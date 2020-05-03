@@ -1,0 +1,93 @@
+-- This work is licensed under a Creative Commons
+-- Attribution-NonCommercial-ShareAlike 4.0 International License.
+-- http://creativecommons.org/licenses/by-nc-sa/4.0
+
+-- Mark D. Aagaard
+-- Riham AlTawy
+-- Guang Gong
+-- Kalikinkar Mandal
+-- Raghvendra Rohit
+-- Marat Sattarov
+-- Nusa Zidaric
+-- http://uwaterloo.ca/communications-security-lab/lwc/wage
+
+
+-- This is a human-readable summary of (and not a substitute for) the license. 
+-- You are free to:
+
+--     Share:  copy and redistribute the material in any medium or format
+--     Adapt:  remix, transform, and build upon the material
+
+--     The licensor cannot revoke these freedoms as long as you follow
+--     the license terms.
+
+-- Under the following terms:
+
+--     Attribution — You must give appropriate credit, provide a link to
+--     the license, and indicate if changes were made. You may do so in
+--     any reasonable manner, but not in any way that suggests the
+--     licensor endorses you or your use.
+
+--     NonCommercial — You may not use the material for commercial
+--     purposes.
+
+--     ShareAlike — If you remix, transform, or build upon the material,
+--     you must distribute your contributions under the same license as
+--     the original.
+
+--     No additional restrictions — You may not apply legal terms or
+--     technological measures that legally restrict others from doing
+--     anything the license permits.
+
+if { $gui_mode } {
+  add wave clk
+  add wave reset
+  add wave -noupdate -divider -height 32 "WAGE"
+  add wave i_dom_sep
+  add wave i_valid
+  add wave i_data
+  add wave o_valid
+  add wave o_data
+  if { $sim_mode eq "PROG_MODE" } then {
+  add wave /uut/u_dp/wage_state/sa
+  add wave wage_state_a_2
+  add wave uut/u_dp/lfsrconst/o_const
+  add wave -radix unsigned uut/u_ctl/count
+  add wave uut/u_ctl/lfsr_c_reset
+  }
+
+
+  add wave -noupdate -divider -height 32 "WAGE CONTROL"  
+  add wave i_padding
+  add wave i_mode
+  if { $sim_mode eq "PROG_MODE" } then {
+    add wave /uut/ctl_control
+  }
+  add wave tb_state_2
+
+  
+
+  if { $sim_mode eq "PROG_MODE" } then {
+
+
+  }
+
+}
+
+vcd file uw_tmp/wage.vcd
+vcd add /wage_tb/uut/*
+
+vcd add -r *
+vcd on
+
+run -all
+
+vcd checkpoint
+vcd off
+vcd flush
+
+if { $gui_mode } {
+  wave zoom full
+} else {  
+  exit
+}

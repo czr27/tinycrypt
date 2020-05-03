@@ -1,0 +1,121 @@
+// Copyright Â© 2013 Steve Thomas 
+
+function fromCisco4MassConvert(h)
+{
+  return cisco4MassConvert(h,0)
+}
+
+function toCisco4MassConvert(h)
+{
+  return cisco4MassConvert(h,1)
+}
+
+function cisco4MassConvert(h,d)
+{
+  h=h.split("\n");
+  var r=[],l=h.length,i,t,u,p,H;
+  
+  for(i=0;i<l;i++)
+  {
+    h[i]=h[i].replace(/^\s+|\s+$/g,"");
+    p="*** Invalid ***";
+    if(h[i]=="")p="";
+    t=h[i].split(":",3);
+    if(t.length<3)
+    {
+      u="";
+      if(t.length>1)
+        u=t[0]+":";
+      t=t[t.length-1];
+      H=-1;
+      if(t.search(/^[\.\/0-9A-Za-z]{43}$/)==0)
+        H=0;
+      else if(t.search(/^[0-9A-Fa-f]{64}$/)==0)
+        H=1;
+      if(H==d)
+        p=u+cisco4Convert(t);
+      else if(H!=-1)
+        p=u+t
+    }
+    r.push(p)
+  }
+  return r.join("\n")
+}
+function cisco4Convert(h)
+{
+  var r="Error invalid hash";
+  if(h.search(/^[\.\/0-9A-Za-z]{43}$/)==0)
+    r=hexEncode(b64Decode(h)); 
+  else if(h.search(/^[0-9A-Fa-f]{64}$/)==0)
+    r=b64Encode(hexDecode(h));
+  return r
+}
+
+function cisco4Gen(p)
+{
+  var h="Error password length";
+  if(p.length<26)h=b64Encode(sha256(p));return h}function 
+hexDecode(d){var l=d.length,r,i;r=new 
+Array(l>>>1);if(d.search(/^[0-9A-Fa-f]*$/)!=0||l%2==1)return 
+null;for(i=0;i<l;i+=2){ch=d.charCodeAt(i)-48;if(ch>10)ch-=7;if(ch>15)ch- 
+=32;ch2=d.charCodeAt(i+1)-48;if(ch2>10)ch2-=7;if(ch2>15)ch2-=32;r[i>>>1] 
+=16*ch+ch2}return r}function hexEncode(d){var 
+r="",i,h="0123456789abcdef";for(i=0;i<d.length;i++)r=r+h.charAt((d[i]>>> 
+4)&15)+h.charAt(d[i]&15);return r}
+
+function b64Decode(d)
+{
+  var b=[0,1,2,3,4,5,6,7,8,9,10,11,-1,-1,-1,-1,-1,-1,-1,12,13,14,15,16,17,18,1 
+         9,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,-1,-1,-1,-1,-1,- 
+         1,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,6 
+         1,62,63],c,C,l=d.length,r,i,j;
+         
+  r = new Array((l>>>2)*3+(((l&3)+1)>>>1));
+  if (d.search(/^[\.\/0-9A-Za-z]*$/)!=0||l %4==1)
+    return null;
+  
+  for (j=i=0; i<l ; i+=4, j+=3)
+  {
+    c = b[d.charCodeAt(i) - 46];
+    C = b[d.charCodeAt(i+1) - 46];
+    r[j] = (c << 2) | (C >> 4);
+    if (i+2 >= l)
+      break;
+    c = b[d.charCodeAt(i+2) - 46];
+    r[j+1] = ((C & 0x0f) << 4) | (c >> 2);
+    if (i+3 >= l)
+      break;
+    r[j+2] = ((c & 0x03) << 6) | b[d.charCodeAt(i + 3) - 46]
+  }
+  return r
+}
+
+function b64Encode (d)
+{
+  var b="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",r="",l=d.length,c,t;
+  
+  for(i=0; i<l; i+=3)
+  {
+    c = d[i];
+    t = b.charAt(c >> 2);
+    c = (c & 0x03) << 8;
+    
+    if(i+1 >= l)
+    {
+      r=r+t+b.charAt(c >> 8);
+      break
+    }
+    c |= d[i+1];
+    t = t+b.charAt(c >> 4);
+    c = (c & 0x0f) << 8;
+    
+    if(i+2 >= l)
+    {
+      r=r+t+b.charAt(c >> 6);
+      break
+    }
+    c |= d[i+2];
+    r  = r+t+b.charAt(c >> 6)+b.charAt(c & 0x3f)
+  }
+  return r
+} 

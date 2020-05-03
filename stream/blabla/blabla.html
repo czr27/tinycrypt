@@ -1,0 +1,260 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://github.com/veorq/blabla">BlaBla</a> is a 256-bit stream cipher designed by <a href="https://aumasson.jp/">Jean-Philippe Aumasson</a>. It uses the same permutation function as the cryptographic hash algorithm <a href="https://blake2.net/">BLAKE2b</a>, that is similar to the permutation function used in the <a href="https://cr.yp.to/chacha.html">ChaCha stream cipher</a>, hence the name. <a href="https://github.com/jedisct1/blabla">Frank Denis</a> described it as "<strong><em>...yet another evil experiment from Jean-Philippe Aumasson</em></strong>" Frank informed me the permutation function used in BlaBla is also used in <a href="https://github.com/MEM-AEAD/mem-aead">this project here</a> which is an Authenticated Encryption Associated Data (AEAD) algorithm using a Masked Even Mansour (MEM) construction. More information can be found in <a href="https://eprint.iacr.org/2015/999">Improved Masking for Tweakable Blockciphers with Applications to Authenticated Encryption</a>
+
+<h3><strong>Initialization</strong></h3>
+
+<p>ChaCha uses an internal state of 512-bits or 64-bytes and works efficiently on 32-bit CPUs. BlaBla uses an internal state of 1024-bits or 128-bytes and works efficiently on 64-bit CPUs. There are nine 64-bit constants used to initialize the internal state. The first four of these include the same 32-bit integers used to initialize the 256-bit key variant of ChaCha, which is the string <strong>"expand 32-byte k"</strong>. The other values were possibly generated randomly, but there's currently no explanation for their origin at the moment.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// setup the key/internal state</span>
+<span style='color:#800000; font-weight:bold; '>void</span> blabla_setkey<span style='color:#808030; '>(</span>blabla_ctx <span style='color:#808030; '>*</span>c<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>key<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>nonce<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    <span style='color:#800000; font-weight:bold; '>int</span> i<span style='color:#800080; '>;</span>
+    
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x6170786593810fab</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x3320646ec7398aee</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>2</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x79622d3217318274</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x6b206574babadada</span><span style='color:#800080; '>;</span>
+
+    <span style='color:#696969; '>// copy 256-bit key</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span> c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>key<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x2ae36e593e46ad5f</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span> <span style='color:#008c00; '>9</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0xb68f143029225fc9</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span><span style='color:#008c00; '>10</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x8da1e08468303aa6</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span><span style='color:#008c00; '>11</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0xa48a209acd50a4a7</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span><span style='color:#008c00; '>12</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008000; '>0x7fdc12f23f90778c</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// set 64-bit counter</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span><span style='color:#008c00; '>13</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span> 
+    
+    <span style='color:#696969; '>// copy 128-bit nonce</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>14</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>nonce<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>AMD64 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc; '>blabla_iv1:</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x6170786593810fab</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x3320646ec7398aee</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x79622d3217318274</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x6b206574babadada</span>
+<span style='color:#e34adc; '>blabla_iv2:</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x2ae36e593e46ad5f</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0xb68f143029225fc9</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x8da1e08468303aa6</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0xa48a209acd50a4a7</span>
+    <span style='color:#004a43; '>dq</span>     <span style='color:#008000; '>0x7fdc12f23f90778c</span>
+    
+<span style='color:#696969; '>; void blabla_setkey(blabla_ctx *c, const void *key, const void *nonce) </span>
+<span style='color:#e34adc; '>blabla_setkey:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rsi                  <span style='color:#696969; '>; save key</span>
+    <span style='color:#696969; '>; copy 4 IV</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rel blabla_iv1<span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#808030; '>(</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rcx
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsd</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rsi                  <span style='color:#696969; '>; restore key</span>
+    <span style='color:#696969; '>; copy 256-bit key to internal state</span>
+    <span style='color:#696969; '>; F(4) c->q[i+4] = k[i];</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>32</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsd</span>
+    <span style='color:#696969; '>; copy 5 more IV</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rel blabla_iv2<span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsd</span>
+    <span style='color:#696969; '>; set 64-bit counter</span>
+    <span style='color:#696969; '>; c->q[13] = 1; </span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#008c00; '>1</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rax
+    stosq
+    <span style='color:#696969; '>; copy 128-bit nonce to internal state</span>
+    <span style='color:#696969; '>; F(2)c->q[i+14]=n[i];</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rdx   
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rsi
+    movsq
+    movsq
+    <span style='color:#800000; font-weight:bold; '>ret</span>    
+</pre>
+
+
+<h3><strong>Stream Generator</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'>void blabla_stream<span style='color:#808030; '>(</span>blabla_ctx <span style='color:#808030; '>*</span>s<span style='color:#808030; '>,</span> void <span style='color:#808030; '>*</span><span style='color:#800000; font-weight:bold; '>out</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>{</span>
+    W a<span style='color:#808030; '>,</span>b<span style='color:#808030; '>,</span><span style='color:#004a43; '>c</span><span style='color:#808030; '>,</span>d<span style='color:#808030; '>,</span>i<span style='color:#808030; '>,</span>t<span style='color:#808030; '>,</span>r<span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>x<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span><span style='color:#800000; font-weight:bold; '>out</span><span style='color:#696969; '>;</span>
+    uint16_t v<span style='color:#808030; '>[</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>{</span><span style='color:#008000; '>0xC840</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xD951</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xEA62</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xFB73</span><span style='color:#808030; '>,</span>
+                   <span style='color:#008000; '>0xFA50</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xCB61</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xD872</span><span style='color:#808030; '>,</span><span style='color:#008000; '>0xE943</span><span style='color:#808030; '>}</span><span style='color:#696969; '>;</span>
+            
+    <span style='color:#808030; '>/</span><span style='color:#808030; '>/</span> store internal state <span style='color:#800000; font-weight:bold; '>in</span> buffer
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>16</span><span style='color:#808030; '>)</span>x<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> s<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#696969; '>;</span>
+    
+    <span style='color:#808030; '>/</span><span style='color:#808030; '>/</span> permute buffer
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>80</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>{</span>
+      d<span style='color:#808030; '>=</span>v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#696969; '>;</span>
+      a<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>d&amp;<span style='color:#008c00; '>15</span><span style='color:#808030; '>)</span><span style='color:#696969; '>;b=(d>>4&amp;15);</span>
+      <span style='color:#004a43; '>c</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>d<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#008c00; '>8</span>&amp;<span style='color:#008c00; '>15</span><span style='color:#808030; '>)</span><span style='color:#696969; '>;d>>=12;</span>
+      
+      <span style='color:#004a43; '>for</span><span style='color:#808030; '>(</span>r<span style='color:#808030; '>=</span><span style='color:#008000; '>0x3F101820</span><span style='color:#696969; '>;r;r>>=8)</span>
+        x<span style='color:#808030; '>[</span>a<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span>b<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>
+        x<span style='color:#808030; '>[</span>d<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>x<span style='color:#808030; '>[</span>d<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span>x<span style='color:#808030; '>[</span>a<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#808030; '>(</span>r&amp;<span style='color:#008c00; '>255</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>
+        X<span style='color:#808030; '>(</span>a<span style='color:#808030; '>,</span><span style='color:#004a43; '>c</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>X<span style='color:#808030; '>(</span>b<span style='color:#808030; '>,</span>d<span style='color:#808030; '>)</span><span style='color:#696969; '>;</span>
+    <span style='color:#808030; '>}</span>
+    <span style='color:#808030; '>/</span><span style='color:#808030; '>/</span> <span style='color:#800000; font-weight:bold; '>add</span> internal state to buffer
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>16</span><span style='color:#808030; '>)</span>x<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> s<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#696969; '>;</span>
+    <span style='color:#808030; '>/</span><span style='color:#808030; '>/</span> increase counter of internal state
+    s<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>q<span style='color:#808030; '>[</span><span style='color:#008c00; '>13</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#696969; '>;</span>
+<span style='color:#808030; '>}</span>
+</pre>
+
+<h3><strong>AMD64 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc; '>blabla_v:</span>
+    <span style='color:#004a43; '>dw</span>     <span style='color:#008000; '>0c840H</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0d951H</span>
+    <span style='color:#004a43; '>dw</span>     <span style='color:#008000; '>0ea62H</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0fb73H</span>
+    <span style='color:#004a43; '>dw</span>     <span style='color:#008000; '>0fa50H</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0cb61H</span>
+    <span style='color:#004a43; '>dw</span>     <span style='color:#008000; '>0d872H</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0e943H</span>
+    
+<span style='color:#696969; '>; void blabla_stream(blabla_ctx *s, void *out) </span>
+<span style='color:#e34adc; '>blabla_stream:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    rbx
+    <span style='color:#800000; font-weight:bold; '>push</span>    rcx
+    <span style='color:#800000; font-weight:bold; '>push</span>    rsi
+    <span style='color:#800000; font-weight:bold; '>push</span>    rdi
+    <span style='color:#800000; font-weight:bold; '>push</span>    rbp
+    
+    <span style='color:#696969; '>; store internal state in buffer</span>
+    <span style='color:#696969; '>; F(16)x[i] = s->q[i];</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    <span style='color:#008c00; '>128</span><span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rcx
+    <span style='color:#800000; font-weight:bold; '>xchg</span>    rsi<span style='color:#808030; '>,</span> rdi
+    <span style='color:#800000; font-weight:bold; '>push</span>    rsi               <span style='color:#696969; '>; save s</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    rdi               <span style='color:#696969; '>; save out</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>     <span style='color:#800000; font-weight:bold; '>movsd</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rdi               <span style='color:#696969; '>; restore out</span>
+    
+    <span style='color:#696969; '>; permute buffer</span>
+    <span style='color:#696969; '>; F(80) {</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+<span style='color:#e34adc; '>bb_sx0:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    rax               <span style='color:#696969; '>; save i</span>
+    <span style='color:#696969; '>; d=v[i%8];</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>7</span> 
+    <span style='color:#800000; font-weight:bold; '>lea</span>     rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rel blabla_v<span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>movzx</span>   <span style='color:#000080; '>edx</span><span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>word</span><span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span>rax<span style='color:#808030; '>*</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>]</span>
+    <span style='color:#696969; '>; a=(d&amp;15);b=(d>>4&amp;15);</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>          <span style='color:#696969; '>; a = d &amp; 15</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>15</span>           
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>          <span style='color:#696969; '>; b = d >> 4 &amp; 15</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>     <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>     <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>15</span>
+    <span style='color:#696969; '>; c=(d>>8&amp;15);d>>=12;</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>          <span style='color:#696969; '>; c = d >> 8 &amp; 15</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>     <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>8</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>     <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>15</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>     <span style='color:#000080; '>edx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>12</span>           <span style='color:#696969; '>; d >>= 12</span>
+    
+      <span style='color:#696969; '>; for (r=0x7080C10;r;r>>=8)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0x3F101820</span> <span style='color:#696969; '>; load rotation values</span>
+<span style='color:#e34adc; '>bb_sx1:</span>
+    <span style='color:#696969; '>; x[a] += x[b]</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>+</span>rbx<span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>+</span>rax<span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rsi
+    
+    <span style='color:#696969; '>; x[d] = R(x[d] ^ x[a], (r &amp; 255))</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>+</span>rdx<span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>    
+    <span style='color:#800000; font-weight:bold; '>xor</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>+</span>rax<span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>ror</span>    rsi<span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>+</span>rdx<span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rsi
+    
+    <span style='color:#696969; '>; X(a, c); X(b, d);</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   rax<span style='color:#808030; '>,</span> rbp
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   rbx<span style='color:#808030; '>,</span> rdx 
+    
+    <span style='color:#696969; '>; r >>= 8</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>8</span>       <span style='color:#696969; '>; shift until done </span>
+    <span style='color:#800000; font-weight:bold; '>jnz</span>    <span style='color:#e34adc; '>bb_sx1</span>
+    
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rax
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>al</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>80</span>
+    <span style='color:#800000; font-weight:bold; '>jnz</span>    <span style='color:#e34adc; '>bb_sx0</span>
+    
+    <span style='color:#696969; '>; add internal state to buffer</span>
+    <span style='color:#696969; '>; F(16)x[i] += s->q[i];</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rsi         <span style='color:#696969; '>; restore state</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    <span style='color:#008c00; '>16</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rcx
+<span style='color:#e34adc; '>bb_sx5:</span>
+    lodsq
+    <span style='color:#800000; font-weight:bold; '>add</span>     rax<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rdi<span style='color:#808030; '>]</span>
+    stosq
+    <span style='color:#800000; font-weight:bold; '>loop</span>    <span style='color:#e34adc; '>bb_sx5</span>
+    
+    <span style='color:#696969; '>; update 64-bit counter</span>
+    <span style='color:#696969; '>; c->q[13]++;   </span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>     <span style='color:#800000; font-weight:bold; '>qword</span><span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span><span style='color:#008c00; '>13</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#008c00; '>-128</span><span style='color:#808030; '>]</span>
+    
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rbp
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rdi
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rsi
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rcx
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rbx
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+</pre>
+
+<h3><strong>Encryption/Decryption</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>// encrypt or decrypt stream of len-bytes</span>
+<span style='color:#800000; font-weight:bold; '>void</span> blabla_encrypt<span style='color:#808030; '>(</span>blabla_ctx <span style='color:#808030; '>*</span>ctx<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>buf<span style='color:#808030; '>,</span> <span style='color:#603000; '>size_t</span> len<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W i<span style='color:#808030; '>,</span> r<span style='color:#800080; '>;</span>
+    B c<span style='color:#808030; '>[</span><span style='color:#008c00; '>128</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>p<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>buf<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>while</span><span style='color:#808030; '>(</span>len<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#696969; '>// generate 128-bytes of ciphertext</span>
+      blabla_stream<span style='color:#808030; '>(</span>ctx<span style='color:#808030; '>,</span> c<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      r <span style='color:#808030; '>=</span> len<span style='color:#808030; '>></span><span style='color:#008c00; '>128</span><span style='color:#800080; '>?</span><span style='color:#008c00; '>128</span><span style='color:#800080; '>:</span>len<span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// xor plaintext with ciphertext</span>
+      F<span style='color:#808030; '>(</span>r<span style='color:#808030; '>)</span> p<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>^</span><span style='color:#808030; '>=</span> c<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// decrease total length, advance buffer</span>
+      len <span style='color:#808030; '>-</span><span style='color:#808030; '>=</span> r<span style='color:#800080; '>;</span> p<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> r<span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>AMD64 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>; void blabla_encrypt(blabla_ctx *ctx, void *buf, size_t len) </span>
+<span style='color:#e34adc; '>blabla_encrypt:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    rbx               <span style='color:#696969; '>; save rbx</span>
+    
+    <span style='color:#800000; font-weight:bold; '>push</span>    rsi               <span style='color:#696969; '>; rbx = buf</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rbx 
+    
+    <span style='color:#800000; font-weight:bold; '>push</span>    rdx               <span style='color:#696969; '>; rcx = len</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rcx
+    
+    <span style='color:#800000; font-weight:bold; '>sub</span>     rsp<span style='color:#808030; '>,</span> <span style='color:#008c00; '>124</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    rax
+    <span style='color:#800000; font-weight:bold; '>push</span>    rsp               <span style='color:#696969; '>; rsi = c[128] </span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rsi
+<span style='color:#e34adc; '>bb_e0:</span>
+    jrcxz   bb_e3             <span style='color:#696969; '>; exit if len==0</span>
+    <span style='color:#696969; '>; blabla_stream(ctx, c);</span>
+    <span style='color:#800000; font-weight:bold; '>call</span>    <span style='color:#e34adc; '>blabla_stream</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>          <span style='color:#696969; '>; i = 0</span>
+<span style='color:#e34adc; '>bb_e1:</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>byte</span><span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span>rax<span style='color:#808030; '>]</span> <span style='color:#696969; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>     <span style='color:#800000; font-weight:bold; '>byte</span><span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>dl</span>     <span style='color:#696969; '>; *p ^= c[i]</span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>     rbx               <span style='color:#696969; '>; p++</span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>     <span style='color:#000080; '>al</span>                <span style='color:#696969; '>; i++</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>128</span>           <span style='color:#696969; '>; i&lt;128</span>
+    <span style='color:#800000; font-weight:bold; '>loopne</span>  <span style='color:#e34adc; '>bb_e1</span>             <span style='color:#696969; '>; --len</span>
+    <span style='color:#800000; font-weight:bold; '>jmp</span>     <span style='color:#e34adc; '>bb_e0</span>
+<span style='color:#e34adc; '>bb_e3:</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rax
+    <span style='color:#800000; font-weight:bold; '>add</span>     rsp<span style='color:#808030; '>,</span> <span style='color:#008c00; '>124</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     rbx               <span style='color:#696969; '>; restore rbx</span>
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/stream/blabla">Sources here.</a></p>

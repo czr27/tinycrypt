@@ -1,0 +1,19 @@
+**** Line 10
+
+  Description:
+    added a name
+
+  Change:
+    -- Nusa Zidaric
+
+
+
+**** Line 221 (old), 222 (new) ****
+**** Line 290 (old), 292 (new) ****
+**** Line 319 (old), 322 (new) ****
+
+  Description:
+    added a hold statement to delay primary inputs from clock edge
+
+  Change:
+    wait for hold;

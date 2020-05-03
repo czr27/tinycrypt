@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>2</fileVersion>
+    <fileChecksum>1576976709</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$TOOLKIT_DIR$\config\linker\lnk430f2370.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\msp430.h</file>
+            <file>$PROJ_DIR$\Debug\List\WAGE16.map</file>
+            <file>$PROJ_DIR$\Debug\Obj\asm.r43</file>
+            <file>$PROJ_DIR$\Debug\Exe\WAGE16.d43</file>
+            <file>$PROJ_DIR$\asm.s43</file>
+            <file>$TOOLKIT_DIR$\config\linker\multiplier.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\msp430f2370.h</file>
+        </outputs>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 4 2</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\WAGE16.d43</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 2</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 0 6 3</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\asm.s43</name>
+            <outputs>
+                <tool>
+                    <name>A430</name>
+                    <file> 3</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>A430</name>
+                    <file> 1 7</file>
+                </tool>
+            </inputs>
+        </file>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs />
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>XLINK</tool>
+        </forcedrebuild>
+    </configuration>
+</project>

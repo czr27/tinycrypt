@@ -1,0 +1,135 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://github.com/gvanas/KeccakCodePackage">Keccak</a> is a cryptographic permutation function designed by <a href="https://keccak.team/team.html">Guido Bertoni</a>, <a href="http://jda.noekeon.org/">Joan Daemen</a>, <a href="http://mip.noekeon.org/">Michaël Peeters</a> and <a href="http://gva.noekeon.org/">Gilles Van Assche</a>. Keccak can be used to construct a stream cipher, a cryptographic hash function, a Pseudo Random Number Generator (PRNG), Message Authentication Code (MAC) or an Authenticated Encryption Associated Data (AEAD) algorithm. It is incredibly versatile and considered the swiss army knife of cryptographic primitives. For more detailed information, please refer to the documentation provided by the designers.</p>
+
+<ul>
+<li><a href="https://keccak.team/files/Keccak-reference-3.0.pdf">The Keccak Reference</a></li>
+<li><a href="https://keccak.team/files/Keccak-implementation-3.2.pdf">Keccak Implementation Overview</a></li>
+<li><a href="https://github.com/gvanas/KeccakCodePackage">Keccak Code Package</a></li>
+</ul>
+
+<h3><strong>Keccak Parameters</strong></h3>
+
+<p>The following table lists parameters for the Keccak function and what architecture it's most suitable for.</p>
+
+<table border="1">
+  <tr>
+    <th>F</th>
+    <th>Target Architecture</th>
+    <th>Capacity</th>
+    <th>Rounds</th>
+  </tr>
+  <tr>
+    <td>200</td>
+    <td>8-bit</td>
+    <td>200-bits</td>
+    <td>18</td>
+  </tr>
+  <tr>
+    <td>400</td>
+    <td>16-bit</td>
+    <td>400-bits</td>
+    <td>20</td>
+  </tr>
+  <tr>
+    <td>800</td>
+    <td>32-bit</td>
+    <td>800-bits</td>
+    <td>22</td>
+  </tr>
+  <tr>
+    <td>1600</td>
+    <td>64-bit</td>
+    <td>1600-bits</td>
+    <td>24</td>
+  </tr>
+</table>
+
+<h3><strong>Macros, data types</strong></h3>
+
+<p>To build keccak for a specific architecture, I've defined parameters for K200 (8-bit), K400 (16-bit), K800 (32-bit) with the default being 64-bit or K1600.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43; '>#</span><span style='color:#004a43; '>if</span><span style='color:#004a43; '> </span><span style='color:#004a43; '>defined</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>K200</span><span style='color:#808030; '>)</span>
+  <span style='color:#696969; '>// keccak-f[200, 18]</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS  18</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN  8</span>
+  <span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>char</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>elif</span><span style='color:#004a43; '> </span><span style='color:#004a43; '>defined</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>K400</span><span style='color:#808030; '>)</span>
+  <span style='color:#696969; '>// keccak-f[400, 20]</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS  20</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN 16</span>
+  <span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>short</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>elif</span><span style='color:#004a43; '> </span><span style='color:#004a43; '>defined</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>K800</span><span style='color:#808030; '>)</span>
+  <span style='color:#696969; '>// keccak-f[800, 22]</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS  22</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN 32</span>
+  <span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>int</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>else</span>
+  <span style='color:#696969; '>// keccak-f[1600, 24]</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS  24</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN 64</span>
+  <span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>long</span> <span style='color:#800000; font-weight:bold; '>long</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>endif</span>
+
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> R</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>|</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>(</span><span style='color:#004a43; '>WORDLEN</span><span style='color:#808030; '>-</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> F</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>)</span><span style='color:#004a43; '>for</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>=</span><span style='color:#004a43; '>0</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>&lt;</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span>
+</pre>
+
+<h3><strong>Keccak Modules</strong></h3>
+
+<table border="1">
+  <tr>
+    <th>Module</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>Theta</td>
+    <td>Renders the internal state into a 5-by-5 array of n-bit elements. Computes the parity of each column and combines them with an exclusive-or (XOR) operator.</td>
+  </tr>
+  <tr>
+    <td>Rho</td>
+    <td>Rotates each element by a triangular number.</td>
+  </tr>
+  <tr>
+    <td>Pi</td>
+    <td>Permutes the elements.</td>
+  </tr>
+  <tr>
+    <td>Chi</td>
+    <td>Adds a non-linear aspect to the permutation round. Combines the row elements using only three bitwise operators: AND, NOT, and XOR.</td>
+  </tr>
+  <tr>
+    <td>Iota</td>
+    <td>Breaks up any symmetry caused by the other modules. This is done by XORing one of the array elements to a round constant. Without iota, the round mapping would be symmetric. Without iota, all rounds would be the same.</td>
+  </tr>
+</table>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> keccak<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>state<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W n<span style='color:#808030; '>,</span>i<span style='color:#808030; '>,</span>j<span style='color:#808030; '>,</span>r<span style='color:#808030; '>,</span>x<span style='color:#808030; '>,</span>y<span style='color:#808030; '>,</span>t<span style='color:#808030; '>,</span>Y<span style='color:#808030; '>,</span>b<span style='color:#808030; '>[</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>s<span style='color:#808030; '>=</span>state<span style='color:#800080; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>char</span> c<span style='color:#808030; '>=</span><span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span>
+
+    F<span style='color:#808030; '>(</span>n<span style='color:#808030; '>,</span> ROUNDS<span style='color:#808030; '>)</span><span style='color:#800080; '>{</span>
+      <span style='color:#696969; '>// Theta</span>
+      F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span><span style='color:#800080; '>{</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span>j<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span><span style='color:#800080; '>}</span>
+      F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span><span style='color:#800080; '>{</span>
+        t<span style='color:#808030; '>=</span>b<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span>R<span style='color:#808030; '>(</span>b<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+        F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span>j<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>t<span style='color:#800080; '>;</span><span style='color:#800080; '>}</span>
+      t<span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>y<span style='color:#808030; '>=</span>r<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>=</span><span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// Rho and Pi</span>
+      F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>24</span><span style='color:#808030; '>)</span>
+        r<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>j<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>,</span>Y<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>x<span style='color:#808030; '>*</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#808030; '>(</span>y<span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>=</span>y<span style='color:#808030; '>,</span>y<span style='color:#808030; '>=</span>Y<span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>,</span>
+        Y<span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span>x<span style='color:#808030; '>+</span>y<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>s<span style='color:#808030; '>[</span>x<span style='color:#808030; '>+</span>y<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>t<span style='color:#808030; '>,</span>r<span style='color:#808030; '>%</span>WORDLEN<span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>t<span style='color:#808030; '>=</span>Y<span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// Chi</span>
+      F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span><span style='color:#800080; '>{</span>
+        F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span>j<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+        F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span>
+          s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span>j<span style='color:#808030; '>*</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>(</span>b<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>&amp;</span><span style='color:#808030; '>~</span>b<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span><span style='color:#800080; '>}</span>
+      <span style='color:#696969; '>// Iota</span>
+      F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>7</span><span style='color:#808030; '>)</span>
+        <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>c<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>c<span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>^</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>c<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#008c00; '>7</span><span style='color:#808030; '>)</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>113</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span>
+          <span style='color:#808030; '>*</span>s<span style='color:#808030; '>^</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span>j<span style='color:#808030; '>)</span><span style='color:#808030; '>-</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/permutation/keccak">Sources here.</a></p>

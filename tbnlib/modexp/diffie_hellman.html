@@ -1,0 +1,842 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://github.com/odzhan/tinycrypt/blob/master/tbnlib/modexp/doc/The%20history%20of%20Non-Secret%20Encryption.pdf">The history Of Non-Secret Encryption</a> published in 1997 by the now deceased J.H.Ellis documents early research by GCHQ employees into what we now refer to as PKC (Public Key Cryptography). Below is a list of papers/reports referenced by Ellis in his 1997 paper.</p>
+
+<p>
+<table border="1">
+<tbody>
+<tr>
+<th>paper/report</th>
+<th>authors</th>
+<th>date</th>
+</tr>
+<tr>
+<td>Final Report on Project C43</td>
+<td>Bell Telephone Laboratory</td>
+<td>1944</td>
+</tr>
+<tr>
+<td>The Possibility of Secure Non-Secret Digital Encryption</td>
+<td>James H. Ellis (GCHQ)</td>
+<td>January 1970</td>
+</tr>
+<tr>
+<td>A Note on Non-Secret Encryption</td>
+<td>Clifford C. Cocks (GCHQ)</td>
+<td>November 1973</td>
+</tr>
+<tr>
+<td>Non-Secret Encryption Using a Finite Field</td>
+<td>M J Williamson (GCHQ)</td>
+<td>January 1974</td>
+</tr>
+<tr>
+<td>Thoughts on Cheaper Non-Secret Encryption</td>
+<td>M J Williamson (GCHQ)</td>
+<td>August 1976</td>
+</tr>
+<tr>
+<td>New Directions in Cryptography</td>
+<td>W Diffie and M E Hellman</td>
+<td>November 1976</td>
+</tr>
+<tr>
+<td>A Method for Obtaining Digital Signatures and Public-key Cryptosystems</td>
+<td>R L Rivest, A Shamir, L Adleman</td>
+<td>February 1978</td>
+</tr>
+</tbody>
+</table>
+</p>
+
+<p>Ellis states his first thoughts about NSE began in the late 60s before finally writing about it in 1970 while working at the GCHQ. His idea was inspired by a Bell Laboratory report published in 1944.</p>
+
+<blockquote>The story begins in the 60s. The management of vast quantities of key material needed for secure communication was a headache for the armed forces. It was obvious to everyone, including me, that no secure communication was possible without secret key, some other secret knowledge, or at least some way in which the recipient was in a different position from an interceptor. After all, if they were in identical situations how could one possibly be able to receive what the other could not? Thus there was no incentive to look for something so clearly impossible.</blockquote>
+
+<p>At that time, he was unable to devise and implement a practical solution for his theory and it wasn't until 1973 when another cryptographer and mathematician working at GCHQ by the name of Clifford Cocks provided a mathematical proof of concept. This was all classified of course until the death of Ellis in 1997. Publicly however, the concept of PKC was first proposed by Ralph Merkle in his 1974 paper <a href="http://www.merkle.com/1974/PuzzlesAsPublished.pdf">Secure Communications over Insecure Channels.</a> This later became the basis of the Diffie-Hellman key exchange protocol designed by Whitfield Diffie and Martin Hellman and published in their paper <a href="http://www-ee.stanford.edu/~hellman/publications/24.pdf">New Directions In Cryptography.</a> Incidentally, another GCHQ cryptographer M.J. Williamson wrote about the same key exchange algorithm 3 months before the publication of the Diffie/Hellman paper.</p>
+
+<blockquote>The method was published by Diffie and Hellman. This was identical to Williamson's version, except that they restricted q to be prime. -- Ellis</blockquote>
+
+<p>What most early and modern day PKC systems have in common is their use of Modular Exponentiation and what follows is a tiny implementation in x86 assembler, optimized for size, so if you require a version optimized for speed, consider using a library such as <a href="https://tls.mbed.org/">PolarSSL</a> or <a href="https://www.openssl.org/">OpenSSL</a> The security of this function depends upon the inability of an adversary/interceptor to solve the (DLP) Discrete Logarithm Problem which is believed to be difficult when the numbers involved are large. More recently in 2015, cryptographers published <a href="https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf">Imperfect Forward Secrecy: How Diffie-Hellman Fails in Practice</a> which suggests feasible attacks against DH which may be used by the NSA and GCHQ.</p>
+
+<h3><strong>Toy implementation</strong></h3>
+
+<p>If p and g have already been chosen (which they normally are, I'll use predefined oakley prime numbers from RFC2409) then you only need modular exponentiation and a cryptographically secure random number generator.</p>
+
+<img src="https://modexp.files.wordpress.com/2015/11/diffie.png" alt="diffie" width="640" height="286" class="aligncenter size-full wp-image-1772" />
+
+<p>Just to illustrate the basic functionality of modular exponentiation, here are 3 functions that perform the calculation over 64-bit field. Obviously 64-bit integers are insufficient for security purposes but it's simply to show what mathematical operators are used. These are then implemented in assembly to work with arbitrary sized numbers. In order for this to work, the <strong>b</strong>ase and <strong>e</strong>xponent must be in range of the <strong>m</strong>odulus for addmod() to return correct results. The base and exponent values must be less than the modulus. This is how Diffie-Hellman and RSA work anyway so I don't see it as a limitation. (open to correction)</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// Modular Addition</span>
+uint64_t addmod <span style='color:#808030;'>(</span>uint64_t a<span style='color:#808030;'>,</span> uint64_t b<span style='color:#808030;'>,</span> uint64_t m<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>+</span> b<span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>a <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> m<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>-</span> m<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> a<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+
+<span style='color:#696969;'>// Modular multiplication</span>
+uint64_t mulmod <span style='color:#808030;'>(</span>uint64_t a<span style='color:#808030;'>,</span> uint64_t b<span style='color:#808030;'>,</span> uint64_t m<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint64_t r<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> t<span style='color:#808030;'>=</span>a<span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>b <span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>b <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      r <span style='color:#808030;'>=</span> addmod <span style='color:#808030;'>(</span>r<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    t <span style='color:#808030;'>=</span> addmod <span style='color:#808030;'>(</span>t<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    b <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+
+<span style='color:#696969;'>// Modular exponentiation</span>
+uint64_t expmod <span style='color:#808030;'>(</span>uint64_t b<span style='color:#808030;'>,</span> uint64_t e<span style='color:#808030;'>,</span> uint64_t m<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint64_t r<span style='color:#808030;'>=</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>,</span> t<span style='color:#808030;'>=</span>b<span style='color:#800080;'>;</span>
+
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>e <span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>e <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      r <span style='color:#808030;'>=</span> mulmod <span style='color:#808030;'>(</span>r<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    t <span style='color:#808030;'>=</span> mulmod <span style='color:#808030;'>(</span>t<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    e <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p>You can see that e is shifted to the right by one, this is essentially dividing by 2.
+Implementing a function to perform this is possible but we'd need to make a copy of the exponent due to modification and it's not necessary. The BT instruction sets the carry flag if a bit at specific position in memory is set and is much more efficient than shifting right using RCR instruction. The following is just some simple code to demonstrate using the above functions.
+What isn't shown is how p and g are generated.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// Alice and Bob agree to use same p and g for key exchange</span>
+  <span style='color:#696969;'>// Both generate a random integer to establish session key.</span>
+  x<span style='color:#808030;'>=</span>rand_range <span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  y<span style='color:#808030;'>=</span>rand_range <span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Alice computes g ^ x mod p</span>
+  A<span style='color:#808030;'>=</span>modexp <span style='color:#808030;'>(</span>g<span style='color:#808030;'>,</span> x<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Bob computes g ^ y mod p</span>
+  B<span style='color:#808030;'>=</span>modexp <span style='color:#808030;'>(</span>g<span style='color:#808030;'>,</span> y<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Alice and Bob exchange A and B values</span>
+  
+  <span style='color:#696969;'>// Alice computes session key using B ^ x mod p</span>
+  S1 <span style='color:#808030;'>=</span> modexp <span style='color:#808030;'>(</span>B<span style='color:#808030;'>,</span> x<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nn  Alice S=</span><span style='color:#007997;'>%llu</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> S1<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Bob computes session key using A ^ x mod p</span>
+  S2 <span style='color:#808030;'>=</span> modexp <span style='color:#808030;'>(</span>A<span style='color:#808030;'>,</span> y<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>n  Bob   S=</span><span style='color:#007997;'>%llu</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> S2<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// S1 and S2 should be equal</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nn  Key exchange </span><span style='color:#007997;'>%s</span><span style='color:#0000e6;'>n</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> 
+    S1 <span style='color:#808030;'>=</span><span style='color:#808030;'>=</span> S2 <span style='color:#800080;'>?</span> <span style='color:#800000;'>"</span><span style='color:#0000e6;'>succeeded</span><span style='color:#800000;'>"</span> <span style='color:#800080;'>:</span> <span style='color:#800000;'>"</span><span style='color:#0000e6;'>failed</span><span style='color:#800000;'>"</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+</pre>
+
+<strong>Getting highest bit</strong>
+
+<p>The following will obtain the highest bit of large number.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; </span>
+<span style='color:#696969;'>; Find highest bit in big memory</span>
+<span style='color:#696969;'>; Return in eax</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; in: eax = 0, </span>
+<span style='color:#696969;'>;     ecx = max size of memory in bytes, </span>
+<span style='color:#696969;'>;     ebx = pointer to memory</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; out: eax = last bit in array</span>
+<span style='color:#696969;'>;</span>
+cntbits <span style='color:#004a43;'>proc</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>8</span><span style='color:#808030;'>*</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>   <span style='color:#000080;'>eax</span>
+<span style='color:#e34adc;'>ghb:</span>
+    <span style='color:#800000;font-weight:bold;'>bt</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>jc</span>    <span style='color:#e34adc;'>end_cnt</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>   <span style='color:#e34adc;'>ghb</span>
+<span style='color:#e34adc;'>end_cnt:</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+cntbits <span style='color:#004a43;'>endp</span>
+</pre>
+
+<p>Next function is modular addition which is used in the modular multiplication function. Why modular addition using subtraction? Normally we need a full modulo function but it isn't required here because we know b and e are less than m, or at least they should be for diffie-hellman key exchange. This is obviously much faster too.</p>
+
+<h3><strong>Modular Addition</strong></h3>
+
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// Modular Addition</span>
+uint64_t addmod <span style='color:#808030;'>(</span>uint64_t a<span style='color:#808030;'>,</span> uint64_t b<span style='color:#808030;'>,</span> uint64_t m<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>+</span> b<span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>a <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> m<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>-</span> m<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> a<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p>In assembly, we make use of ADC (Add with Carry) and SBB (Subtract with Borrow). The numbers are compared from top to bottom.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; **************************************************</span>
+<span style='color:#696969;'>; r = r + t; if (r &gt;= m) r -= m;</span>
+<span style='color:#696969;'>; t = t + t; if (t &gt;= m) t -= m;</span>
+<span style='color:#696969;'>; **************************************************</span>
+addmod <span style='color:#004a43;'>proc</span> <span style='color:#004a43;'>c</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>cmovnc</span>  <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>clc</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+<span style='color:#e34adc;'>add_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>lodsb</span>
+    <span style='color:#800000;font-weight:bold;'>adc</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>stosb</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>add_loop</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+<span style='color:#e34adc;'>cmp_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>-</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>-</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>loope</span>  <span style='color:#e34adc;'>cmp_loop</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>jb</span>     <span style='color:#e34adc;'>end_am</span>
+<span style='color:#e34adc;'>sub_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>lodsb</span>
+    <span style='color:#800000;font-weight:bold;'>sbb</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>-</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>al</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>sub_loop</span>
+<span style='color:#e34adc;'>end_am:</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+addmod <span style='color:#004a43;'>endp</span>
+</pre>
+
+<h3><strong>Modular Multiplication</strong></h3>
+
+<p>Essentially you are multiplying two numbers together and applying modulo operator like <strong>(a * b) % m</strong>. However, because we expect numbers to be much larger than 64-bits, we use binary multiplication.</p>
+
+<pre style='color:#000000;background:#ffffff;'>uint64_t mulmod <span style='color:#808030;'>(</span>uint64_t num1<span style='color:#808030;'>,</span> uint64_t num2<span style='color:#808030;'>,</span> 
+    uint64_t modulus<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint64_t r<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> b<span style='color:#808030;'>=</span>num1<span style='color:#808030;'>,</span> e<span style='color:#808030;'>=</span>num2<span style='color:#808030;'>,</span> m<span style='color:#808030;'>=</span>modulus<span style='color:#800080;'>;</span>
+
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>e <span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>e <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      r <span style='color:#808030;'>=</span> addmod <span style='color:#808030;'>(</span>r<span style='color:#808030;'>,</span> b<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    b <span style='color:#808030;'>=</span> addmod <span style='color:#808030;'>(</span>b<span style='color:#808030;'>,</span> b<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    e <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+
+<pre style='color:#000000;background:#ffffff;'>mulmod <span style='color:#004a43;'>proc</span> <span style='color:#004a43;'>c</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+
+    <span style='color:#696969;'>; if (cf==1) do mulmod (r, b, m) else do mulmod (b, b, m)</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span> <span style='color:#696969;'>; eax = b</span>
+    <span style='color:#800000;font-weight:bold;'>cmovc</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span> <span style='color:#696969;'>; eax = r</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>      <span style='color:#696969;'>; where to store result</span>
+   
+    <span style='color:#696969;'>; e = b/num2</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    
+    <span style='color:#696969;'>; b = b|r/num1</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>   <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>   <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>   <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>   <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    
+    <span style='color:#696969;'>; r = 0</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>stosb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    
+    <span style='color:#800000;font-weight:bold;'>cdq</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>  <span style='color:#e34adc;'>cntbits</span>
+<span style='color:#e34adc;'>mul_loop:</span>
+    <span style='color:#696969;'>; e &amp; 1</span>
+    <span style='color:#800000;font-weight:bold;'>bt</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+<span style='color:#e34adc;'>am_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>pushfd</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>  <span style='color:#e34adc;'>addmod</span>
+    <span style='color:#800000;font-weight:bold;'>popfd</span>
+    <span style='color:#800000;font-weight:bold;'>cmc</span>
+    <span style='color:#800000;font-weight:bold;'>jnc</span>   <span style='color:#e34adc;'>am_loop</span>
+    
+    <span style='color:#800000;font-weight:bold;'>inc</span>   <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>jns</span>   <span style='color:#e34adc;'>mul_loop</span>
+
+    <span style='color:#800000;font-weight:bold;'>lea</span>   <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>]</span>
+
+    <span style='color:#696969;'>; return r</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>   <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>   <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>   <span style='color:#800000;font-weight:bold;'>movsb</span>
+    
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+mulmod <span style='color:#004a43;'>endp</span>
+</pre>
+
+<p>Finally, the main function used in Diffie-Hellman key exchange and various other PKC.</p>
+
+<h3><strong>Modular Exponentiation</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'>uint64_t modexp <span style='color:#808030;'>(</span>uint64_t b<span style='color:#808030;'>,</span> uint64_t e<span style='color:#808030;'>,</span> uint64_t m<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint64_t r<span style='color:#808030;'>=</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>,</span> t<span style='color:#808030;'>=</span>b<span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>int</span> n<span style='color:#808030;'>,</span> i<span style='color:#800080;'>;</span>
+  
+  n<span style='color:#808030;'>=</span>bits <span style='color:#808030;'>(</span>e<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>=</span>n<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span> 
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>e <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span> 
+      r <span style='color:#808030;'>=</span> mulmod <span style='color:#808030;'>(</span>r<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span> 
+    <span style='color:#800080;'>}</span> 
+    t <span style='color:#808030;'>=</span> mulmod <span style='color:#808030;'>(</span>t<span style='color:#808030;'>,</span> t<span style='color:#808030;'>,</span> m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span> 
+    e <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; int modexp (int bitlen, void *base, void </span>
+    <span style='color:#808030;'>*</span>exponent<span style='color:#808030;'>,</span> void <span style='color:#808030;'>*</span>modulus<span style='color:#808030;'>,</span> void <span style='color:#808030;'>*</span>result<span style='color:#808030;'>)</span><span style='color:#696969;'>;</span>
+
+modexp <span style='color:#004a43;'>proc</span> <span style='color:#004a43;'>c</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>+</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; maxbits</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>+</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; base</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+12</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; exponent</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+16</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; modulus</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+20</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; result</span>
+
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span>
+    
+    <span style='color:#696969;'>; b = base</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    
+    <span style='color:#696969;'>; e = exponent</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    
+    <span style='color:#696969;'>; result = 1</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>stosb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#800000;font-weight:bold;'>byte</span> <span style='color:#800000;font-weight:bold;'>ptr</span><span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+    
+    <span style='color:#696969;'>; n = bits(e)</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>cntbits</span>
+<span style='color:#e34adc;'>exp_loop:</span>
+    <span style='color:#696969;'>; e &amp; 1</span>
+    <span style='color:#800000;font-weight:bold;'>bt</span>     <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+<span style='color:#e34adc;'>mm_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>pushfd</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>mulmod</span>
+    <span style='color:#800000;font-weight:bold;'>popfd</span>
+    <span style='color:#800000;font-weight:bold;'>cmc</span>
+    <span style='color:#800000;font-weight:bold;'>jnc</span>   <span style='color:#e34adc;'>mm_loop</span>
+    
+    <span style='color:#800000;font-weight:bold;'>inc</span>   <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>jns</span>   <span style='color:#e34adc;'>exp_loop</span>
+    
+    <span style='color:#800000;font-weight:bold;'>lea</span>   <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>*</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+modexp <span style='color:#004a43;'>endp</span>
+</pre>
+
+<h3><strong>Demonstration</strong></h3>
+
+<p>The following uses first and second oakley groups from <a href="https://tools.ietf.org/html/rfc2409#section-6.1">RFC 2409</a> to simulate Diffie-Hellman key exchange. The modexp function is called from assembly itself but so long as maxbits parameter is aligned by 32, you can call from any language that supports cdecl convention.</p>
+
+<h3><strong>Testing</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>stdio.h</span><span style='color:#800000;'>&gt;</span>
+<span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>string.h</span><span style='color:#800000;'>&gt;</span>
+<span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>stdlib.h</span><span style='color:#800000;'>&gt;</span>
+<span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>stdint.h</span><span style='color:#800000;'>&gt;</span>
+
+<span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>openssl/bn.h</span><span style='color:#800000;'>&gt;</span>
+<span style='color:#004a43;'>#</span><span style='color:#004a43;'>include </span><span style='color:#800000;'>&lt;</span><span style='color:#40015a;'>openssl/rand.h</span><span style='color:#800000;'>&gt;</span>
+
+<span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#800000;font-weight:bold;'>char</span> OAKLEY_PRIME_MODP768<span style='color:#808030;'>[</span><span style='color:#808030;'>]</span><span style='color:#808030;'>=</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>29024E088A67CC74020BBEA63B139B22514A08798E3404DD</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>E485B576625E7EC6F44C42E9A63A3620FFFFFFFFFFFFFFFF</span><span style='color:#800000;'>"</span><span style='color:#800080;'>;</span>
+  
+<span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#800000;font-weight:bold;'>char</span> OAKLEY_PRIME_MODP1024<span style='color:#808030;'>[</span><span style='color:#808030;'>]</span><span style='color:#808030;'>=</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>29024E088A67CC74020BBEA63B139B22514A08798E3404DD</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381</span><span style='color:#800000;'>"</span>
+	<span style='color:#800000;'>"</span><span style='color:#0000e6;'>FFFFFFFFFFFFFFFF</span><span style='color:#800000;'>"</span><span style='color:#800080;'>;</span>
+    
+<span style='color:#800000;font-weight:bold;'>extern</span> <span style='color:#800000;font-weight:bold;'>void</span> dh_asm <span style='color:#808030;'>(</span>uint32_t numlen<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>p<span style='color:#808030;'>,</span> 
+  <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>g<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>x<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>y<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+<span style='color:#800000;font-weight:bold;'>void</span> dh <span style='color:#808030;'>(</span><span style='color:#800000;font-weight:bold;'>void</span><span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  BIGNUM <span style='color:#808030;'>*</span>p<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>g<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>x<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>y<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>A<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>B<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>s1<span style='color:#808030;'>,</span> <span style='color:#808030;'>*</span>s2<span style='color:#800080;'>;</span>
+  BN_CTX <span style='color:#808030;'>*</span>ctx<span style='color:#800080;'>;</span>
+  uint32_t maxbits<span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// initialize context</span>
+  ctx <span style='color:#808030;'>=</span> BN_CTX_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_CTX_init <span style='color:#808030;'>(</span>ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  p  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  g  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  x  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  y  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  A  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  B  <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  s1 <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  s2 <span style='color:#808030;'>=</span> BN_new <span style='color:#808030;'>(</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  BN_hex2bn <span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>p<span style='color:#808030;'>,</span> OAKLEY_PRIME_MODP768<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_hex2bn <span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>g<span style='color:#808030;'>,</span> <span style='color:#800000;'>"</span><span style='color:#0000e6;'>2</span><span style='color:#800000;'>"</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// generate 2 random integers in range of p</span>
+  BN_rand_range <span style='color:#808030;'>(</span>x<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_rand_range <span style='color:#808030;'>(</span>y<span style='color:#808030;'>,</span> p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nP is </span><span style='color:#007997;'>%i</span><span style='color:#0000e6;'>-bits</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_num_bits <span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>np = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>ng = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>g<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nx = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>x<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>ny = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>y<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Alice does g ^ x mod p</span>
+  BN_mod_exp <span style='color:#808030;'>(</span>A<span style='color:#808030;'>,</span> g<span style='color:#808030;'>,</span> x<span style='color:#808030;'>,</span> p<span style='color:#808030;'>,</span> ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nA = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>A<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Bob does g ^ y mod p</span>
+  BN_mod_exp <span style='color:#808030;'>(</span>B<span style='color:#808030;'>,</span> g<span style='color:#808030;'>,</span> y<span style='color:#808030;'>,</span> p<span style='color:#808030;'>,</span> ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nB = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>B<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// *************************************</span>
+  <span style='color:#696969;'>// Bob and Alice exchange A and B values</span>
+  <span style='color:#696969;'>// *************************************</span>
+  
+  <span style='color:#696969;'>// Alice computes session key</span>
+  BN_mod_exp <span style='color:#808030;'>(</span>s1<span style='color:#808030;'>,</span> B<span style='color:#808030;'>,</span> x<span style='color:#808030;'>,</span> p<span style='color:#808030;'>,</span> ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>ns1 = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>s1<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Bob computes session key</span>
+  BN_mod_exp <span style='color:#808030;'>(</span>s2<span style='color:#808030;'>,</span> A<span style='color:#808030;'>,</span> y<span style='color:#808030;'>,</span> p<span style='color:#808030;'>,</span> ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>ns2 = </span><span style='color:#007997;'>%s</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>s2<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// check if both keys match</span>
+  <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>BN_cmp <span style='color:#808030;'>(</span>s1<span style='color:#808030;'>,</span> s2<span style='color:#808030;'>)</span> <span style='color:#808030;'>=</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nnKey exchange succeeded</span><span style='color:#800000;'>"</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nnSession key = </span><span style='color:#007997;'>%s</span><span style='color:#0000e6;'>n</span><span style='color:#800000;'>"</span><span style='color:#808030;'>,</span> BN_bn2hex <span style='color:#808030;'>(</span>s1<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span> <span style='color:#800000;font-weight:bold;'>else</span> <span style='color:#800080;'>{</span>
+    <span style='color:#603000;'>printf</span> <span style='color:#808030;'>(</span><span style='color:#800000;'>"</span><span style='color:#0000e6;'>nnKey exchange failedn</span><span style='color:#800000;'>"</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  
+  <span style='color:#696969;'>// call the assembler function</span>
+  dh_asm <span style='color:#808030;'>(</span>BN_num_bits<span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>p<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>g<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> 
+      <span style='color:#808030;'>&amp;</span>x<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>y<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  BN_free <span style='color:#808030;'>(</span>s2<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>s1<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>p<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>g<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>y<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>x<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>B<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  BN_free <span style='color:#808030;'>(</span>A<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// release context</span>
+  BN_CTX_free <span style='color:#808030;'>(</span>ctx<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p>The following should be assembled with JWASM/Win32 include files and linked with C code above.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#008c00;'>.686</span>
+<span style='color:#004a43;'>.model</span> <span style='color:#004a43;'>flat</span><span style='color:#808030;'>,</span> <span style='color:#004a43;'>c</span>
+
+    <span style='color:#004a43;'>option</span> <span style='color:#004a43;'>casemap</span><span style='color:#808030;'>:</span><span style='color:#004a43;'>none</span>
+    <span style='color:#004a43;'>.nolist</span>
+    <span style='color:#004a43;'>.nocref</span>
+    WIN32_LEAN_AND_MEAN <span style='color:#004a43;'>equ</span> <span style='color:#008c00;'>1</span>
+    <span style='color:#004a43;'>include</span> <span style='color:#808030;'>&lt;</span><span style='color:#004a43;'>windows</span>.<span style='color:#800000;font-weight:bold;'>inc</span><span style='color:#808030;'>&gt;</span>
+    <span style='color:#004a43;'>include</span> <span style='color:#808030;'>&lt;</span>stdio.<span style='color:#800000;font-weight:bold;'>inc</span><span style='color:#808030;'>&gt;</span>
+    <span style='color:#004a43;'>include</span> <span style='color:#808030;'>&lt;</span>stdlib.<span style='color:#800000;font-weight:bold;'>inc</span><span style='color:#808030;'>&gt;</span>
+    
+    <span style='color:#696969;'>;includelib &lt;msvcrt.lib&gt;</span>
+    <span style='color:#004a43;'>includelib</span> <span style='color:#808030;'>&lt;</span>kernel3<span style='color:#008c00;'>2</span>.lib<span style='color:#808030;'>&gt;</span>
+    <span style='color:#004a43;'>.list</span>
+    <span style='color:#004a43;'>.cref</span>
+<span style='color:#004a43;'>.data</span>
+
+MAX_NUM <span style='color:#004a43;'>equ</span> <span style='color:#008c00;'>256</span> <span style='color:#696969;'>; 2048 bytes</span>
+
+CStr <span style='color:#004a43;'>macro</span> szText<span style='color:#808030;'>:</span>VARARG
+  <span style='color:#004a43;'>local</span> dbText
+<span style='color:#004a43;'>.data</span>
+dbText <span style='color:#004a43;'>db</span> szText<span style='color:#808030;'>,</span> <span style='color:#008c00;'>0</span>
+<span style='color:#004a43;'>.code</span>
+<span style='color:#004a43;'>exitm</span> <span style='color:#808030;'>&lt;</span><span style='color:#800000;font-weight:bold;'>offset</span> dbText<span style='color:#808030;'>&gt;</span>
+<span style='color:#004a43;'>endm</span>
+
+modexp <span style='color:#004a43;'>proto</span> <span style='color:#004a43;'>C</span> numlen<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> base<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> exponent<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> 
+<span style='color:#e34adc;'>&#xa0;&#xa0;modulus:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> result<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span>
+
+<span style='color:#004a43;'>.code</span>
+
+my_memcpy <span style='color:#004a43;'>proto</span> <span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span>
+
+my_memcpy <span style='color:#004a43;'>proc</span> dst<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> src<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> len<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span>
+  <span style='color:#800000;font-weight:bold;'>pushad</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>len<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>src<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>dst<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+  <span style='color:#800000;font-weight:bold;'>popad</span>
+  <span style='color:#800000;font-weight:bold;'>ret</span>
+my_memcpy <span style='color:#004a43;'>endp</span>
+
+my_memset <span style='color:#004a43;'>proc</span> x<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> b<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> len<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span>
+  <span style='color:#800000;font-weight:bold;'>pushad</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>len<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>b<span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>stosb</span>
+  <span style='color:#800000;font-weight:bold;'>popad</span>
+  <span style='color:#800000;font-weight:bold;'>ret</span>
+my_memset <span style='color:#004a43;'>endp</span>
+
+dump_hex <span style='color:#004a43;'>proc</span> <span style='color:#004a43;'>uses</span> <span style='color:#000080;'>esi</span> <span style='color:#000080;'>edi</span> <span style='color:#000080;'>ebx</span> txt<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>DWORD</span><span style='color:#808030;'>,</span> 
+<span style='color:#e34adc;'>&#xa0;&#xa0;buf:</span><span style='color:#800000;font-weight:bold;'>DWORD</span><span style='color:#808030;'>,</span> len<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>DWORD</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>   <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>buf<span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>   <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>len<span style='color:#808030;'>]</span>
+    <span style='color:#004a43;'>invoke</span> printf<span style='color:#808030;'>,</span> txt
+    <span style='color:#004a43;'>.while</span> <span style='color:#000080;'>ebx</span> <span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>0</span>
+      <span style='color:#800000;font-weight:bold;'>movzx</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>byte</span> <span style='color:#800000;font-weight:bold;'>ptr</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>-</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span>
+      <span style='color:#004a43;'>invoke</span> printf<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#0000e6;'>"%02X"</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+      <span style='color:#800000;font-weight:bold;'>dec</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#004a43;'>.endw</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+dump_hex <span style='color:#004a43;'>endp</span>
+
+BN_LEN <span style='color:#004a43;'>equ</span> <span style='color:#008c00;'>1024</span>
+
+DH_ARGS <span style='color:#004a43;'>struct</span>
+  p <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  g <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  
+  x <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  y <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  
+  A <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  B <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  
+  s1 <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+  s2 <span style='color:#004a43;'>db</span> BN_LEN <span style='color:#004a43;'>dup</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>?</span><span style='color:#808030;'>)</span>
+DH_ARGS <span style='color:#004a43;'>ends</span>
+
+<span style='color:#004a43;'>.data</span>
+dhargs DH_ARGS <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&gt;</span>
+maxbits <span style='color:#004a43;'>dd</span> <span style='color:#808030;'>?</span>
+maxbytes <span style='color:#004a43;'>dd</span> <span style='color:#808030;'>?</span>
+<span style='color:#004a43;'>.code</span>
+dh_asm <span style='color:#004a43;'>proc</span> <span style='color:#004a43;'>uses</span> <span style='color:#000080;'>esi</span> <span style='color:#000080;'>ebx</span> <span style='color:#000080;'>edi</span> numlen<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>,</span> p<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>DWORD</span><span style='color:#808030;'>,</span> 
+<span style='color:#e34adc;'>&#xa0;&#xa0;g:</span><span style='color:#800000;font-weight:bold;'>DWORD</span><span style='color:#808030;'>,</span> x<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>DWORD</span><span style='color:#808030;'>,</span> y<span style='color:#808030;'>:</span><span style='color:#800000;font-weight:bold;'>DWORD</span>
+    
+    <span style='color:#800000;font-weight:bold;'>mov</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>numlen<span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    
+    <span style='color:#800000;font-weight:bold;'>mov</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>numlen<span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>and</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>-32</span>
+    <span style='color:#800000;font-weight:bold;'>add</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>32</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span> <span style='color:#808030;'>[</span>maxbits<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    
+    <span style='color:#696969;'>; copy p, g, x and y</span>
+    <span style='color:#004a43;'>invoke</span> my_memcpy<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>p<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+    <span style='color:#004a43;'>invoke</span> my_memcpy<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.g<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>g<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>1</span>
+    <span style='color:#004a43;'>invoke</span> my_memcpy<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.x<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+    <span style='color:#004a43;'>invoke</span> my_memcpy<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.y<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>y<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"p = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"g = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.g<span style='color:#808030;'>,</span> <span style='color:#008c00;'>1</span>
+   
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"x = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.x<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"y = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.y<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+    <span style='color:#696969;'>;int 3</span>
+    <span style='color:#696969;'>; Alice does g ^ x mod p</span>
+    <span style='color:#004a43;'>invoke</span> modexp<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbits<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.g<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.x<span style='color:#808030;'>,</span> 
+      <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.A
+        
+    <span style='color:#696969;'>; Bob does g ^ y mod p</span>
+    <span style='color:#004a43;'>invoke</span> modexp<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbits<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.g<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.y<span style='color:#808030;'>,</span> 
+      <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.B
+    
+    <span style='color:#696969;'>; *************************************</span>
+    <span style='color:#696969;'>; Bob and Alice exchange A and B values</span>
+    <span style='color:#696969;'>; *************************************</span>
+    
+    <span style='color:#696969;'>; Alice computes session key</span>
+    <span style='color:#004a43;'>invoke</span> modexp<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbits<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.B<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.x<span style='color:#808030;'>,</span> 
+      <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.s1
+    
+    <span style='color:#696969;'>; Bob computes session key</span>
+    <span style='color:#004a43;'>invoke</span> modexp<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbits<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.A<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.y<span style='color:#808030;'>,</span> 
+      <span style='color:#004a43;'>addr</span> dhargs.p<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.s2
+    
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"A = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.A<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"B = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.B<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"s1 = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.s1<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"s2 = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.s2<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+        
+    <span style='color:#696969;'>; s1 + s2 should be equal</span>
+    <span style='color:#004a43;'>invoke</span> memcmp<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.s1<span style='color:#808030;'>,</span> <span style='color:#004a43;'>addr</span> dhargs.s2<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+    <span style='color:#004a43;'>.if</span> <span style='color:#000080;'>eax</span> <span style='color:#808030;'>=</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span>
+      <span style='color:#696969;'>; use a KDF to generate symmetric key using s1 as input</span>
+      <span style='color:#004a43;'>invoke</span> printf<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"Key exchange succeeded"</span><span style='color:#808030;'>)</span>
+      <span style='color:#004a43;'>invoke</span> dump_hex<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"Session key = "</span><span style='color:#808030;'>)</span><span style='color:#808030;'>,</span> 
+        <span style='color:#004a43;'>addr</span> dhargs.s1<span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span>maxbytes<span style='color:#808030;'>]</span>
+    <span style='color:#004a43;'>.else</span>
+      <span style='color:#696969;'>; something went wrong..</span>
+      <span style='color:#004a43;'>invoke</span> printf<span style='color:#808030;'>,</span> CStr<span style='color:#808030;'>(</span><span style='color:#008c00;'>10</span><span style='color:#808030;'>,</span> <span style='color:#0000e6;'>"Key exchange failed"</span><span style='color:#808030;'>)</span>
+    <span style='color:#004a43;'>.endif</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+dh_asm <span style='color:#004a43;'>endp</span>
+</pre>
+
+<h3><strong>Compact version</strong></h3>
+
+<p>This version was a joint effort between Peter Ferrie and myself. We managed to reduce the size of code down to 135 bytes! However, the byte version is quite slow on large numbers. The C prototype for this is:</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> modexp<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>int</span> maxbytes<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>base<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>exponent<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>modulus<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>result<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+</pre>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>; -----------------------------------------------</span>
+<span style='color:#696969; '>; Modular Exponetiation in x86 assembly</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; size: 135 bytes or 138 for slightly faster version</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; global calls use cdecl convention</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; -----------------------------------------------</span>
+
+ <span style='color:#696969; '>;%define BYTES 1</span>
+
+  <span style='color:#004a43; '>bits</span> <span style='color:#008c00; '>32</span>
+  
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BIN</span>
+    <span style='color:#004a43; '>global</span> _modexp
+    <span style='color:#004a43; '>global</span> modexp
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%endif</span>
+
+<span style='color:#e34adc; '>_modexp:</span>
+<span style='color:#e34adc; '>modexp:</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>     <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#808030; '>+</span> <span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>cdq</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>          <span style='color:#696969; '>; ecx = max bytes</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    <span style='color:#000080; '>eax</span>               <span style='color:#696969; '>; save base</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>          <span style='color:#696969; '>; ebx = exponent</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>    <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>          <span style='color:#696969; '>; ebp = modulus</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>                   
+    <span style='color:#800000; font-weight:bold; '>xchg</span>    <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>          <span style='color:#696969; '>; edi = result</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     <span style='color:#000080; '>esi</span>               <span style='color:#696969; '>; esi = base    </span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>     <span style='color:#000080; '>edx</span>               <span style='color:#696969; '>; edx = x=1</span>
+    <span style='color:#004a43; '>db</span>      <span style='color:#008000; '>0b0h</span>              <span style='color:#696969; '>; mov al, 0x60 to mask pushad</span>
+<span style='color:#e34adc; '>mulmod:</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>                   <span style='color:#696969; '>; save registers</span>
+<span style='color:#696969; '>; cf=1 : r = mulmod (r, t, m);</span>
+<span style='color:#696969; '>; cf=0 : t = mulmod (t, t, m);</span>
+    
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>edi</span>               <span style='color:#696969; '>; save edi</span>
+    <span style='color:#696969; '>; r=x</span>
+    <span style='color:#800000; font-weight:bold; '>sub</span>    <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>          <span style='color:#696969; '>; create space for r and assign x</span>
+    <span style='color:#696969; '>; t=b</span>
+    <span style='color:#800000; font-weight:bold; '>sub</span>    <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>          <span style='color:#696969; '>; create space for t and assign b</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>esp</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>ecx</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsb</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>ecx</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>esp</span>
+    
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>    <span style='color:#000080; '>ecx</span>               <span style='color:#696969; '>; skip 1</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>          <span style='color:#696969; '>; r=x</span>
+    <span style='color:#800000; font-weight:bold; '>stosb</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>al</span>            <span style='color:#696969; '>; zero remainder of buffer</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>stosb</span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    
+    <span style='color:#800000; font-weight:bold; '>call</span>    <span style='color:#e34adc; '>ld_fn</span>
+    
+<span style='color:#696969; '>; cf=1 : r = addmod (r, t, m);</span>
+<span style='color:#696969; '>; cf=0 : t = addmod (t, t, m);</span>
+
+<span style='color:#696969; '>; ebp  : m</span>
+<span style='color:#696969; '>; esi  : t</span>
+<span style='color:#696969; '>; edi  : r or t</span>
+<span style='color:#696969; '>; ecx  : size in bytes</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#e34adc; '>addmod:</span>
+<span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BYTES</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>     <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span>            <span style='color:#696969; '>; /= 4</span>
+<span style='color:#004a43; '>%endif</span>
+    <span style='color:#800000; font-weight:bold; '>clc</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+<span style='color:#e34adc; '>am_l1:</span>
+<span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BYTES</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>adc</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>
+<span style='color:#004a43; '>%else</span>
+    <span style='color:#800000; font-weight:bold; '>lodsb</span>
+    <span style='color:#800000; font-weight:bold; '>adc</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>stosb</span>
+<span style='color:#004a43; '>%endif</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>    <span style='color:#e34adc; '>am_l1</span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebp</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>    <span style='color:#000080; '>ecx</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>     <span style='color:#000080; '>ecx</span>
+<span style='color:#e34adc; '>am_l2:</span>
+<span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BYTES</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span>
+<span style='color:#004a43; '>%else</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>]</span>
+<span style='color:#004a43; '>%endif</span>
+    <span style='color:#800000; font-weight:bold; '>loope</span>   <span style='color:#e34adc; '>am_l2</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     <span style='color:#000080; '>ecx</span>
+    <span style='color:#800000; font-weight:bold; '>jb</span>      <span style='color:#e34adc; '>am_l4</span>
+<span style='color:#e34adc; '>am_l3:</span>
+<span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BYTES</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>sbb</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+<span style='color:#004a43; '>%else</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>sbb</span>     <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>stosb</span>
+    <span style='color:#800000; font-weight:bold; '>lodsb</span>
+<span style='color:#004a43; '>%endif</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>    <span style='color:#e34adc; '>am_l3</span>
+<span style='color:#e34adc; '>am_l4:</span>
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+    <span style='color:#696969; '>; -----------------------------</span>
+<span style='color:#e34adc; '>ld_fn:</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>     <span style='color:#000080; '>edx</span>
+    <span style='color:#800000; font-weight:bold; '>js</span>      <span style='color:#e34adc; '>cntbits</span>
+    <span style='color:#800000; font-weight:bold; '>sub</span>     <span style='color:#800000; font-weight:bold; '>dword</span><span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> addmod <span style='color:#808030; '>-</span> mulmod
+<span style='color:#e34adc; '>cntbits:</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>     <span style='color:#000080; '>edx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>     <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>
+<span style='color:#e34adc; '>cnt_l1:</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>     <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>jz</span>      <span style='color:#e34adc; '>xm_l1</span>
+    <span style='color:#800000; font-weight:bold; '>bt</span>      <span style='color:#808030; '>[</span><span style='color:#000080; '>ebx</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>jnc</span>     <span style='color:#e34adc; '>cnt_l1</span>
+<span style='color:#e34adc; '>xm_l1:</span>
+    <span style='color:#696969; '>; if (e &amp; 1)</span>
+    <span style='color:#800000; font-weight:bold; '>bt</span>      <span style='color:#808030; '>[</span><span style='color:#000080; '>ebx</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edx</span>
+<span style='color:#e34adc; '>xm_l2:</span>
+    <span style='color:#800000; font-weight:bold; '>pushfd</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+    <span style='color:#800000; font-weight:bold; '>cdq</span>
+    <span style='color:#800000; font-weight:bold; '>cmovnc</span>  <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>esi</span>          <span style='color:#696969; '>; if (cf==0) do t = xmod(t, t, m)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edi</span>          <span style='color:#696969; '>; else r = xmod(r, t, m)</span>
+    <span style='color:#800000; font-weight:bold; '>call</span>    <span style='color:#e34adc; '>dword</span><span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#008c00; '>+4</span><span style='color:#808030; '>]</span>   <span style='color:#696969; '>; invoke mulmod or addmod</span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    <span style='color:#800000; font-weight:bold; '>popfd</span>
+    <span style='color:#800000; font-weight:bold; '>cmc</span>
+    <span style='color:#800000; font-weight:bold; '>jnc</span>     <span style='color:#e34adc; '>xm_l2</span>
+    
+    <span style='color:#800000; font-weight:bold; '>inc</span>     <span style='color:#000080; '>edx</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>     <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>jns</span>     <span style='color:#e34adc; '>xm_l1</span>
+
+    <span style='color:#696969; '>; return r</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>     <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edi</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>     <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>2</span><span style='color:#008c00; '>+4</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>     <span style='color:#000080; '>edi</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>     <span style='color:#800000; font-weight:bold; '>movsb</span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+</pre>
+
+<h3><strong>Summary</strong></h3>
+
+<p>Although there are now effective attacks against Diffie-Hellman when using short groups in the range of 1024-bits, this doesn't render the modular exponentiation itself obsolete for facilitating secure key exchange, we just need to use larger numbers in range of 4096-bits or more.</p>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/tbnlib/modexp">Sources here.</a></p>

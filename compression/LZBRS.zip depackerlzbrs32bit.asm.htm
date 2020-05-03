@@ -1,0 +1,76 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="GB2312"><title>LZBRS.zip depackerlzbrs32bit.asm</title>
+<link href="LZBRS.zip%20depackerlzbrs32bit.asm_files/read_style.css" type="text/css" rel="stylesheet"></head>
+<body>
+<p><a href="http://www.pudn.com/">www.pudn.com</a> &gt; <a href="http://www.pudn.com/Download/item/id/963137.html">LZBRS.zip</a> &gt; depackerlzbrs32bit.asm, change:2007-09-28,size:844b</p><!-- saved from http://www.pudn.com -->
+<script src="LZBRS.zip%20depackerlzbrs32bit.asm_files/gg_read1.js"></script><form action="http://www.pudn.com/search_db.asp" method="get" target="_blank">
+
+&nbsp;<input maxlength="50" size="20" name="keyword">
+
+<input type="submit" value="Search codes">
+
+<br>
+<script type="text/javascript" src="LZBRS.zip%20depackerlzbrs32bit.asm_files/show_ads.js">
+</script>
+<br>
+<pre name="code" class="asm">.cpu pentium2 
+.bits 32 
+ 
+;MOV ESI,SourceOfs 
+;MOV EDI,DstOfs 
+ 
+CLD 
+LODSD 
+LEA EBX,[EDI+EAX] 
+ 
+MOV AL,0x80 
+ 
+DepackerLZBRSMainLoop: 
+ CMP EDI,EBX 
+ JAE SHORT DepackerLZBRSDone 
+ 
+ CALL DepackerLZBRSGetBit 
+ JC SHORT DepackerLZBRSMatch 
+ 
+DepackerLZBRSLiteral: 
+ MOVSB 
+ JMP SHORT DepackerLZBRSMainLoop 
+ 
+DepackerLZBRSMatch: 
+ CALL DepackerLZBRSGetGamma 
+ LEA EDX,[ECX-1] 
+ CALL DepackerLZBRSGetGamma 
+ PUSH ESI 
+ MOV ESI,EDI 
+ SUB ESI,EDX 
+ REP MOVSB 
+ POP ESI 
+ JMP SHORT DepackerLZBRSMainLoop 
+ 
+DepackerLZBRSGetBit: 
+ ADD AL,AL 
+ JNZ SHORT DepackerLZBRSStillBitsLeft 
+  LODSB 
+  ADC AL,AL 
+ DepackerLZBRSStillBitsLeft: 
+ RET 
+ 
+DepackerLZBRSGetGamma: 
+ XOR ECX,ECX 
+ INC ECX 
+DepackerLZBRSGetGammaLoop: 
+ CALL DepackerLZBRSGetBit 
+ ADC ECX,ECX 
+ CALL DepackerLZBRSGetBit 
+ JC SHORT DepackerLZBRSGetGammaLoop 
+ RET 
+ 
+DepackerLZBRSDone:</pre>
+<script src="LZBRS.zip%20depackerlzbrs32bit.asm_files/gg_read2.js"></script>
+<div id="Javascript.gg_div" class="gg_div" style="width: 728; height:90;" align="center">
+<script type="text/javascript" src="LZBRS.zip%20depackerlzbrs32bit.asm_files/show_ads.js">
+</script>
+</div>
+<br>
+
+</form></body></html>

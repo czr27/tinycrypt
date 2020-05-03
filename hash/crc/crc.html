@@ -1,0 +1,80 @@
+<h3><strong>Introduction</strong></h3>
+
+<p>The concept of error detection codes was first proposed by mathematician and computer scientist W. Wesley Peterson in his 1961 publication <a href="https://github.com/odzhan/tinycrypt/blob/master/hash/crc/docs/peterson1961.pdf">Cyclic Codes for Error Detection.</a></p>
+
+<h3><strong>CRC in C</strong></h3>
+
+<p>The following structure holds values relevant to generating a CRC and is based on code found on <a href="https://crccalc.com/">this site.</a></p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>struct</span> _crc_param_t <span style='color:#800080; '>{</span>
+    <span style='color:#800000; font-weight:bold; '>char</span>    <span style='color:#808030; '>*</span>str<span style='color:#800080; '>;</span>     <span style='color:#696969; '>// description</span>
+    uint64_t poly<span style='color:#800080; '>;</span>    <span style='color:#696969; '>// polynomial</span>
+    uint64_t iv<span style='color:#800080; '>;</span>      <span style='color:#696969; '>// initial value</span>
+    <span style='color:#800000; font-weight:bold; '>int</span>      rin<span style='color:#800080; '>;</span>     <span style='color:#696969; '>// reverse bits of input</span>
+    <span style='color:#800000; font-weight:bold; '>int</span>      rout<span style='color:#800080; '>;</span>    <span style='color:#696969; '>// reverse bits of output</span>
+    uint64_t xor<span style='color:#800080; '>;</span>     <span style='color:#696969; '>// xor final value</span>
+    uint64_t tv<span style='color:#800080; '>;</span>      <span style='color:#696969; '>// test vector for "123456789"</span>
+    uint64_t wordlen<span style='color:#800080; '>;</span> <span style='color:#696969; '>// length of CRC in bits</span>
+<span style='color:#800080; '>}</span> crc_param<span style='color:#800080; '>;</span>
+</pre>
+
+<p>The following code will calculate a 16,32 or 64-bit CRC when provided with the correct parameters.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>static</span> uint64_t crc_table<span style='color:#808030; '>[</span><span style='color:#008c00; '>256</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+
+<span style='color:#696969; '>// reverse bits of x</span>
+<span style='color:#800000; font-weight:bold; '>static</span> uint64_t rbit<span style='color:#808030; '>(</span>uint64_t x<span style='color:#808030; '>,</span> uint64_t wordlen<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    uint64_t i<span style='color:#808030; '>,</span> r <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span> i<span style='color:#808030; '>&lt;</span>wordlen<span style='color:#800080; '>;</span> i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>x <span style='color:#808030; '>&amp;</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span> <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> i<span style='color:#808030; '>)</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>!</span><span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        r <span style='color:#808030; '>|</span><span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span> <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#808030; '>(</span>wordlen <span style='color:#808030; '>-</span> i <span style='color:#808030; '>-</span> <span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+    <span style='color:#800080; '>}</span>
+    <span style='color:#800000; font-weight:bold; '>return</span> r<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+ 
+<span style='color:#800000; font-weight:bold; '>static</span> <span style='color:#800000; font-weight:bold; '>void</span> create_table<span style='color:#808030; '>(</span>crc_param <span style='color:#808030; '>*</span>p<span style='color:#808030; '>,</span> uint64_t m<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    <span style='color:#800000; font-weight:bold; '>int</span>      j<span style='color:#800080; '>;</span>
+    uint64_t i<span style='color:#808030; '>,</span> r<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span> i<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>256</span><span style='color:#800080; '>;</span> i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      r <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>rin<span style='color:#808030; '>)</span> <span style='color:#800080; '>?</span> rbit<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>)</span> <span style='color:#800080; '>:</span> i <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen <span style='color:#808030; '>-</span> <span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+
+      <span style='color:#800000; font-weight:bold; '>for</span> <span style='color:#808030; '>(</span>j<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span> j<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>8</span><span style='color:#800080; '>;</span> j<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        <span style='color:#800000; font-weight:bold; '>if</span> <span style='color:#808030; '>(</span>r <span style='color:#808030; '>&amp;</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span> <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen <span style='color:#808030; '>-</span> <span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+          r <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>r <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>^</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>poly<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+        <span style='color:#800080; '>}</span> <span style='color:#800000; font-weight:bold; '>else</span> <span style='color:#800080; '>{</span>
+          r <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>=</span> <span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span><span style='color:#800080; '>;</span>
+        <span style='color:#800080; '>}</span>
+      <span style='color:#800080; '>}</span>
+      r <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>rout<span style='color:#808030; '>)</span> <span style='color:#800080; '>?</span> rbit<span style='color:#808030; '>(</span>r<span style='color:#808030; '>,</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>)</span> <span style='color:#800080; '>:</span> r<span style='color:#800080; '>;</span>
+      crc_table<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span>r <span style='color:#808030; '>&amp;</span> m<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+<span style='color:#800080; '>}</span>
+
+uint64_t crc<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>input<span style='color:#808030; '>,</span> <span style='color:#603000; '>size_t</span> len<span style='color:#808030; '>,</span> crc_param <span style='color:#808030; '>*</span>p<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    uint64_t crc<span style='color:#808030; '>,</span> m<span style='color:#808030; '>=</span><span style='color:#808030; '>~</span><span style='color:#008c00; '>0</span><span style='color:#006600; '>ULL</span><span style='color:#800080; '>;</span>
+    uint8_t  <span style='color:#808030; '>*</span>data<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>uint8_t<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>input<span style='color:#800080; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>int</span>      i<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>64</span><span style='color:#808030; '>)</span> m <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#008c00; '>1</span><span style='color:#006600; '>ULL</span> <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>)</span> <span style='color:#808030; '>-</span> <span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span>
+
+    create_table<span style='color:#808030; '>(</span>p<span style='color:#808030; '>,</span> m<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    
+    crc <span style='color:#808030; '>=</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>rin <span style='color:#800080; '>?</span> rbit<span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>iv<span style='color:#808030; '>,</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>)</span> <span style='color:#800080; '>:</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>iv<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span> i<span style='color:#808030; '>&lt;</span>len<span style='color:#800080; '>;</span> i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#800000; font-weight:bold; '>if</span> <span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>rout<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        crc <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span>crc <span style='color:#808030; '>></span><span style='color:#808030; '>></span> <span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>^</span> crc_table<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>crc<span style='color:#808030; '>&amp;</span><span style='color:#008000; '>0xFF</span><span style='color:#808030; '>)</span><span style='color:#808030; '>^</span>data<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span> <span style='color:#800000; font-weight:bold; '>else</span> <span style='color:#800080; '>{</span>
+        crc <span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span>crc <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>^</span> crc_table<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>crc<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>(</span>p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>wordlen<span style='color:#808030; '>-</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>^</span>data<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>  
+      <span style='color:#800080; '>}</span>
+      crc <span style='color:#808030; '>&amp;</span><span style='color:#808030; '>=</span> m<span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+    <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#808030; '>(</span>crc <span style='color:#808030; '>^</span> p<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>xor<span style='color:#808030; '>)</span> <span style='color:#808030; '>&amp;</span> m<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/hash/crc">Sources here.</a></p>
+

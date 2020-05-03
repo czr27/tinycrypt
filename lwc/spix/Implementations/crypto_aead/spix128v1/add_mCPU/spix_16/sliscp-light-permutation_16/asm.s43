@@ -1,0 +1,456 @@
+/* Reference implementation of SPIX16 permutation
+ Written by:
+ Yunjie Yi <yunjie.yi@uwaterloo.ca>
+ */
+#include "msp430.h"                     ; #define controlled include file
+
+        NAME    main                    ; module name
+
+        PUBLIC  main                    ; make the main label vissible
+                                        ; outside this module
+        ORG     0FFFEh
+        DC16    init                    ; set reset vector to 'init' label
+
+        RSEG    CSTACK                  ; pre-declaration of segment
+        RSEG    CODE                    ; place program in 'CODE' segment
+
+init:   MOV     #SFE(CSTACK), SP        ; set up stack
+
+main:   NOP                             ; main program
+        MOV.W   #WDTPW+WDTHOLD,&WDTCTL  ; Stop watchdog timer
+
+
+;;begin main func
+        ;;CALL #bgbg     
+        
+        
+;;Pre-save t and SC to the memory(flash)
+        MOV.B #0x0F, &0xEE00
+        MOV.B #0x47, &0xEE02
+        MOV.B #0x04, &0xEE04
+        MOV.B #0xB2, &0xEE06
+        MOV.B #0x43, &0xEE08
+        MOV.B #0xB5, &0xEE0A
+        MOV.B #0xF1, &0xEE0C
+        MOV.B #0x37, &0xEE0E
+        MOV.B #0x44, &0xEE10
+        MOV.B #0x96, &0xEE12
+        MOV.B #0x73, &0xEE14
+        MOV.B #0xEE, &0xEE16
+        MOV.B #0xE5, &0xEE18
+        MOV.B #0x4C, &0xEE1A
+        MOV.B #0x0B, &0xEE1C
+        MOV.B #0xF5, &0xEE1E
+        
+        MOV.B #0x47, &0xEE20
+        MOV.B #0x07, &0xEE22
+        MOV.B #0xB2, &0xEE24
+        MOV.B #0x82, &0xEE26
+        MOV.B #0xB5, &0xEE28
+        MOV.B #0xA1, &0xEE2A
+        MOV.B #0x37, &0xEE2C
+        MOV.B #0x78, &0xEE2E
+        MOV.B #0x96, &0xEE30
+        MOV.B #0xA2, &0xEE32
+        MOV.B #0xEE, &0xEE34
+        MOV.B #0xB9, &0xEE36
+        MOV.B #0x4C, &0xEE38
+        MOV.B #0xF2, &0xEE3A
+        MOV.B #0xF5, &0xEE3C
+        MOV.B #0x85, &0xEE3E
+
+        MOV.B #0x07, &0xEE40
+        MOV.B #0x23, &0xEE42
+        MOV.B #0x82, &0xEE44
+        MOV.B #0xD9, &0xEE46
+        ;;;
+
+        MOV.B #0x08, &0xEF00
+        MOV.B #0x64, &0xEF02
+        MOV.B #0x86, &0xEF04
+        MOV.B #0x6B, &0xEF06
+        MOV.B #0xE2, &0xEF08
+        MOV.B #0x6F, &0xEF0A
+        MOV.B #0x89, &0xEF0C
+        MOV.B #0x2C, &0xEF0E
+        MOV.B #0xE6, &0xEF10
+        MOV.B #0xDD, &0xEF12
+        MOV.B #0xCA, &0xEF14
+        MOV.B #0x99, &0xEF16
+        MOV.B #0x17, &0xEF18
+        MOV.B #0xEA, &0xEF1A
+        MOV.B #0x8E, &0xEF1C
+        MOV.B #0x0F, &0xEF1E
+
+        MOV.B #0x64, &0xEF20
+        MOV.B #0x04, &0xEF22
+        MOV.B #0x6B, &0xEF24
+        MOV.B #0x43, &0xEF26
+        MOV.B #0x6F, &0xEF28
+        MOV.B #0xF1, &0xEF2A
+        MOV.B #0x2C, &0xEF2C
+        MOV.B #0x44, &0xEF2E
+        MOV.B #0xDD, &0xEF30
+        MOV.B #0x73, &0xEF32
+        MOV.B #0x99, &0xEF34
+        MOV.B #0xE5, &0xEF36
+        MOV.B #0xEA, &0xEF38
+        MOV.B #0x0B, &0xEF3A
+        MOV.B #0x0F, &0xEF3C
+        MOV.B #0x47, &0xEF3E
+        
+        MOV.B #0x04, &0xEF40
+        MOV.B #0xB2, &0xEF42
+        MOV.B #0x43, &0xEF44
+        MOV.B #0xB5, &0xEF46
+        
+;;finish pre-save
+;;set vectors for the t's and SC's
+;;load initial value to registerat locations from 0xfd00 to 0xfd40       
+
+
+        MOV.W #0x0000, &0xED1E  ;;most left data in the fig.
+        MOV.W #0x0000, &0xED1C
+        MOV.W #0x0000, &0xED1A
+        MOV.W #0x0000, &0xED18
+
+        MOV.W #0x0000, &0xED16
+        MOV.W #0x0000, &0xED14
+        MOV.W #0x0000, &0xED12
+        MOV.W #0x0000, &0xED10
+
+        MOV.W #0x0000, &0xED0E
+        MOV.W #0x0000, &0xED0C
+        MOV.W #0x0000, &0xED0A
+        MOV.W #0x0000, &0xED08
+
+        MOV.W #0x0000, &0xED06
+        MOV.W #0x0000, &0xED04
+        MOV.W #0x0000, &0xED02
+        MOV.W #0x0000, &0xED00  ;;most right data in the fig. When read from mem, it is from bottom to up
+
+
+
+        
+        CALL #FFUN3
+
+;;End main func
+JMP $                           ; jump to current location '$'
+                                        ; (endless loop)
+
+;;this is permutation box 
+FFUN3:   ;;LOOP the sliscp-light    ;;round 18
+        PUSH R4
+        PUSH R5
+        PUSH R6
+        PUSH R7
+        PUSH R8
+        PUSH R9
+        PUSH R10
+        PUSH R11
+        PUSH R12
+        PUSH R13
+        PUSH R14
+        PUSH R15
+
+        MOV.W #0xEE00, &0xEC80
+        MOV.W #0xEF00, &0xEC84
+        MOV.W #0x0001, &0xEC88 ;Save the indicator of data location to the location 0xFC88, it is either 0 or 1
+
+
+
+        MOV.W #0x0000, R14
+WHIL3:  CMP.W #0x0012, R14
+        JGE NEXTC
+        CALL #FFUN2
+        INC R14
+        JMP WHIL3
+NEXTC:  
+
+        POP R15
+        POP R14
+        POP R13
+        POP R12
+        POP R11
+        POP R10
+        POP R9
+        POP R8
+        POP R7
+        POP R6
+        POP R5
+        POP R4
+RET
+
+;;this is permutation round 
+FFUN2:  ;; PASS data(&FD3C-&FD00), and R14(t)(&FB00-FB48) with Vector (&FC80), 
+          ;;R15(sc)(&FC00-FC48) with Vector (&FC84), Indicator(&FC88)
+            ;;...($FDBC-FD80) is used as temperaor ram data to save odd number operation data
+        PUSH R14
+        
+        MOV.W &0xEC80, R12  ;;Get the current address of the t
+        MOV.B @R12, R14  ;;save the t to r14
+        MOV.W &0xEC84, R12  ;;Get the current address of the SC
+        MOV.B @R12, R15       ;; sace the sc to r15
+        
+        MOV.W &0xEC88, R13
+        CLRC
+        RRA.W R13
+        JNC SaveToMemR  ;;if R13=0, then jmp to SaveToMem1
+
+SaveToMemL:
+        MOV.W &0xED1E, R11  ;;most left data in the fig.
+        MOV.W &0xED1C, R10
+        MOV.W &0xED1A, R9
+        MOV.W &0xED18, R8
+
+        MOV.W &0xED16, R7
+        MOV.W &0xED14, R6
+        MOV.W &0xED12, R5
+        MOV.W &0xED10, R4
+        
+        CALL #FFUN ;;finish the h on the left side
+        
+        XOR #0xFFFF, R11
+        XOR #0xFFFF, R10
+        XOR #0xFFFF, R9
+        XOR #0xFF00, R8
+        XOR R15, R8 
+        
+        XOR R7, R11
+        XOR R6, R10
+        XOR R5, R9
+        XOR R4, R8
+        
+        MOV.W R11, &0xED86
+        MOV.W R10, &0xED84
+        MOV.W R9, &0xED82
+        MOV.W R8, &0xED80
+        MOV.W R7, &0xED9E
+        MOV.W R6, &0xED9C
+        MOV.W R5, &0xED9A
+        MOV.W R4, &0xED98
+        
+        ADD.W #0x0002, &0xEC80
+        ADD.W #0x0002, &0xEC84
+        MOV.W &0xEC80, R12  ;;Get the current address of the t
+        MOV.B @R12, R14  ;;save the t to r14
+        MOV.W &0xEC84, R12  ;;Get the current address of the SC
+        MOV.B @R12, R15       ;; sace the sc to r15
+
+
+        MOV.W &0xED0E, R11
+        MOV.W &0xED0C, R10
+        MOV.W &0xED0A, R9
+        MOV.W &0xED08, R8
+        MOV.W &0xED06, R7
+        MOV.W &0xED04, R6
+        MOV.W &0xED02, R5
+        MOV.W &0xED00, R4
+        
+        CALL #FFUN ;;finish the h on the left side
+        
+        XOR #0xFFFF, R11
+        XOR #0xFFFF, R10
+        XOR #0xFFFF, R9
+        XOR #0xFF00, R8
+        XOR R15, R8 
+        
+        XOR R7, R11
+        XOR R6, R10
+        XOR R5, R9
+        XOR R4, R8
+        
+        MOV.W R11, &0xED96
+        MOV.W R10, &0xED94
+        MOV.W R9, &0xED92
+        MOV.W R8, &0xED90
+        MOV.W R7, &0xED8E
+        MOV.W R6, &0xED8C
+        MOV.W R5, &0xED8A
+        MOV.W R4, &0xED88
+        
+        ADD.W #0x0002, &0xEC80
+        ADD.W #0x0002, &0xEC84
+        MOV.W #0x0000,&0xEC88
+        JMP PermutFinished
+        
+SaveToMemR:
+        MOV.W &0xED9E, R11  ;;most left data in the fig.
+        MOV.W &0xED9C, R10
+        MOV.W &0xED9A, R9
+        MOV.W &0xED98, R8
+
+        MOV.W &0xED96, R7
+        MOV.W &0xED94, R6
+        MOV.W &0xED92, R5
+        MOV.W &0xED90, R4
+        
+        CALL #FFUN ;;finish the h on the left side
+        
+        XOR #0xFFFF, R11
+        XOR #0xFFFF, R10
+        XOR #0xFFFF, R9
+        XOR #0xFF00, R8
+        XOR R15, R8 
+        
+        XOR R7, R11
+        XOR R6, R10
+        XOR R5, R9
+        XOR R4, R8
+        
+        MOV.W R11, &0xED06
+        MOV.W R10, &0xED04
+        MOV.W R9, &0xED02
+        MOV.W R8, &0xED00
+        MOV.W R7, &0xED1E
+        MOV.W R6, &0xED1C
+        MOV.W R5, &0xED1A
+        MOV.W R4, &0xED18
+        
+        ADD.W #0x0002, &0xEC80
+        ADD.W #0x0002, &0xEC84
+        MOV.W &0xEC80, R12  ;;Get the current address of the t
+        MOV.B @R12, R14  ;;save the t to r14
+        MOV.W &0xEC84, R12  ;;Get the current address of the SC
+        MOV.B @R12, R15       ;; sace the sc to r15
+
+
+        MOV.W &0xED8E, R11
+        MOV.W &0xED8C, R10
+        MOV.W &0xED8A, R9
+        MOV.W &0xED88, R8
+        MOV.W &0xED86, R7
+        MOV.W &0xED84, R6
+        MOV.W &0xED82, R5
+        MOV.W &0xED80, R4
+
+        CALL #FFUN ;;finish the h on the left side
+
+        XOR #0xFFFF, R11
+        XOR #0xFFFF, R10
+        XOR #0xFFFF, R9
+        XOR #0xFF00, R8
+        XOR R15, R8 
+        
+        XOR R7, R11
+        XOR R6, R10
+        XOR R5, R9
+        XOR R4, R8
+        
+        MOV.W R11, &0xED16
+        MOV.W R10, &0xED14
+        MOV.W R9, &0xED12
+        MOV.W R8, &0xED10
+        MOV.W R7, &0xED0E
+        MOV.W R6, &0xED0C
+        MOV.W R5, &0xED0A
+        MOV.W R4, &0xED08
+        
+        ADD.W #0x0002, &0xEC80
+        ADD.W #0x0002, &0xEC84
+        MOV.W #0x0001,&0xEC88
+PermutFinished: 
+        POP R14
+RET
+
+;;this is Simeck box
+FFUN: ;(R7, R6, R5, R4, R14)
+        PUSH R8
+        PUSH R9
+        PUSH R10
+        PUSH R11
+        
+        MOV.W #0x0000, R12
+WHIL2:  CMP.W #0x0008, R12 ; compare R15 and R14
+        JGE NEXTB ; When R13>=8, then branch
+        call #SimeckRF
+        INC R12
+        JMP WHIL2 ; Go back to beginning of WHILE loop
+NEXTB:
+        POP R11
+        POP R10
+        POP R9
+        POP R8
+RET
+
+
+;; this is Simeck round
+SimeckRF: ;(R7, R6, R5, R4, R14)
+        PUSH R12
+        
+        MOV.W R7,R9  ; save the X0 data to R3, R2, R1, r0
+        MOV.W R6,R8
+
+        MOV.W #0x0005, R12 ;SET A
+        CALL #LCircularShift ; pass r7, R6, R12 into the function.
+                                                ; r30, r31 will be changed
+
+        AND R9, R7 ;;first AND operation in the graph
+        AND R8, R6
+
+        MOV.W R7, R11 ;;move r7,r6 to save
+        MOV.W R6, R10 
+
+        MOV.W R9, R7 ;; retore R7 and R6 to original value
+        MOV.W R8, R6
+
+
+
+        MOV.W #0x0001, R12;SET c
+        CALL #LCircularShift ; pass r19, r18, r17, r16, and r29 into the function.
+                                                ; r30, r31 will be changed
+
+        XOR R11, R7
+        XOR R10, R6
+        XOR R5, R7
+        XOR R4, R6 ; then we need to xor rc with r7 and r6, then finish
+
+        XOR #0xFFFF, R7
+        MOV.W R14, R12
+        BIS #0xFFFE, R12
+        XOR R12, R6
+        RRA.W R14
+        
+        MOV.W R9, R5
+        MOV.W R8, R4
+
+        POP R12
+        
+RET
+
+
+;;this is circular shift
+LCircularShift: ;(R7, R6, R12), where R15 is the number of shifts in bit
+        PUSH R13
+
+	MOV.W #0x0000,R13
+        
+WHIL:	CMP.W R12, R13 ; compare R12 and R14
+        JGE NEXTA ; When R14>=R12, then branch
+                      ;circular left shift begin for 2 Registers
+        CLRC ; clear the carry
+        RLA.W R7  ; shift R5 to the left by 1 bit
+        JNC carry5 ; if carry is 0, then branch
+
+        RLA.W R6
+        BIS #0x0001, R6
+        JNC carryFinish
+        BIS #0x0001, R7
+        JMP carryFinish
+carry5:
+        RLA.W R6 ; shift R
+        JNC carryFinish ; if carry is 0, then branch
+        BIS #0x0001, R7
+carryFinish:
+        
+;finished the circular left shift for 4 reginsters R19:R18:R17:R16
+        inc R13 ; n++
+        JMP WHIL ; Go back to beginning of WHILE loop
+NEXTA:
+        POP R13
+RET
+        
+;;End sub function        
+        END
+
+

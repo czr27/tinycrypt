@@ -1,0 +1,328 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="http://www.cix.co.uk/~klockstone/tea.pdf">Tiny Encryption Algorithm</a> (TEA) is a 64-bit block cipher with support for 128-bit keys. It was published in November 1994 by Cambridge computer scientists, <a href="https://en.wikipedia.org/wiki/David_Wheeler_%28British_computer_scientist%29">David John Wheeler</a> and <a href="https://en.wikipedia.org/wiki/Roger_Needham">Roger Needham</a>. TEA is not subject to any patents. This along with its simplicity made it attractive to various developers, particularly in the field of microelectronics where memory is limited. Others just wanted a simple encryption algorithm free of license restrictions. It was popular enough that even Microsoft developers used it to secure firmware on the first xbox consoles as one hacker noted in 2007.</p>
+
+<p><blockquote>After reading Bruce Schneier's book on crypto, we learned that TEA was a really bad choice as a hash. The book says that TEA must never be used as a hash, because it is insecure if used this way. If you flip both bit 16 and 31 of a 32 bit word, the hash will be the same. We could easily patch a jump in the second bootloader so that it would not be recognized. This modified jump lead us directly into flash memory.
+
+But why did they make this mistake? Obviously the designers knew nothing about crypto - again! - and just added code without understanding it and without even reading the most basic books on the topic. A possible explanation why they chose TEA would be that they might have searched the internet for a "tiny" encryption algorithm - and got TEA. </blockquote></p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>int</span> u32<span style='color:#800080; '>;</span>
+
+<span style='color:#800000; font-weight:bold; '>void</span> tea<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>mk<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>data<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    u32 i<span style='color:#808030; '>,</span> v0<span style='color:#808030; '>,</span> v1<span style='color:#808030; '>,</span> t<span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>v<span style='color:#808030; '>=</span>data<span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>k<span style='color:#808030; '>=</span>mk<span style='color:#808030; '>,</span> sum<span style='color:#808030; '>=</span><span style='color:#008000; '>0x9e3779b9</span><span style='color:#800080; '>;</span>
+    
+    v0<span style='color:#808030; '>=</span>v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span> v1<span style='color:#808030; '>=</span>v<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>sum <span style='color:#808030; '>=</span><span style='color:#808030; '>=</span> <span style='color:#008000; '>0x9e3779b9</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>33</span><span style='color:#808030; '>)</span> <span style='color:#800000; font-weight:bold; '>break</span><span style='color:#800080; '>;</span>
+      v0 <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>v1 <span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span> <span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>+</span> k<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>^</span> 
+             <span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>v1 <span style='color:#808030; '>></span><span style='color:#808030; '>></span> <span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>+</span> k<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>)</span> <span style='color:#808030; '>^</span> <span style='color:#808030; '>(</span>v1 <span style='color:#808030; '>+</span> sum<span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      t<span style='color:#808030; '>=</span>v0<span style='color:#800080; '>;</span> v0<span style='color:#808030; '>=</span>v1<span style='color:#800080; '>;</span> v1<span style='color:#808030; '>=</span>t<span style='color:#800080; '>;</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>i <span style='color:#808030; '>&amp;</span> <span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        sum <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> <span style='color:#008000; '>0x9e3779b9</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+    <span style='color:#800080; '>}</span>
+    v<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>v0<span style='color:#800080; '>;</span> v<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>v1<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+
+<strong>Encryption</strong>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> TEA_Encrypt <span style='color:#808030;'>(</span><span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>data<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>key<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>int</span> enc<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  tea_blk <span style='color:#808030;'>*</span>v<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>tea_blk<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>data<span style='color:#800080;'>;</span>
+  tea_key <span style='color:#808030;'>*</span>k<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>tea_key<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>key<span style='color:#800080;'>;</span>
+  
+  uint32_t v0<span style='color:#808030;'>,</span> v1<span style='color:#808030;'>,</span> i<span style='color:#808030;'>,</span> sum<span style='color:#808030;'>=</span><span style='color:#008000;'>0x9e3779b9</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>enc<span style='color:#808030;'>=</span><span style='color:#808030;'>=</span>TEA_DECRYPT<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    sum <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>5</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  
+  v0 <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span> 
+  v1 <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>enc<span style='color:#808030;'>=</span><span style='color:#808030;'>=</span>TEA_ENCRYPT<span style='color:#808030;'>)</span>
+  <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span>TEA_ROUNDS<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> 
+    <span style='color:#800080;'>{</span>         
+      v0 <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+             <span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+            <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+            
+      v1 <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+             <span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+            <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+            
+      sum <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#008000;'>0x9e3779b9</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+  <span style='color:#800080;'>}</span> <span style='color:#800000;font-weight:bold;'>else</span> <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span>TEA_ROUNDS<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> 
+    <span style='color:#800080;'>{</span>
+      v1 <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+             <span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+            <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+              
+      v0 <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+             <span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+            <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+            
+      sum <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#008000;'>0x9e3779b9</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>  
+  <span style='color:#800080;'>}</span>
+  v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>v0<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span> 
+  v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>v1<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<strong>Integrating Encryption and Decryption</strong>
+
+There were 2 approaches to this and both depend on an input flag of zero or one defined as simply <strong>TEA_ENCRYPT </strong>and <strong>TEA_DECRYPT</strong> 
+
+The main parameters required for both functions are loaded and then the flag is checked. If <strong>TEA_DECRYPT</strong> is specified, code jumps to the decrypt routine and this is fairly common in most crypto libraries already. 
+
+The second approach is similar but instead of jumping to a decrypt routine, we negate the flag and use it to invert bits of one register for subtraction which is what happens when decrypting a block of ciphertext. XOR operation against zero does nothing so if flag is <strong>TEA_ENCRYPT</strong> it just adds value of 2 registers.
+
+If you know how adders work, subtraction is simply addition with bits of 1 addend inverted. Take the following 2 functions which are identical except in subtraction where the first parameter is inverted before and after the addition.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// add y to x</span>
+uint32_t add <span style='color:#808030;'>(</span>uint32_t x<span style='color:#808030;'>,</span> uint32_t y<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t a<span style='color:#808030;'>=</span>x<span style='color:#808030;'>,</span> b<span style='color:#808030;'>=</span>y<span style='color:#808030;'>,</span> c<span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>b <span style='color:#808030;'>!</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c <span style='color:#808030;'>=</span> a <span style='color:#808030;'>&amp;</span> b<span style='color:#800080;'>;</span>  
+    a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>^</span> b<span style='color:#800080;'>;</span>
+    b <span style='color:#808030;'>=</span> c <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> a<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+
+<span style='color:#696969;'>// subtract y from x</span>
+uint32_t subtract <span style='color:#808030;'>(</span>uint32_t x<span style='color:#808030;'>,</span> uint32_t y<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t a<span style='color:#808030;'>=</span>x<span style='color:#808030;'>,</span> b<span style='color:#808030;'>=</span>y<span style='color:#808030;'>,</span> c<span style='color:#800080;'>;</span>
+  a <span style='color:#808030;'>=</span> <span style='color:#808030;'>~</span>a<span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>b <span style='color:#808030;'>!</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c <span style='color:#808030;'>=</span> a <span style='color:#808030;'>&amp;</span> b<span style='color:#800080;'>;</span>  
+    a <span style='color:#808030;'>=</span> a <span style='color:#808030;'>^</span> b<span style='color:#800080;'>;</span> 
+    b <span style='color:#808030;'>=</span> c <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> <span style='color:#808030;'>~</span>a<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+The same can be achieved with the following code where we want to either add or subtract two numbers.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>         <span style='color:#696969;'>; num1</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span>         <span style='color:#696969;'>; num2</span>
+  <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>12</span><span style='color:#808030;'>]</span>         <span style='color:#696969;'>; 1 or 0</span>
+  <span style='color:#800000;font-weight:bold;'>neg</span>    <span style='color:#000080;'>ecx</span>                   <span style='color:#696969;'>; 1 becomes -1, 0 becomes 0</span>
+  <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>              <span style='color:#696969;'>; invert for subtraction</span>
+  <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>              <span style='color:#696969;'>; regular add</span>
+  <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>              <span style='color:#696969;'>; invert</span>
+</pre>
+
+There may be a better way to do all this but that's what I finished up with. (let me know in comments)
+
+The only other problem really is the order of execution for each statement in the cycle. For encryption, <em>v0</em> is modified first, for decryption, it's <em>v1</em> so again the input flag determines what settings are applied. I use XCHG to swap values beforehand.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// encryption</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span>TEA_ROUNDS<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> 
+  <span style='color:#800080;'>{</span>         
+    v0 <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+           <span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+          <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+          
+    v1 <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+           <span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+          <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+          
+    sum <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#008000;'>0x9e3779b9</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+</pre>
+
+There's a sequential order for encryption when reading the key but not decryption so the 128-bit key is rotated right by 64-bits. I tried using MMX/XMM but this generated too much code. Swapping the lower 64-bits with upper 64 works fine. 
+
+This means having to cache the key on stack which unfortunately then requires more code. You could obviously trash the key space but I decided to store locally before modifying.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>//</span>
+    v1 <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+           <span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+          <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v0 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+            
+    v0 <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+           <span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>+</span> sum<span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> 
+          <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>v1 <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v32<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+          
+    sum <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> <span style='color:#008000;'>0x9e3779b9</span><span style='color:#800080;'>;</span>
+</pre>
+
+Last thing to mention is the above 2 statements. They are basically the same, (just using different values) so the carry flag is cleared in preparation for a double loop. 
+
+After the first loop, the flag is flipped and then goes again one more time until cleared. During this, both <em>v0</em> and <em>v1</em> are exchanged. This is a clever way to loop 2 times without using up other registers.
+
+A traditional approach to looping twice might be something like (just for example)
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+   <span style='color:#800000;font-weight:bold;'>push</span>    <span style='color:#008c00;'>2</span>
+   <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>
+<span style='color:#e34adc;'>add_loop:</span>
+   <span style='color:#800000;font-weight:bold;'>lodsd</span>
+   <span style='color:#800000;font-weight:bold;'>add</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+   <span style='color:#800000;font-weight:bold;'>stosd</span>
+   <span style='color:#800000;font-weight:bold;'>loop</span>  <span style='color:#e34adc;'>add_loop</span>
+</pre>
+
+You could replace it while preserving ecx with
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>clc</span>
+<span style='color:#e34adc;'>add_loop:</span>
+  <span style='color:#800000;font-weight:bold;'>pushfd</span>
+  <span style='color:#800000;font-weight:bold;'>lodsd</span>
+  <span style='color:#800000;font-weight:bold;'>add</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+  <span style='color:#800000;font-weight:bold;'>stosd</span>
+  <span style='color:#800000;font-weight:bold;'>popfd</span>
+  <span style='color:#800000;font-weight:bold;'>cmc</span>
+  <span style='color:#800000;font-weight:bold;'>jc</span>  <span style='color:#e34adc;'>add_loop</span>
+</pre>
+
+Normally you wouldn't use a loop for something that simple but it's just to illustrate how it would work.
+
+It's usually very effective when ecx and other registers are reserved for outer loop or some other purpose.
+Peter Ferrie showed me a another way to loop twice using the Parity Flag.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+<span style='color:#e34adc;'>add_loop:</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>   <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>jnp</span>   <span style='color:#e34adc;'>add_loop</span>
+</pre>
+
+For decryption, the sum variable is intialized to delta times 32 so we skip over this part when encrypting. The final version for now is approx. 134 bytes.
+
+<strong>Final Version</strong>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>bits</span> <span style='color:#008c00;'>32</span>
+    
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> TEA_ROUNDS 32</span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> TEA_DELTA  09e3779b9h</span>
+
+<span style='color:#004a43;'>%ifndef</span><span style='color:#004a43;'> BIN</span>
+  <span style='color:#004a43;'>global</span> TEA_Encryptx
+  <span style='color:#004a43;'>global</span> _TEA_Encryptx
+<span style='color:#004a43;'>%endif</span>
+  
+<span style='color:#e34adc;'>_TEA_Encryptx:</span>
+<span style='color:#e34adc;'>TEA_Encryptx:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>          <span style='color:#696969;'>; edx = data </span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>               <span style='color:#696969;'>; save key</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>          <span style='color:#696969;'>; edx = flag</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>esi</span>               <span style='color:#696969;'>; esi = key</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span> 
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; allocate 16 bytes for key</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>          <span style='color:#696969;'>; ecx = 16</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>          <span style='color:#696969;'>; move stack pointer into edi</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>             <span style='color:#696969;'>; move key onto stack</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>          <span style='color:#696969;'>; esi = key</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>          <span style='color:#696969;'>; edi = key</span>
+  
+    <span style='color:#800000;font-weight:bold;'>neg</span>    <span style='color:#000080;'>edx</span>               <span style='color:#696969;'>; negate input flag</span>
+    <span style='color:#800000;font-weight:bold;'>pushfd</span>                   <span style='color:#696969;'>; save cpu flags</span>
+    <span style='color:#800000;font-weight:bold;'>jz</span>     <span style='color:#e34adc;'>load_data</span>         <span style='color:#696969;'>; if neg edx was zero, we're encrypting</span>
+  
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>2</span>             <span style='color:#696969;'>; else we're decrypting and need to </span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; rotate key right 64-bits</span>
+<span style='color:#e34adc;'>load_key:</span>                    <span style='color:#696969;'>; this is because of how key is loaded</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; load 32-bits of key</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span>      <span style='color:#696969;'>; swap with upper 64-bits</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                    <span style='color:#696969;'>; save upper 32-bits</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>load_key</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#696969;'>; ------------------------</span>
+<span style='color:#e34adc;'>load_data:</span>
+    <span style='color:#800000;font-weight:bold;'>popfd</span>                    <span style='color:#696969;'>; restore register flags</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>          <span style='color:#696969;'>; eax now contains data to process</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>esi</span>               <span style='color:#696969;'>; save pointer to it</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>edx</span>               <span style='color:#696969;'>; save result of neg edx for add/sub</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; eax=v[0]</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; store in ebx</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; ebx=v[1]</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; store in ebx</span>
+    <span style='color:#696969;'>; for (i=32; i&gt;0; i--)</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> TEA_ROUNDS    <span style='color:#696969;'>; default is 32 rounds</span>
+    <span style='color:#696969;'>; delta = 0x9e3779b9</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008000;'>09e3779b9h</span>   <span style='color:#696969;'>; ebp = delta</span>
+    <span style='color:#800000;font-weight:bold;'>jz</span>     <span style='color:#e34adc;'>t_el</span>              <span style='color:#696969;'>; neg edx == 0? skip shift for decryption</span>
+    <span style='color:#800000;font-weight:bold;'>shl</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>5</span>            <span style='color:#696969;'>; *= 32 for decryption</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; and swap v0 + v1</span>
+<span style='color:#e34adc;'>t_el:</span>
+    <span style='color:#800000;font-weight:bold;'>clc</span>                      <span style='color:#696969;'>; clear carry flag   </span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>edi</span>
+<span style='color:#e34adc;'>t_ev:</span>
+    <span style='color:#800000;font-weight:bold;'>pushfd</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; v &lt;&lt; 4 + k</span>
+    <span style='color:#800000;font-weight:bold;'>shl</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>        <span style='color:#696969;'>; add key from edi</span>
+    <span style='color:#800000;font-weight:bold;'>scasd</span>                    <span style='color:#696969;'>; advance edi 4 bytes</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; v + sum</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; v1 &gt;&gt; 5 + k1</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>5</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>        <span style='color:#696969;'>; add key from edi</span>
+    <span style='color:#800000;font-weight:bold;'>scasd</span>                    <span style='color:#696969;'>; advance edi 4 bytes</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#696969;'>; v += ((v &lt;&lt; 4) + k) ^</span>
+    <span style='color:#696969;'>;        (v + sum) ^</span>
+    <span style='color:#696969;'>;       ((v &gt;&gt; 5) + k)</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span>
+  
+    <span style='color:#800000;font-weight:bold;'>popfd</span>                    <span style='color:#696969;'>; restore flags</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; swap v0, v1</span>
+    <span style='color:#800000;font-weight:bold;'>cmc</span>                      <span style='color:#696969;'>; flip carry flag</span>
+    <span style='color:#800000;font-weight:bold;'>jc</span>     <span style='color:#e34adc;'>t_ev</span>              <span style='color:#696969;'>; keep going if carry</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>               <span style='color:#696969;'>; restore pointer to key</span>
+  
+    <span style='color:#696969;'>; sum += delta or sum -= delta</span>
+    <span style='color:#696969;'>;</span>
+    <span style='color:#696969;'>; the following performs addition or subtraction</span>
+    <span style='color:#696969;'>; depending on flag which we expect to be 1 or 0</span>
+    <span style='color:#696969;'>; the negate operation earlier will change it to -1 if true</span>
+    <span style='color:#696969;'>; but remain 0 if false.</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>        <span style='color:#696969;'>; ebp ^= -flag</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008000;'>09e3779b9h</span>   <span style='color:#696969;'>; performs normal addition</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>        <span style='color:#696969;'>; ebp ^= -flag</span>
+  
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>t_el</span>
+<span style='color:#e34adc;'>save_r:</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; restore -flag</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; -flag++</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>$+3</span>               <span style='color:#696969;'>; if not zero, it means encryption</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>          <span style='color:#696969;'>; else decryption so swap again</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                    <span style='color:#696969;'>; v[0] = v0</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                    <span style='color:#696969;'>; v[1] = v1</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>                    <span style='color:#696969;'>; release stack</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+An earlier version was simpler and smaller but I prefer this one despite all the additional code.
+
+<a href="https://github.com/odzhan/tinycrypt/tree/master/block/tea">sources here</a>

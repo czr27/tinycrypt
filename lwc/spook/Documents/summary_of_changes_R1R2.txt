@@ -1,0 +1,10 @@
+Summary of changes. We:
+- Added a link to our website and a reference.
+- Clarified the leakage-resistance vs. leakage-resistance terminology. 
+- Clarified the fact that the L-box applies to 2l bits already in Algorithms 1 and 2.
+- Added figures describing Clyde-128 and Shadow-512 and their components.
+- Fixed a few minor typos of the original submission. 
+- Provide a minor update of the reference implementations.
+
+As required, the specifications are unchanged.
+Note that additional material (discussions, implementations, ...) are available on our website.

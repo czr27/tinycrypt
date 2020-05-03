@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>/home/user/hub/shellcode/os/linux/arm64/crypto/chacha/ccx.s.html</title>
+<meta name="Generator" content="Vim/8.0">
+<meta name="plugin-version" content="vim7.4_v2">
+<meta name="syntax" content="arm">
+<meta name="settings" content="use_css,pre_wrap,no_foldcolumn,prevent_copy=">
+<meta name="colorscheme" content="none">
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #ffffff; background-color: #000000; }
+body { font-family: monospace; color: #ffffff; background-color: #000000; }
+* { font-size: 1em; }
+.Type { color: #87ffaf; }
+.Comment { color: #00ffff; }
+.Constant { color: #ff40ff; }
+.Identifier { color: #00ffff; font-weight: bold; }
+.Statement { color: #ffff00; }
+.PreProc { color: #5fd7ff; }
+-->
+</style>
+
+<script type='text/javascript'>
+<!--
+
+-->
+</script>
+</head>
+<body>
+<pre id='vimCodeElement'>
+<span class="Comment">// ChaCha in ARM64 assembly </span>
+<span class="Comment">// 348 bytes</span>
+
+ <span class="PreProc">.arch</span> <span class="Identifier">armv8</span><span class="Statement">-</span><span class="Identifier">a</span>
+ <span class="PreProc">.text</span>
+ <span class="PreProc">.global</span> <span class="Identifier">chacha</span>
+
+ <span class="PreProc">.include</span> <span class="Constant">&quot;../../include.inc&quot;</span>
+
+<span class="Identifier">P:</span>
+    <span class="Statement">adr</span>     <span class="Type">x13</span><span class="Statement">,</span> <span class="Identifier">cc_v</span>
+
+    <span class="Comment">// F(16)x[i]=s[i];</span>
+    <span class="Statement">mov</span>     <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Type">P0</span>:
+    <span class="Statement">ldr</span>     <span class="Type">w14</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">str</span>     <span class="Type">w14</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+
+    <span class="Statement">add</span>     <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Statement">cmp</span>     <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">16</span>
+    <span class="Statement">bne</span>     <span class="Type">P0</span>
+
+    <span class="Statement">mov</span>     <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Type">P1</span>:
+    <span class="Comment">// d=v[i%8];</span>
+    <span class="Statement">and</span>     <span class="Type">w12</span><span class="Statement">,</span> <span class="Type">w8</span><span class="Statement">,</span> <span class="Constant">7</span>
+    <span class="Statement">ldrh</span>    <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x13</span><span class="Statement">,</span> <span class="Type">x12</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">1</span>]
+
+    <span class="Comment">// a=(d&amp;15);b=(d&gt;&gt;4&amp;15);</span>
+    <span class="Comment">// c=(d&gt;&gt;8&amp;15);d&gt;&gt;=12;</span>
+    <span class="Statement">ubfx</span>    <span class="Type">w4</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">0</span><span class="Statement">,</span> <span class="Constant">4</span>
+    <span class="Statement">ubfx</span>    <span class="Type">w5</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">4</span><span class="Statement">,</span> <span class="Constant">4</span>
+    <span class="Statement">ubfx</span>    <span class="Type">w6</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">8</span><span class="Statement">,</span> <span class="Constant">4</span>
+    <span class="Statement">ubfx</span>    <span class="Type">w7</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">12</span><span class="Statement">,</span> <span class="Constant">4</span>
+
+    <span class="Identifier">movl</span>    <span class="Type">w10</span><span class="Statement">,</span> <span class="Constant">0x19181410</span>
+<span class="Type">P2</span>:
+    <span class="Comment">// x[a]+=x[b],</span>
+    <span class="Statement">ldr</span>     <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x4</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">ldr</span>     <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x5</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">add</span>     <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w12</span>
+    <span class="Statement">str</span>     <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x4</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+
+    <span class="Comment">// x[d]=R(x[d]^x[a],(r&amp;255)),</span>
+    <span class="Statement">ldr</span>     <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x7</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">eor</span>     <span class="Type">w12</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Type">w11</span>
+    <span class="Statement">and</span>     <span class="Type">w14</span><span class="Statement">,</span> <span class="Type">w10</span><span class="Statement">,</span> <span class="Constant">255</span>
+    <span class="Statement">ror</span>     <span class="Type">w12</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> <span class="Type">w14</span>
+    <span class="Statement">str</span>     <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x7</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+
+    <span class="Comment">// X(a,c),X(b,d);</span>
+    <span class="Statement">stp</span>     <span class="Type">w4</span><span class="Statement">,</span> <span class="Type">w6</span><span class="Statement">,</span> [<span class="Type">sp</span><span class="Statement">,</span> <span class="Statement">-</span><span class="Constant">16</span>]<span class="Statement">!</span>
+    <span class="Statement">ldp</span>     <span class="Type">w6</span><span class="Statement">,</span> <span class="Type">w4</span><span class="Statement">,</span> [<span class="Type">sp</span>]<span class="Statement">,</span> <span class="Constant">16</span>
+    <span class="Statement">stp</span>     <span class="Type">w5</span><span class="Statement">,</span> <span class="Type">w7</span><span class="Statement">,</span> [<span class="Type">sp</span><span class="Statement">,</span> <span class="Statement">-</span><span class="Constant">16</span>]<span class="Statement">!</span>
+    <span class="Statement">ldp</span>     <span class="Type">w7</span><span class="Statement">,</span> <span class="Type">w5</span><span class="Statement">,</span> [<span class="Type">sp</span>]<span class="Statement">,</span> <span class="Constant">16</span>
+
+    <span class="Comment">// r &gt;&gt;= 8</span>
+    <span class="Statement">lsr</span>    <span class="Type">w10</span><span class="Statement">,</span> <span class="Type">w10</span><span class="Statement">,</span> <span class="Constant">8</span>
+    <span class="Statement">cbnz</span>   <span class="Type">w10</span><span class="Statement">,</span> <span class="Type">P2</span>
+
+    <span class="Comment">// i++</span>
+    <span class="Statement">add</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Comment">// i &lt; 80</span>
+    <span class="Statement">cmp</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">80</span>
+    <span class="Statement">bne</span>    <span class="Type">P1</span>
+
+    <span class="Comment">// F(16)x[i]+=s[i];</span>
+    <span class="Statement">mov</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Type">P3</span>:
+    <span class="Statement">ldr</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">ldr</span>    <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+    <span class="Statement">add</span>    <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w12</span>
+    <span class="Statement">str</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">2</span>]
+
+    <span class="Statement">add</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Statement">cmp</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">16</span>
+    <span class="Statement">bne</span>    <span class="Type">P3</span>
+
+    <span class="Comment">// s[12]++;</span>
+    <span class="Statement">ldr</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Constant">12</span><span class="Statement">*</span><span class="Constant">4</span>]
+    <span class="Statement">add</span>    <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w11</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Statement">str</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Constant">12</span><span class="Statement">*</span><span class="Constant">4</span>]
+    <span class="Statement">ret</span>
+<span class="Identifier">cc_v:</span>
+    <span class="PreProc">.2byte</span> <span class="Constant">0xC840</span><span class="Statement">,</span> <span class="Constant">0xD951</span><span class="Statement">,</span> <span class="Constant">0xEA62</span><span class="Statement">,</span> <span class="Constant">0xFB73</span>
+    <span class="PreProc">.2byte</span> <span class="Constant">0xFA50</span><span class="Statement">,</span> <span class="Constant">0xCB61</span><span class="Statement">,</span> <span class="Constant">0xD872</span><span class="Statement">,</span> <span class="Constant">0xE943</span>
+
+    <span class="Comment">// void chacha(int l, void *in, void *state);</span>
+<span class="Identifier">chacha:</span>
+    <span class="Statement">str</span>    <span class="Identifier">x30</span><span class="Statement">,</span> [<span class="Type">sp</span><span class="Statement">,</span> <span class="Statement">-</span><span class="Constant">96</span>]<span class="Statement">!</span>
+    <span class="Statement">cbz</span>    <span class="Type">x0</span><span class="Statement">,</span> <span class="Identifier">L2</span>
+
+    <span class="Statement">add</span>    <span class="Type">x3</span><span class="Statement">,</span> <span class="Type">sp</span><span class="Statement">,</span> <span class="Constant">16</span>
+
+    <span class="Statement">mov</span>    <span class="Type">x9</span><span class="Statement">,</span> <span class="Constant">64</span>
+<span class="Identifier">L0:</span>
+    <span class="Comment">// P(s,(W*)c);</span>
+    <span class="Statement">bl</span>     <span class="Identifier">P</span>
+
+    <span class="Comment">// r=(l &gt; 64) ? 64 : l;</span>
+    <span class="Statement">cmp</span>    <span class="Type">x0</span><span class="Statement">,</span> <span class="Constant">64</span>
+    <span class="Statement">csel</span>   <span class="Type">x10</span><span class="Statement">,</span> <span class="Type">x0</span><span class="Statement">,</span> <span class="Type">x9</span><span class="Statement">,</span> <span class="Identifier">ls</span>
+
+    <span class="Comment">// F(r)*p++^=c[i];</span>
+    <span class="Statement">mov</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Identifier">L1:</span>
+    <span class="Statement">ldrb</span>   <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x3</span><span class="Statement">,</span> <span class="Type">x8</span>]
+    <span class="Statement">ldrb</span>   <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x1</span>]
+    <span class="Statement">eor</span>    <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w12</span>
+    <span class="Statement">strb</span>   <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x1</span>]<span class="Statement">,</span> <span class="Constant">1</span>
+
+    <span class="Statement">add</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Statement">cmp</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x10</span>
+    <span class="Statement">bne</span>    <span class="Identifier">L1</span>
+
+    <span class="Comment">// l-=r;</span>
+    <span class="Statement">subs</span>   <span class="Type">x0</span><span class="Statement">,</span> <span class="Type">x0</span><span class="Statement">,</span> <span class="Type">x10</span>
+    <span class="Statement">bne</span>    <span class="Identifier">L0</span>
+    <span class="Statement">beq</span>    <span class="Identifier">L4</span>
+<span class="Identifier">L2:</span>
+    <span class="Comment">// s[0]=0x61707865;s[1]=0x3320646E;</span>
+    <span class="Identifier">movl</span>   <span class="Type">w11</span><span class="Statement">,</span> <span class="Constant">0x61707865</span>
+    <span class="Identifier">movl</span>   <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">0x3320646E</span>
+    <span class="Statement">stp</span>    <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x2</span>]
+
+    <span class="Comment">// s[2]=0x79622D32;s[3]=0x6B206574;</span>
+    <span class="Identifier">movl</span>   <span class="Type">w11</span><span class="Statement">,</span> <span class="Constant">0x79622D32</span>
+    <span class="Identifier">movl</span>   <span class="Type">w12</span><span class="Statement">,</span> <span class="Constant">0x6B206574</span>
+    <span class="Statement">stp</span>    <span class="Type">w11</span><span class="Statement">,</span> <span class="Type">w12</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Constant">8</span>]
+
+    <span class="Comment">// F(12)s[i+4]=k[i];</span>
+    <span class="Statement">mov</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">16</span>
+    <span class="Statement">sub</span>    <span class="Type">x1</span><span class="Statement">,</span> <span class="Type">x1</span><span class="Statement">,</span> <span class="Constant">16</span>
+<span class="Identifier">L3:</span>
+    <span class="Statement">ldr</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x1</span><span class="Statement">,</span> <span class="Type">x8</span>]
+    <span class="Statement">str</span>    <span class="Type">w11</span><span class="Statement">,</span> [<span class="Type">x2</span><span class="Statement">,</span> <span class="Type">x8</span>]
+    <span class="Statement">add</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">4</span>
+    <span class="Statement">cmp</span>    <span class="Type">x8</span><span class="Statement">,</span> <span class="Constant">64</span>
+    <span class="Statement">bne</span>    <span class="Identifier">L3</span>
+<span class="Identifier">L4:</span>
+    <span class="Statement">ldr</span>    <span class="Identifier">x30</span><span class="Statement">,</span> [<span class="Type">sp</span>]<span class="Statement">,</span> <span class="Constant">96</span>
+    <span class="Statement">ret</span>
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->

@@ -1,0 +1,3069 @@
+
+AVRASM ver. 2.2.7  E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm Wed Feb 13 13:30:41 2019
+
+[builtin](2): Including file 'D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc\m128def.inc'
+E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm(9): Including file 'D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc\m128def.inc'
+[builtin](2): Including file 'D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc\m128def.inc'
+E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm(9): Including file 'D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc\m128def.inc'
+                                 
+                                 ; WAGE
+                                 
+                                 ;***** Created: 2011-02-09 12:03 ******* Source: ATmega128.xml ***********
+                                 ;*************************************************************************
+                                 ;* A P P L I C A T I O N   N O T E   F O R   T H E   A V R   F A M I L Y
+                                 ;* 
+                                 ;* Number            : AVR000
+                                 ;* File Name         : "m128def.inc"
+                                 ;* Title             : Register/Bit Definitions for the ATmega128
+                                 ;* Date              : 2011-02-09
+                                 ;* Version           : 2.35
+                                 ;* Support E-mail    : avr@atmel.com
+                                 ;* Target MCU        : ATmega128
+                                 ;* 
+                                 ;* DESCRIPTION
+                                 ;* When including this file in the assembly program file, all I/O register 
+                                 ;* names and I/O register bit names appearing in the data book can be used.
+                                 ;* In addition, the six registers forming the three data pointers X, Y and 
+                                 ;* Z have been assigned names XL - ZH. Highest RAM address for Internal 
+                                 ;* SRAM is also defined 
+                                 ;* 
+                                 ;* The Register names are represented by their hexadecimal address.
+                                 ;* 
+                                 ;* The Register Bit names are represented by their bit number (0-7).
+                                 ;* 
+                                 ;* Please observe the difference in using the bit names with instructions
+                                 ;* such as "sbr"/"cbr" (set/clear bit in register) and "sbrs"/"sbrc"
+                                 ;* (skip if bit in register set/cleared). The following example illustrates
+                                 ;* this:
+                                 ;* 
+                                 ;* in    r16,PORTB             ;read PORTB latch
+                                 ;* sbr   r16,(1<<PB6)+(1<<PB5) ;set PB6 and PB5 (use masks, not bit#)
+                                 ;* out   PORTB,r16             ;output to PORTB
+                                 ;* 
+                                 ;* in    r16,TIFR              ;read the Timer Interrupt Flag Register
+                                 ;* sbrc  r16,TOV0              ;test the overflow flag (use bit#)
+                                 ;* rjmp  TOV0_is_set           ;jump if set
+                                 ;* ...                         ;otherwise do something else
+                                 ;*************************************************************************
+                                 
+                                 #ifndef _M128DEF_INC_
+                                 #define _M128DEF_INC_
+                                 
+                                 
+                                 #pragma partinc 0
+                                 
+                                 ; ***** SPECIFY DEVICE ***************************************************
+                                 .device ATmega128
+                                 #pragma AVRPART ADMIN PART_NAME ATmega128
+                                 .equ	SIGNATURE_000	= 0x1e
+                                 .equ	SIGNATURE_001	= 0x97
+                                 .equ	SIGNATURE_002	= 0x02
+                                 
+                                 #pragma AVRPART CORE CORE_VERSION V2E
+                                 
+                                 
+                                 ; ***** I/O REGISTER DEFINITIONS *****************************************
+                                 ; NOTE:
+                                 ; Definitions marked "MEMORY MAPPED"are extended I/O ports
+                                 ; and cannot be used with IN/OUT instructions
+                                 .equ	UCSR1C	= 0x9d	; MEMORY MAPPED
+                                 .equ	UDR1	= 0x9c	; MEMORY MAPPED
+                                 .equ	UCSR1A	= 0x9b	; MEMORY MAPPED
+                                 .equ	UCSR1B	= 0x9a	; MEMORY MAPPED
+                                 .equ	UBRR1H	= 0x98	; MEMORY MAPPED
+                                 .equ	UBRR1L	= 0x99	; MEMORY MAPPED
+                                 .equ	UCSR0C	= 0x95	; MEMORY MAPPED
+                                 .equ	UBRR0H	= 0x90	; MEMORY MAPPED
+                                 .equ	TCCR3C	= 0x8c	; MEMORY MAPPED
+                                 .equ	TCCR3A	= 0x8b	; MEMORY MAPPED
+                                 .equ	TCCR3B	= 0x8a	; MEMORY MAPPED
+                                 .equ	TCNT3L	= 0x88	; MEMORY MAPPED
+                                 .equ	TCNT3H	= 0x89	; MEMORY MAPPED
+                                 .equ	OCR3AL	= 0x86	; MEMORY MAPPED
+                                 .equ	OCR3AH	= 0x87	; MEMORY MAPPED
+                                 .equ	OCR3BL	= 0x84	; MEMORY MAPPED
+                                 .equ	OCR3BH	= 0x85	; MEMORY MAPPED
+                                 .equ	OCR3CL	= 0x82	; MEMORY MAPPED
+                                 .equ	OCR3CH	= 0x83	; MEMORY MAPPED
+                                 .equ	ICR3L	= 0x80	; MEMORY MAPPED
+                                 .equ	ICR3H	= 0x81	; MEMORY MAPPED
+                                 .equ	ETIMSK	= 0x7d	; MEMORY MAPPED
+                                 .equ	ETIFR	= 0x7c	; MEMORY MAPPED
+                                 .equ	TCCR1C	= 0x7a	; MEMORY MAPPED
+                                 .equ	OCR1CL	= 0x78	; MEMORY MAPPED
+                                 .equ	OCR1CH	= 0x79	; MEMORY MAPPED
+                                 .equ	TWCR	= 0x74	; MEMORY MAPPED
+                                 .equ	TWDR	= 0x73	; MEMORY MAPPED
+                                 .equ	TWAR	= 0x72	; MEMORY MAPPED
+                                 .equ	TWSR	= 0x71	; MEMORY MAPPED
+                                 .equ	TWBR	= 0x70	; MEMORY MAPPED
+                                 .equ	OSCCAL	= 0x6f	; MEMORY MAPPED
+                                 .equ	XMCRA	= 0x6d	; MEMORY MAPPED
+                                 .equ	XMCRB	= 0x6c	; MEMORY MAPPED
+                                 .equ	EICRA	= 0x6a	; MEMORY MAPPED
+                                 .equ	SPMCSR	= 0x68	; MEMORY MAPPED
+                                 .equ	PORTG	= 0x65	; MEMORY MAPPED
+                                 .equ	DDRG	= 0x64	; MEMORY MAPPED
+                                 .equ	PING	= 0x63	; MEMORY MAPPED
+                                 .equ	PORTF	= 0x62	; MEMORY MAPPED
+                                 .equ	DDRF	= 0x61	; MEMORY MAPPED
+                                 .equ	SREG	= 0x3f
+                                 .equ	SPL	= 0x3d
+                                 .equ	SPH	= 0x3e
+                                 .equ	XDIV	= 0x3c
+                                 .equ	RAMPZ	= 0x3b
+                                 .equ	EICRB	= 0x3a
+                                 .equ	EIMSK	= 0x39
+                                 .equ	EIFR	= 0x38
+                                 .equ	TIMSK	= 0x37
+                                 .equ	TIFR	= 0x36
+                                 .equ	MCUCR	= 0x35
+                                 .equ	MCUCSR	= 0x34
+                                 .equ	TCCR0	= 0x33
+                                 .equ	TCNT0	= 0x32
+                                 .equ	OCR0	= 0x31
+                                 .equ	ASSR	= 0x30
+                                 .equ	TCCR1A	= 0x2f
+                                 .equ	TCCR1B	= 0x2e
+                                 .equ	TCNT1L	= 0x2c
+                                 .equ	TCNT1H	= 0x2d
+                                 .equ	OCR1AL	= 0x2a
+                                 .equ	OCR1AH	= 0x2b
+                                 .equ	OCR1BL	= 0x28
+                                 .equ	OCR1BH	= 0x29
+                                 .equ	ICR1L	= 0x26
+                                 .equ	ICR1H	= 0x27
+                                 .equ	TCCR2	= 0x25
+                                 .equ	TCNT2	= 0x24
+                                 .equ	OCR2	= 0x23
+                                 .equ	OCDR	= 0x22
+                                 .equ	WDTCR	= 0x21
+                                 .equ	SFIOR	= 0x20
+                                 .equ	EEARL	= 0x1e
+                                 .equ	EEARH	= 0x1f
+                                 .equ	EEDR	= 0x1d
+                                 .equ	EECR	= 0x1c
+                                 .equ	PORTA	= 0x1b
+                                 .equ	DDRA	= 0x1a
+                                 .equ	PINA	= 0x19
+                                 .equ	PORTB	= 0x18
+                                 .equ	DDRB	= 0x17
+                                 .equ	PINB	= 0x16
+                                 .equ	PORTC	= 0x15
+                                 .equ	DDRC	= 0x14
+                                 .equ	PINC	= 0x13
+                                 .equ	PORTD	= 0x12
+                                 .equ	DDRD	= 0x11
+                                 .equ	PIND	= 0x10
+                                 .equ	SPDR	= 0x0f
+                                 .equ	SPSR	= 0x0e
+                                 .equ	SPCR	= 0x0d
+                                 .equ	UDR0	= 0x0c
+                                 .equ	UCSR0A	= 0x0b
+                                 .equ	UCSR0B	= 0x0a
+                                 .equ	UBRR0L	= 0x09
+                                 .equ	ACSR	= 0x08
+                                 .equ	ADMUX	= 0x07
+                                 .equ	ADCSRA	= 0x06
+                                 .equ	ADCH	= 0x05
+                                 .equ	ADCL	= 0x04
+                                 .equ	PORTE	= 0x03
+                                 .equ	DDRE	= 0x02
+                                 .equ	PINE	= 0x01
+                                 .equ	PINF	= 0x00
+                                 
+                                 
+                                 ; ***** BIT DEFINITIONS **************************************************
+                                 
+                                 ; ***** ANALOG_COMPARATOR ************
+                                 ; SFIOR - Special Function IO Register
+                                 .equ	ACME	= 3	; Analog Comparator Multiplexer Enable
+                                 
+                                 ; ACSR - Analog Comparator Control And Status Register
+                                 .equ	ACIS0	= 0	; Analog Comparator Interrupt Mode Select bit 0
+                                 .equ	ACIS1	= 1	; Analog Comparator Interrupt Mode Select bit 1
+                                 .equ	ACIC	= 2	; Analog Comparator Input Capture Enable
+                                 .equ	ACIE	= 3	; Analog Comparator Interrupt Enable
+                                 .equ	ACI	= 4	; Analog Comparator Interrupt Flag
+                                 .equ	ACO	= 5	; Analog Compare Output
+                                 .equ	ACBG	= 6	; Analog Comparator Bandgap Select
+                                 .equ	ACD	= 7	; Analog Comparator Disable
+                                 
+                                 
+                                 ; ***** SPI **************************
+                                 ; SPDR - SPI Data Register
+                                 .equ	SPDR0	= 0	; SPI Data Register bit 0
+                                 .equ	SPDR1	= 1	; SPI Data Register bit 1
+                                 .equ	SPDR2	= 2	; SPI Data Register bit 2
+                                 .equ	SPDR3	= 3	; SPI Data Register bit 3
+                                 .equ	SPDR4	= 4	; SPI Data Register bit 4
+                                 .equ	SPDR5	= 5	; SPI Data Register bit 5
+                                 .equ	SPDR6	= 6	; SPI Data Register bit 6
+                                 .equ	SPDR7	= 7	; SPI Data Register bit 7
+                                 
+                                 ; SPSR - SPI Status Register
+                                 .equ	SPI2X	= 0	; Double SPI Speed Bit
+                                 .equ	WCOL	= 6	; Write Collision Flag
+                                 .equ	SPIF	= 7	; SPI Interrupt Flag
+                                 
+                                 ; SPCR - SPI Control Register
+                                 .equ	SPR0	= 0	; SPI Clock Rate Select 0
+                                 .equ	SPR1	= 1	; SPI Clock Rate Select 1
+                                 .equ	CPHA	= 2	; Clock Phase
+                                 .equ	CPOL	= 3	; Clock polarity
+                                 .equ	MSTR	= 4	; Master/Slave Select
+                                 .equ	DORD	= 5	; Data Order
+                                 .equ	SPE	= 6	; SPI Enable
+                                 .equ	SPIE	= 7	; SPI Interrupt Enable
+                                 
+                                 
+                                 ; ***** TWI **************************
+                                 ; TWBR - TWI Bit Rate register
+                                 .equ	I2BR	= TWBR	; For compatibility
+                                 .equ	TWBR0	= 0	; 
+                                 .equ	TWBR1	= 1	; 
+                                 .equ	TWBR2	= 2	; 
+                                 .equ	TWBR3	= 3	; 
+                                 .equ	TWBR4	= 4	; 
+                                 .equ	TWBR5	= 5	; 
+                                 .equ	TWBR6	= 6	; 
+                                 .equ	TWBR7	= 7	; 
+                                 
+                                 ; TWCR - TWI Control Register
+                                 .equ	I2CR	= TWCR	; For compatibility
+                                 .equ	TWIE	= 0	; TWI Interrupt Enable
+                                 .equ	I2IE	= TWIE	; For compatibility
+                                 .equ	TWEN	= 2	; TWI Enable Bit
+                                 .equ	I2EN	= TWEN	; For compatibility
+                                 .equ	ENI2C	= TWEN	; For compatibility
+                                 .equ	TWWC	= 3	; TWI Write Collition Flag
+                                 .equ	I2WC	= TWWC	; For compatibility
+                                 .equ	TWSTO	= 4	; TWI Stop Condition Bit
+                                 .equ	I2STO	= TWSTO	; For compatibility
+                                 .equ	TWSTA	= 5	; TWI Start Condition Bit
+                                 .equ	I2STA	= TWSTA	; For compatibility
+                                 .equ	TWEA	= 6	; TWI Enable Acknowledge Bit
+                                 .equ	I2EA	= TWEA	; For compatibility
+                                 .equ	TWINT	= 7	; TWI Interrupt Flag
+                                 .equ	I2INT	= TWINT	; For compatibility
+                                 
+                                 ; TWSR - TWI Status Register
+                                 .equ	I2SR	= TWSR	; For compatibility
+                                 .equ	TWPS0	= 0	; TWI Prescaler
+                                 .equ	TWS0	= TWPS0	; For compatibility
+                                 .equ	I2GCE	= TWPS0	; For compatibility
+                                 .equ	TWPS1	= 1	; TWI Prescaler
+                                 .equ	TWS1	= TWPS1	; For compatibility
+                                 .equ	TWS3	= 3	; TWI Status
+                                 .equ	I2S3	= TWS3	; For compatibility
+                                 .equ	TWS4	= 4	; TWI Status
+                                 .equ	I2S4	= TWS4	; For compatibility
+                                 .equ	TWS5	= 5	; TWI Status
+                                 .equ	I2S5	= TWS5	; For compatibility
+                                 .equ	TWS6	= 6	; TWI Status
+                                 .equ	I2S6	= TWS6	; For compatibility
+                                 .equ	TWS7	= 7	; TWI Status
+                                 .equ	I2S7	= TWS7	; For compatibility
+                                 
+                                 ; TWDR - TWI Data register
+                                 .equ	I2DR	= TWDR	; For compatibility
+                                 .equ	TWD0	= 0	; TWI Data Register Bit 0
+                                 .equ	TWD1	= 1	; TWI Data Register Bit 1
+                                 .equ	TWD2	= 2	; TWI Data Register Bit 2
+                                 .equ	TWD3	= 3	; TWI Data Register Bit 3
+                                 .equ	TWD4	= 4	; TWI Data Register Bit 4
+                                 .equ	TWD5	= 5	; TWI Data Register Bit 5
+                                 .equ	TWD6	= 6	; TWI Data Register Bit 6
+                                 .equ	TWD7	= 7	; TWI Data Register Bit 7
+                                 
+                                 ; TWAR - TWI (Slave) Address register
+                                 .equ	I2AR	= TWAR	; For compatibility
+                                 .equ	TWGCE	= 0	; TWI General Call Recognition Enable Bit
+                                 .equ	TWA0	= 1	; TWI (Slave) Address register Bit 0
+                                 .equ	TWA1	= 2	; TWI (Slave) Address register Bit 1
+                                 .equ	TWA2	= 3	; TWI (Slave) Address register Bit 2
+                                 .equ	TWA3	= 4	; TWI (Slave) Address register Bit 3
+                                 .equ	TWA4	= 5	; TWI (Slave) Address register Bit 4
+                                 .equ	TWA5	= 6	; TWI (Slave) Address register Bit 5
+                                 .equ	TWA6	= 7	; TWI (Slave) Address register Bit 6
+                                 
+                                 
+                                 ; ***** USART0 ***********************
+                                 ; UDR0 - USART I/O Data Register
+                                 .equ	UDR00	= 0	; USART I/O Data Register bit 0
+                                 .equ	UDR01	= 1	; USART I/O Data Register bit 1
+                                 .equ	UDR02	= 2	; USART I/O Data Register bit 2
+                                 .equ	UDR03	= 3	; USART I/O Data Register bit 3
+                                 .equ	UDR04	= 4	; USART I/O Data Register bit 4
+                                 .equ	UDR05	= 5	; USART I/O Data Register bit 5
+                                 .equ	UDR06	= 6	; USART I/O Data Register bit 6
+                                 .equ	UDR07	= 7	; USART I/O Data Register bit 7
+                                 
+                                 ; UCSR0A - USART Control and Status Register A
+                                 .equ	MPCM0	= 0	; Multi-processor Communication Mode
+                                 .equ	U2X0	= 1	; Double the USART transmission speed
+                                 .equ	UPE0	= 2	; Parity Error
+                                 .equ	DOR0	= 3	; Data overRun
+                                 .equ	FE0	= 4	; Framing Error
+                                 .equ	UDRE0	= 5	; USART Data Register Empty
+                                 .equ	TXC0	= 6	; USART Transmitt Complete
+                                 .equ	RXC0	= 7	; USART Receive Complete
+                                 
+                                 ; UCSR0B - USART Control and Status Register B
+                                 .equ	TXB80	= 0	; Transmit Data Bit 8
+                                 .equ	RXB80	= 1	; Receive Data Bit 8
+                                 .equ	UCSZ02	= 2	; Character Size
+                                 .equ	UCSZ2	= UCSZ02	; For compatibility
+                                 .equ	TXEN0	= 3	; Transmitter Enable
+                                 .equ	RXEN0	= 4	; Receiver Enable
+                                 .equ	UDRIE0	= 5	; USART Data register Empty Interrupt Enable
+                                 .equ	TXCIE0	= 6	; TX Complete Interrupt Enable
+                                 .equ	RXCIE0	= 7	; RX Complete Interrupt Enable
+                                 
+                                 ; UCSR0C - USART Control and Status Register C
+                                 .equ	UCPOL0	= 0	; Clock Polarity
+                                 .equ	UCSZ00	= 1	; Character Size
+                                 .equ	UCSZ01	= 2	; Character Size
+                                 .equ	USBS0	= 3	; Stop Bit Select
+                                 .equ	UPM00	= 4	; Parity Mode Bit 0
+                                 .equ	UPM01	= 5	; Parity Mode Bit 1
+                                 .equ	UMSEL0	= 6	; USART Mode Select
+                                 
+                                 ; UBRR0H - USART Baud Rate Register Hight Byte
+                                 .equ	UBRR8	= 0	; USART Baud Rate Register bit 8
+                                 .equ	UBRR9	= 1	; USART Baud Rate Register bit 9
+                                 .equ	UBRR10	= 2	; USART Baud Rate Register bit 10
+                                 .equ	UBRR11	= 3	; USART Baud Rate Register bit 11
+                                 
+                                 ; UBRR0L - USART Baud Rate Register Low Byte
+                                 .equ	UBRR0	= 0	; USART Baud Rate Register bit 0
+                                 .equ	UBRR1	= 1	; USART Baud Rate Register bit 1
+                                 .equ	UBRR2	= 2	; USART Baud Rate Register bit 2
+                                 .equ	UBRR3	= 3	; USART Baud Rate Register bit 3
+                                 .equ	UBRR4	= 4	; USART Baud Rate Register bit 4
+                                 .equ	UBRR5	= 5	; USART Baud Rate Register bit 5
+                                 .equ	UBRR6	= 6	; USART Baud Rate Register bit 6
+                                 .equ	UBRR7	= 7	; USART Baud Rate Register bit 7
+                                 
+                                 
+                                 ; ***** USART1 ***********************
+                                 ; UDR1 - USART I/O Data Register
+                                 .equ	UDR10	= 0	; USART I/O Data Register bit 0
+                                 .equ	UDR11	= 1	; USART I/O Data Register bit 1
+                                 .equ	UDR12	= 2	; USART I/O Data Register bit 2
+                                 .equ	UDR13	= 3	; USART I/O Data Register bit 3
+                                 .equ	UDR14	= 4	; USART I/O Data Register bit 4
+                                 .equ	UDR15	= 5	; USART I/O Data Register bit 5
+                                 .equ	UDR16	= 6	; USART I/O Data Register bit 6
+                                 .equ	UDR17	= 7	; USART I/O Data Register bit 7
+                                 
+                                 ; UCSR1A - USART Control and Status Register A
+                                 .equ	MPCM1	= 0	; Multi-processor Communication Mode
+                                 .equ	U2X1	= 1	; Double the USART transmission speed
+                                 .equ	UPE1	= 2	; Parity Error
+                                 .equ	DOR1	= 3	; Data overRun
+                                 .equ	FE1	= 4	; Framing Error
+                                 .equ	UDRE1	= 5	; USART Data Register Empty
+                                 .equ	TXC1	= 6	; USART Transmitt Complete
+                                 .equ	RXC1	= 7	; USART Receive Complete
+                                 
+                                 ; UCSR1B - USART Control and Status Register B
+                                 .equ	TXB81	= 0	; Transmit Data Bit 8
+                                 .equ	RXB81	= 1	; Receive Data Bit 8
+                                 .equ	UCSZ12	= 2	; Character Size
+                                 .equ	TXEN1	= 3	; Transmitter Enable
+                                 .equ	RXEN1	= 4	; Receiver Enable
+                                 .equ	UDRIE1	= 5	; USART Data register Empty Interrupt Enable
+                                 .equ	TXCIE1	= 6	; TX Complete Interrupt Enable
+                                 .equ	RXCIE1	= 7	; RX Complete Interrupt Enable
+                                 
+                                 ; UCSR1C - USART Control and Status Register C
+                                 .equ	UCPOL1	= 0	; Clock Polarity
+                                 .equ	UCSZ10	= 1	; Character Size
+                                 .equ	UCSZ11	= 2	; Character Size
+                                 .equ	USBS1	= 3	; Stop Bit Select
+                                 .equ	UPM10	= 4	; Parity Mode Bit 0
+                                 .equ	UPM11	= 5	; Parity Mode Bit 1
+                                 .equ	UMSEL1	= 6	; USART Mode Select
+                                 
+                                 ; UBRR1H - USART Baud Rate Register Hight Byte
+                                 ;.equ	UBRR8	= 0	; USART Baud Rate Register bit 8
+                                 ;.equ	UBRR9	= 1	; USART Baud Rate Register bit 9
+                                 ;.equ	UBRR10	= 2	; USART Baud Rate Register bit 10
+                                 ;.equ	UBRR11	= 3	; USART Baud Rate Register bit 11
+                                 
+                                 ; UBRR1L - USART Baud Rate Register Low Byte
+                                 ;.equ	UBRR0	= 0	; USART Baud Rate Register bit 0
+                                 ;.equ	UBRR1	= 1	; USART Baud Rate Register bit 1
+                                 ;.equ	UBRR2	= 2	; USART Baud Rate Register bit 2
+                                 ;.equ	UBRR3	= 3	; USART Baud Rate Register bit 3
+                                 ;.equ	UBRR4	= 4	; USART Baud Rate Register bit 4
+                                 ;.equ	UBRR5	= 5	; USART Baud Rate Register bit 5
+                                 ;.equ	UBRR6	= 6	; USART Baud Rate Register bit 6
+                                 ;.equ	UBRR7	= 7	; USART Baud Rate Register bit 7
+                                 
+                                 
+                                 ; ***** CPU **************************
+                                 ; SREG - Status Register
+                                 .equ	SREG_C	= 0	; Carry Flag
+                                 .equ	SREG_Z	= 1	; Zero Flag
+                                 .equ	SREG_N	= 2	; Negative Flag
+                                 .equ	SREG_V	= 3	; Two's Complement Overflow Flag
+                                 .equ	SREG_S	= 4	; Sign Bit
+                                 .equ	SREG_H	= 5	; Half Carry Flag
+                                 .equ	SREG_T	= 6	; Bit Copy Storage
+                                 .equ	SREG_I	= 7	; Global Interrupt Enable
+                                 
+                                 ; MCUCR - MCU Control Register
+                                 .equ	IVCE	= 0	; Interrupt Vector Change Enable
+                                 .equ	IVSEL	= 1	; Interrupt Vector Select
+                                 .equ	SM2	= 2	; Sleep Mode Select
+                                 .equ	SM0	= 3	; Sleep Mode Select
+                                 .equ	SM1	= 4	; Sleep Mode Select
+                                 .equ	SE	= 5	; Sleep Enable
+                                 .equ	SRW10	= 6	; External SRAM Wait State Select
+                                 .equ	SRE	= 7	; External SRAM Enable
+                                 
+                                 ; XMCRA - External Memory Control Register A
+                                 .equ	SRW11	= 1	; Wait state select bit upper page
+                                 .equ	SRW00	= 2	; Wait state select bit lower page
+                                 .equ	SRW01	= 3	; Wait state select bit lower page
+                                 .equ	SRL0	= 4	; Wait state page limit
+                                 .equ	SRL1	= 5	; Wait state page limit
+                                 .equ	SRL2	= 6	; Wait state page limit
+                                 
+                                 ; XMCRB - External Memory Control Register B
+                                 .equ	XMM0	= 0	; External Memory High Mask
+                                 .equ	XMM1	= 1	; External Memory High Mask
+                                 .equ	XMM2	= 2	; External Memory High Mask
+                                 .equ	XMBK	= 7	; External Memory Bus Keeper Enable
+                                 
+                                 ; OSCCAL - Oscillator Calibration Value
+                                 .equ	CAL0	= 0	; Oscillator Calibration Value
+                                 .equ	CAL1	= 1	; Oscillator Calibration Value
+                                 .equ	CAL2	= 2	; Oscillator Calibration Value
+                                 .equ	CAL3	= 3	; Oscillator Calibration Value
+                                 .equ	CAL4	= 4	; Oscillator Calibration Value
+                                 .equ	CAL5	= 5	; Oscillator Calibration Value
+                                 .equ	CAL6	= 6	; Oscillator Calibration Value
+                                 .equ	CAL7	= 7	; Oscillator Calibration Value
+                                 
+                                 ; XDIV - XTAL Divide Control Register
+                                 .equ	XDIV0	= 0	; XTAl Divide Select Bit 0
+                                 .equ	XDIV1	= 1	; XTAl Divide Select Bit 1
+                                 .equ	XDIV2	= 2	; XTAl Divide Select Bit 2
+                                 .equ	XDIV3	= 3	; XTAl Divide Select Bit 3
+                                 .equ	XDIV4	= 4	; XTAl Divide Select Bit 4
+                                 .equ	XDIV5	= 5	; XTAl Divide Select Bit 5
+                                 .equ	XDIV6	= 6	; XTAl Divide Select Bit 6
+                                 .equ	XDIVEN	= 7	; XTAL Divide Enable
+                                 
+                                 ; MCUCSR - MCU Control And Status Register
+                                 .equ	PORF	= 0	; Power-on reset flag
+                                 .equ	EXTRF	= 1	; External Reset Flag
+                                 .equ	BORF	= 2	; Brown-out Reset Flag
+                                 .equ	WDRF	= 3	; Watchdog Reset Flag
+                                 .equ	JTRF	= 4	; JTAG Reset Flag
+                                 .equ	JTD	= 7	; JTAG Interface Disable
+                                 
+                                 ; RAMPZ - RAM Page Z Select Register
+                                 .equ	RAMPZ0	= 0	; RAM Page Z Select Register Bit 0
+                                 
+                                 
+                                 ; ***** BOOT_LOAD ********************
+                                 ; SPMCSR - Store Program Memory Control Register
+                                 .equ	SPMCR	= SPMCSR	; For compatibility
+                                 .equ	SPMEN	= 0	; Store Program Memory Enable
+                                 .equ	PGERS	= 1	; Page Erase
+                                 .equ	PGWRT	= 2	; Page Write
+                                 .equ	BLBSET	= 3	; Boot Lock Bit Set
+                                 .equ	RWWSRE	= 4	; Read While Write section read enable
+                                 .equ	ASRE	= RWWSRE	; For compatibility
+                                 .equ	RWWSB	= 6	; Read While Write Section Busy
+                                 .equ	ASB	= RWWSB	; For compatibility
+                                 .equ	SPMIE	= 7	; SPM Interrupt Enable
+                                 
+                                 
+                                 ; ***** JTAG *************************
+                                 ; OCDR - On-Chip Debug Related Register in I/O Memory
+                                 .equ	OCDR0	= 0	; On-Chip Debug Register Bit 0
+                                 .equ	OCDR1	= 1	; On-Chip Debug Register Bit 1
+                                 .equ	OCDR2	= 2	; On-Chip Debug Register Bit 2
+                                 .equ	OCDR3	= 3	; On-Chip Debug Register Bit 3
+                                 .equ	OCDR4	= 4	; On-Chip Debug Register Bit 4
+                                 .equ	OCDR5	= 5	; On-Chip Debug Register Bit 5
+                                 .equ	OCDR6	= 6	; On-Chip Debug Register Bit 6
+                                 .equ	OCDR7	= 7	; On-Chip Debug Register Bit 7
+                                 .equ	IDRD	= OCDR7	; For compatibility
+                                 
+                                 ; MCUCSR - MCU Control And Status Register
+                                 ;.equ	JTRF	= 4	; JTAG Reset Flag
+                                 ;.equ	JTD	= 7	; JTAG Interface Disable
+                                 
+                                 
+                                 ; ***** MISC *************************
+                                 ; SFIOR - Special Function IO Register
+                                 .equ	PSR321	= 0	; Prescaler Reset Timer/Counter3, Timer/Counter2, and Timer/Counter1
+                                 .equ	PSR1	= PSR321	; For compatibility
+                                 .equ	PSR2	= PSR321	; For compatibility
+                                 .equ	PSR3	= PSR321	; For compatibility
+                                 .equ	PSR0	= 1	; Prescaler Reset Timer/Counter0
+                                 .equ	PUD	= 2	; Pull Up Disable
+                                 ;.equ	ACME	= 3	; Analog Comparator Multiplexer Enable
+                                 .equ	TSM	= 7	; Timer/Counter Synchronization Mode
+                                 
+                                 
+                                 ; ***** EXTERNAL_INTERRUPT ***********
+                                 ; EICRA - External Interrupt Control Register A
+                                 .equ	ISC00	= 0	; External Interrupt Sense Control Bit
+                                 .equ	ISC01	= 1	; External Interrupt Sense Control Bit
+                                 .equ	ISC10	= 2	; External Interrupt Sense Control Bit
+                                 .equ	ISC11	= 3	; External Interrupt Sense Control Bit
+                                 .equ	ISC20	= 4	; External Interrupt Sense Control Bit
+                                 .equ	ISC21	= 5	; External Interrupt Sense Control Bit
+                                 .equ	ISC30	= 6	; External Interrupt Sense Control Bit
+                                 .equ	ISC31	= 7	; External Interrupt Sense Control Bit
+                                 
+                                 ; EICRB - External Interrupt Control Register B
+                                 .equ	ISC40	= 0	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC41	= 1	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC50	= 2	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC51	= 3	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC60	= 4	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC61	= 5	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC70	= 6	; External Interrupt 7-4 Sense Control Bit
+                                 .equ	ISC71	= 7	; External Interrupt 7-4 Sense Control Bit
+                                 
+                                 ; EIMSK - External Interrupt Mask Register
+                                 .equ	GICR	= EIMSK	; For compatibility
+                                 .equ	GIMSK	= EIMSK	; For compatibility
+                                 .equ	INT0	= 0	; External Interrupt Request 0 Enable
+                                 .equ	INT1	= 1	; External Interrupt Request 1 Enable
+                                 .equ	INT2	= 2	; External Interrupt Request 2 Enable
+                                 .equ	INT3	= 3	; External Interrupt Request 3 Enable
+                                 .equ	INT4	= 4	; External Interrupt Request 4 Enable
+                                 .equ	INT5	= 5	; External Interrupt Request 5 Enable
+                                 .equ	INT6	= 6	; External Interrupt Request 6 Enable
+                                 .equ	INT7	= 7	; External Interrupt Request 7 Enable
+                                 
+                                 ; EIFR - External Interrupt Flag Register
+                                 .equ	GIFR	= EIFR	; For compatibility
+                                 .equ	INTF0	= 0	; External Interrupt Flag 0
+                                 .equ	INTF1	= 1	; External Interrupt Flag 1
+                                 .equ	INTF2	= 2	; External Interrupt Flag 2
+                                 .equ	INTF3	= 3	; External Interrupt Flag 3
+                                 .equ	INTF4	= 4	; External Interrupt Flag 4
+                                 .equ	INTF5	= 5	; External Interrupt Flag 5
+                                 .equ	INTF6	= 6	; External Interrupt Flag 6
+                                 .equ	INTF7	= 7	; External Interrupt Flag 7
+                                 
+                                 
+                                 ; ***** EEPROM ***********************
+                                 ; EEDR - EEPROM Data Register
+                                 .equ	EEDR0	= 0	; EEPROM Data Register bit 0
+                                 .equ	EEDR1	= 1	; EEPROM Data Register bit 1
+                                 .equ	EEDR2	= 2	; EEPROM Data Register bit 2
+                                 .equ	EEDR3	= 3	; EEPROM Data Register bit 3
+                                 .equ	EEDR4	= 4	; EEPROM Data Register bit 4
+                                 .equ	EEDR5	= 5	; EEPROM Data Register bit 5
+                                 .equ	EEDR6	= 6	; EEPROM Data Register bit 6
+                                 .equ	EEDR7	= 7	; EEPROM Data Register bit 7
+                                 
+                                 ; EECR - EEPROM Control Register
+                                 .equ	EERE	= 0	; EEPROM Read Enable
+                                 .equ	EEWE	= 1	; EEPROM Write Enable
+                                 .equ	EEMWE	= 2	; EEPROM Master Write Enable
+                                 .equ	EERIE	= 3	; EEPROM Ready Interrupt Enable
+                                 
+                                 
+                                 ; ***** PORTA ************************
+                                 ; PORTA - Port A Data Register
+                                 .equ	PORTA0	= 0	; Port A Data Register bit 0
+                                 .equ	PA0	= 0	; For compatibility
+                                 .equ	PORTA1	= 1	; Port A Data Register bit 1
+                                 .equ	PA1	= 1	; For compatibility
+                                 .equ	PORTA2	= 2	; Port A Data Register bit 2
+                                 .equ	PA2	= 2	; For compatibility
+                                 .equ	PORTA3	= 3	; Port A Data Register bit 3
+                                 .equ	PA3	= 3	; For compatibility
+                                 .equ	PORTA4	= 4	; Port A Data Register bit 4
+                                 .equ	PA4	= 4	; For compatibility
+                                 .equ	PORTA5	= 5	; Port A Data Register bit 5
+                                 .equ	PA5	= 5	; For compatibility
+                                 .equ	PORTA6	= 6	; Port A Data Register bit 6
+                                 .equ	PA6	= 6	; For compatibility
+                                 .equ	PORTA7	= 7	; Port A Data Register bit 7
+                                 .equ	PA7	= 7	; For compatibility
+                                 
+                                 ; DDRA - Port A Data Direction Register
+                                 .equ	DDA0	= 0	; Data Direction Register, Port A, bit 0
+                                 .equ	DDA1	= 1	; Data Direction Register, Port A, bit 1
+                                 .equ	DDA2	= 2	; Data Direction Register, Port A, bit 2
+                                 .equ	DDA3	= 3	; Data Direction Register, Port A, bit 3
+                                 .equ	DDA4	= 4	; Data Direction Register, Port A, bit 4
+                                 .equ	DDA5	= 5	; Data Direction Register, Port A, bit 5
+                                 .equ	DDA6	= 6	; Data Direction Register, Port A, bit 6
+                                 .equ	DDA7	= 7	; Data Direction Register, Port A, bit 7
+                                 
+                                 ; PINA - Port A Input Pins
+                                 .equ	PINA0	= 0	; Input Pins, Port A bit 0
+                                 .equ	PINA1	= 1	; Input Pins, Port A bit 1
+                                 .equ	PINA2	= 2	; Input Pins, Port A bit 2
+                                 .equ	PINA3	= 3	; Input Pins, Port A bit 3
+                                 .equ	PINA4	= 4	; Input Pins, Port A bit 4
+                                 .equ	PINA5	= 5	; Input Pins, Port A bit 5
+                                 .equ	PINA6	= 6	; Input Pins, Port A bit 6
+                                 .equ	PINA7	= 7	; Input Pins, Port A bit 7
+                                 
+                                 
+                                 ; ***** PORTB ************************
+                                 ; PORTB - Port B Data Register
+                                 .equ	PORTB0	= 0	; Port B Data Register bit 0
+                                 .equ	PB0	= 0	; For compatibility
+                                 .equ	PORTB1	= 1	; Port B Data Register bit 1
+                                 .equ	PB1	= 1	; For compatibility
+                                 .equ	PORTB2	= 2	; Port B Data Register bit 2
+                                 .equ	PB2	= 2	; For compatibility
+                                 .equ	PORTB3	= 3	; Port B Data Register bit 3
+                                 .equ	PB3	= 3	; For compatibility
+                                 .equ	PORTB4	= 4	; Port B Data Register bit 4
+                                 .equ	PB4	= 4	; For compatibility
+                                 .equ	PORTB5	= 5	; Port B Data Register bit 5
+                                 .equ	PB5	= 5	; For compatibility
+                                 .equ	PORTB6	= 6	; Port B Data Register bit 6
+                                 .equ	PB6	= 6	; For compatibility
+                                 .equ	PORTB7	= 7	; Port B Data Register bit 7
+                                 .equ	PB7	= 7	; For compatibility
+                                 
+                                 ; DDRB - Port B Data Direction Register
+                                 .equ	DDB0	= 0	; Port B Data Direction Register bit 0
+                                 .equ	DDB1	= 1	; Port B Data Direction Register bit 1
+                                 .equ	DDB2	= 2	; Port B Data Direction Register bit 2
+                                 .equ	DDB3	= 3	; Port B Data Direction Register bit 3
+                                 .equ	DDB4	= 4	; Port B Data Direction Register bit 4
+                                 .equ	DDB5	= 5	; Port B Data Direction Register bit 5
+                                 .equ	DDB6	= 6	; Port B Data Direction Register bit 6
+                                 .equ	DDB7	= 7	; Port B Data Direction Register bit 7
+                                 
+                                 ; PINB - Port B Input Pins
+                                 .equ	PINB0	= 0	; Port B Input Pins bit 0
+                                 .equ	PINB1	= 1	; Port B Input Pins bit 1
+                                 .equ	PINB2	= 2	; Port B Input Pins bit 2
+                                 .equ	PINB3	= 3	; Port B Input Pins bit 3
+                                 .equ	PINB4	= 4	; Port B Input Pins bit 4
+                                 .equ	PINB5	= 5	; Port B Input Pins bit 5
+                                 .equ	PINB6	= 6	; Port B Input Pins bit 6
+                                 .equ	PINB7	= 7	; Port B Input Pins bit 7
+                                 
+                                 
+                                 ; ***** PORTC ************************
+                                 ; PORTC - Port C Data Register
+                                 .equ	PORTC0	= 0	; Port C Data Register bit 0
+                                 .equ	PC0	= 0	; For compatibility
+                                 .equ	PORTC1	= 1	; Port C Data Register bit 1
+                                 .equ	PC1	= 1	; For compatibility
+                                 .equ	PORTC2	= 2	; Port C Data Register bit 2
+                                 .equ	PC2	= 2	; For compatibility
+                                 .equ	PORTC3	= 3	; Port C Data Register bit 3
+                                 .equ	PC3	= 3	; For compatibility
+                                 .equ	PORTC4	= 4	; Port C Data Register bit 4
+                                 .equ	PC4	= 4	; For compatibility
+                                 .equ	PORTC5	= 5	; Port C Data Register bit 5
+                                 .equ	PC5	= 5	; For compatibility
+                                 .equ	PORTC6	= 6	; Port C Data Register bit 6
+                                 .equ	PC6	= 6	; For compatibility
+                                 .equ	PORTC7	= 7	; Port C Data Register bit 7
+                                 .equ	PC7	= 7	; For compatibility
+                                 
+                                 ; DDRC - Port C Data Direction Register
+                                 .equ	DDC0	= 0	; Port C Data Direction Register bit 0
+                                 .equ	DDC1	= 1	; Port C Data Direction Register bit 1
+                                 .equ	DDC2	= 2	; Port C Data Direction Register bit 2
+                                 .equ	DDC3	= 3	; Port C Data Direction Register bit 3
+                                 .equ	DDC4	= 4	; Port C Data Direction Register bit 4
+                                 .equ	DDC5	= 5	; Port C Data Direction Register bit 5
+                                 .equ	DDC6	= 6	; Port C Data Direction Register bit 6
+                                 .equ	DDC7	= 7	; Port C Data Direction Register bit 7
+                                 
+                                 ; PINC - Port C Input Pins
+                                 .equ	PINC0	= 0	; Port C Input Pins bit 0
+                                 .equ	PINC1	= 1	; Port C Input Pins bit 1
+                                 .equ	PINC2	= 2	; Port C Input Pins bit 2
+                                 .equ	PINC3	= 3	; Port C Input Pins bit 3
+                                 .equ	PINC4	= 4	; Port C Input Pins bit 4
+                                 .equ	PINC5	= 5	; Port C Input Pins bit 5
+                                 .equ	PINC6	= 6	; Port C Input Pins bit 6
+                                 .equ	PINC7	= 7	; Port C Input Pins bit 7
+                                 
+                                 
+                                 ; ***** PORTD ************************
+                                 ; PORTD - Port D Data Register
+                                 .equ	PORTD0	= 0	; Port D Data Register bit 0
+                                 .equ	PD0	= 0	; For compatibility
+                                 .equ	PORTD1	= 1	; Port D Data Register bit 1
+                                 .equ	PD1	= 1	; For compatibility
+                                 .equ	PORTD2	= 2	; Port D Data Register bit 2
+                                 .equ	PD2	= 2	; For compatibility
+                                 .equ	PORTD3	= 3	; Port D Data Register bit 3
+                                 .equ	PD3	= 3	; For compatibility
+                                 .equ	PORTD4	= 4	; Port D Data Register bit 4
+                                 .equ	PD4	= 4	; For compatibility
+                                 .equ	PORTD5	= 5	; Port D Data Register bit 5
+                                 .equ	PD5	= 5	; For compatibility
+                                 .equ	PORTD6	= 6	; Port D Data Register bit 6
+                                 .equ	PD6	= 6	; For compatibility
+                                 .equ	PORTD7	= 7	; Port D Data Register bit 7
+                                 .equ	PD7	= 7	; For compatibility
+                                 
+                                 ; DDRD - Port D Data Direction Register
+                                 .equ	DDD0	= 0	; Port D Data Direction Register bit 0
+                                 .equ	DDD1	= 1	; Port D Data Direction Register bit 1
+                                 .equ	DDD2	= 2	; Port D Data Direction Register bit 2
+                                 .equ	DDD3	= 3	; Port D Data Direction Register bit 3
+                                 .equ	DDD4	= 4	; Port D Data Direction Register bit 4
+                                 .equ	DDD5	= 5	; Port D Data Direction Register bit 5
+                                 .equ	DDD6	= 6	; Port D Data Direction Register bit 6
+                                 .equ	DDD7	= 7	; Port D Data Direction Register bit 7
+                                 
+                                 ; PIND - Port D Input Pins
+                                 .equ	PIND0	= 0	; Port D Input Pins bit 0
+                                 .equ	PIND1	= 1	; Port D Input Pins bit 1
+                                 .equ	PIND2	= 2	; Port D Input Pins bit 2
+                                 .equ	PIND3	= 3	; Port D Input Pins bit 3
+                                 .equ	PIND4	= 4	; Port D Input Pins bit 4
+                                 .equ	PIND5	= 5	; Port D Input Pins bit 5
+                                 .equ	PIND6	= 6	; Port D Input Pins bit 6
+                                 .equ	PIND7	= 7	; Port D Input Pins bit 7
+                                 
+                                 
+                                 ; ***** PORTE ************************
+                                 ; PORTE - Data Register, Port E
+                                 .equ	PORTE0	= 0	; 
+                                 .equ	PE0	= 0	; For compatibility
+                                 .equ	PORTE1	= 1	; 
+                                 .equ	PE1	= 1	; For compatibility
+                                 .equ	PORTE2	= 2	; 
+                                 .equ	PE2	= 2	; For compatibility
+                                 .equ	PORTE3	= 3	; 
+                                 .equ	PE3	= 3	; For compatibility
+                                 .equ	PORTE4	= 4	; 
+                                 .equ	PE4	= 4	; For compatibility
+                                 .equ	PORTE5	= 5	; 
+                                 .equ	PE5	= 5	; For compatibility
+                                 .equ	PORTE6	= 6	; 
+                                 .equ	PE6	= 6	; For compatibility
+                                 .equ	PORTE7	= 7	; 
+                                 .equ	PE7	= 7	; For compatibility
+                                 
+                                 ; DDRE - Data Direction Register, Port E
+                                 .equ	DDE0	= 0	; 
+                                 .equ	DDE1	= 1	; 
+                                 .equ	DDE2	= 2	; 
+                                 .equ	DDE3	= 3	; 
+                                 .equ	DDE4	= 4	; 
+                                 .equ	DDE5	= 5	; 
+                                 .equ	DDE6	= 6	; 
+                                 .equ	DDE7	= 7	; 
+                                 
+                                 ; PINE - Input Pins, Port E
+                                 .equ	PINE0	= 0	; 
+                                 .equ	PINE1	= 1	; 
+                                 .equ	PINE2	= 2	; 
+                                 .equ	PINE3	= 3	; 
+                                 .equ	PINE4	= 4	; 
+                                 .equ	PINE5	= 5	; 
+                                 .equ	PINE6	= 6	; 
+                                 .equ	PINE7	= 7	; 
+                                 
+                                 
+                                 ; ***** PORTF ************************
+                                 ; PORTF - Data Register, Port F
+                                 .equ	PORTF0	= 0	; 
+                                 .equ	PF0	= 0	; For compatibility
+                                 .equ	PORTF1	= 1	; 
+                                 .equ	PF1	= 1	; For compatibility
+                                 .equ	PORTF2	= 2	; 
+                                 .equ	PF2	= 2	; For compatibility
+                                 .equ	PORTF3	= 3	; 
+                                 .equ	PF3	= 3	; For compatibility
+                                 .equ	PORTF4	= 4	; 
+                                 .equ	PF4	= 4	; For compatibility
+                                 .equ	PORTF5	= 5	; 
+                                 .equ	PF5	= 5	; For compatibility
+                                 .equ	PORTF6	= 6	; 
+                                 .equ	PF6	= 6	; For compatibility
+                                 .equ	PORTF7	= 7	; 
+                                 .equ	PF7	= 7	; For compatibility
+                                 
+                                 ; DDRF - Data Direction Register, Port F
+                                 .equ	DDF0	= 0	; 
+                                 .equ	DDF1	= 1	; 
+                                 .equ	DDF2	= 2	; 
+                                 .equ	DDF3	= 3	; 
+                                 .equ	DDF4	= 4	; 
+                                 .equ	DDF5	= 5	; 
+                                 .equ	DDF6	= 6	; 
+                                 .equ	DDF7	= 7	; 
+                                 
+                                 ; PINF - Input Pins, Port F
+                                 .equ	PINF0	= 0	; 
+                                 .equ	PINF1	= 1	; 
+                                 .equ	PINF2	= 2	; 
+                                 .equ	PINF3	= 3	; 
+                                 .equ	PINF4	= 4	; 
+                                 .equ	PINF5	= 5	; 
+                                 .equ	PINF6	= 6	; 
+                                 .equ	PINF7	= 7	; 
+                                 
+                                 
+                                 ; ***** PORTG ************************
+                                 ; PORTG - Data Register, Port G
+                                 .equ	PORTG0	= 0	; 
+                                 .equ	PG0	= 0	; For compatibility
+                                 .equ	PORTG1	= 1	; 
+                                 .equ	PG1	= 1	; For compatibility
+                                 .equ	PORTG2	= 2	; 
+                                 .equ	PG2	= 2	; For compatibility
+                                 .equ	PORTG3	= 3	; 
+                                 .equ	PG3	= 3	; For compatibility
+                                 .equ	PORTG4	= 4	; 
+                                 .equ	PG4	= 4	; For compatibility
+                                 
+                                 ; DDRG - Data Direction Register, Port G
+                                 .equ	DDG0	= 0	; 
+                                 .equ	DDG1	= 1	; 
+                                 .equ	DDG2	= 2	; 
+                                 .equ	DDG3	= 3	; 
+                                 .equ	DDG4	= 4	; 
+                                 
+                                 ; PING - Input Pins, Port G
+                                 .equ	PING0	= 0	; 
+                                 .equ	PING1	= 1	; 
+                                 .equ	PING2	= 2	; 
+                                 .equ	PING3	= 3	; 
+                                 .equ	PING4	= 4	; 
+                                 
+                                 
+                                 ; ***** TIMER_COUNTER_0 **************
+                                 ; TCCR0 - Timer/Counter Control Register
+                                 .equ	CS00	= 0	; Clock Select 0
+                                 .equ	CS01	= 1	; Clock Select 1
+                                 .equ	CS02	= 2	; Clock Select 2
+                                 .equ	WGM01	= 3	; Waveform Generation Mode 1
+                                 .equ	CTC0	= WGM01	; For compatibility
+                                 .equ	COM00	= 4	; Compare match Output Mode 0
+                                 .equ	COM01	= 5	; Compare Match Output Mode 1
+                                 .equ	WGM00	= 6	; Waveform Generation Mode 0
+                                 .equ	PWM0	= WGM00	; For compatibility
+                                 .equ	FOC0	= 7	; Force Output Compare
+                                 
+                                 ; TCNT0 - Timer/Counter Register
+                                 .equ	TCNT0_0	= 0	; 
+                                 .equ	TCNT0_1	= 1	; 
+                                 .equ	TCNT0_2	= 2	; 
+                                 .equ	TCNT0_3	= 3	; 
+                                 .equ	TCNT0_4	= 4	; 
+                                 .equ	TCNT0_5	= 5	; 
+                                 .equ	TCNT0_6	= 6	; 
+                                 .equ	TCNT0_7	= 7	; 
+                                 
+                                 ; OCR0 - Output Compare Register
+                                 .equ	OCR0_0	= 0	; 
+                                 .equ	OCR0_1	= 1	; 
+                                 .equ	OCR0_2	= 2	; 
+                                 .equ	OCR0_3	= 3	; 
+                                 .equ	OCR0_4	= 4	; 
+                                 .equ	OCR0_5	= 5	; 
+                                 .equ	OCR0_6	= 6	; 
+                                 .equ	OCR0_7	= 7	; 
+                                 
+                                 ; ASSR - Asynchronus Status Register
+                                 .equ	TCR0UB	= 0	; Timer/Counter Control Register 0 Update Busy
+                                 .equ	OCR0UB	= 1	; Output Compare register 0 Busy
+                                 .equ	TCN0UB	= 2	; Timer/Counter0 Update Busy
+                                 .equ	AS0	= 3	; Asynchronus Timer/Counter 0
+                                 
+                                 ; TIMSK - Timer/Counter Interrupt Mask Register
+                                 .equ	TOIE0	= 0	; Timer/Counter0 Overflow Interrupt Enable
+                                 .equ	OCIE0	= 1	; Timer/Counter0 Output Compare Match Interrupt register
+                                 
+                                 ; TIFR - Timer/Counter Interrupt Flag register
+                                 .equ	TOV0	= 0	; Timer/Counter0 Overflow Flag
+                                 .equ	OCF0	= 1	; Output Compare Flag 0
+                                 
+                                 ; SFIOR - Special Function IO Register
+                                 ;.equ	PSR0	= 1	; Prescaler Reset Timer/Counter0
+                                 ;.equ	TSM	= 7	; Timer/Counter Synchronization Mode
+                                 
+                                 
+                                 ; ***** TIMER_COUNTER_1 **************
+                                 ; TIMSK - Timer/Counter Interrupt Mask Register
+                                 .equ	TOIE1	= 2	; Timer/Counter1 Overflow Interrupt Enable
+                                 .equ	OCIE1B	= 3	; Timer/Counter1 Output CompareB Match Interrupt Enable
+                                 .equ	OCIE1A	= 4	; Timer/Counter1 Output CompareA Match Interrupt Enable
+                                 .equ	TICIE1	= 5	; Timer/Counter1 Input Capture Interrupt Enable
+                                 
+                                 ; ETIMSK - Extended Timer/Counter Interrupt Mask Register
+                                 .equ	OCIE1C	= 0	; Timer/Counter 1, Output Compare Match C Interrupt Enable
+                                 
+                                 ; TIFR - Timer/Counter Interrupt Flag register
+                                 .equ	TOV1	= 2	; Timer/Counter1 Overflow Flag
+                                 .equ	OCF1B	= 3	; Output Compare Flag 1B
+                                 .equ	OCF1A	= 4	; Output Compare Flag 1A
+                                 .equ	ICF1	= 5	; Input Capture Flag 1
+                                 
+                                 ; ETIFR - Extended Timer/Counter Interrupt Flag register
+                                 .equ	OCF1C	= 0	; Timer/Counter 1, Output Compare C Match Flag
+                                 
+                                 ; SFIOR - Special Function IO Register
+                                 ;.equ	PSR321	= 0	; Prescaler Reset, T/C3, T/C2, T/C1
+                                 ;.equ	TSM	= 7	; Timer/Counter Synchronization Mode
+                                 
+                                 ; TCCR1A - Timer/Counter1 Control Register A
+                                 .equ	WGM10	= 0	; Waveform Generation Mode Bit 0
+                                 .equ	PWM10	= WGM10	; For compatibility
+                                 .equ	WGM11	= 1	; Waveform Generation Mode Bit 1
+                                 .equ	PWM11	= WGM11	; For compatibility
+                                 .equ	COM1C0	= 2	; Compare Output Mode 1C, bit 0
+                                 .equ	COM1C1	= 3	; Compare Output Mode 1C, bit 1
+                                 .equ	COM1B0	= 4	; Compare Output Mode 1B, bit 0
+                                 .equ	COM1B1	= 5	; Compare Output Mode 1B, bit 1
+                                 .equ	COM1A0	= 6	; Compare Ouput Mode 1A, bit 0
+                                 .equ	COM1A1	= 7	; Compare Output Mode 1A, bit 1
+                                 
+                                 ; TCCR1B - Timer/Counter1 Control Register B
+                                 .equ	CS10	= 0	; Clock Select bit 0
+                                 .equ	CS11	= 1	; Clock Select 1 bit 1
+                                 .equ	CS12	= 2	; Clock Select1 bit 2
+                                 .equ	WGM12	= 3	; Waveform Generation Mode
+                                 .equ	CTC10	= WGM12	; For compatibility
+                                 .equ	WGM13	= 4	; Waveform Generation Mode
+                                 .equ	CTC11	= WGM13	; For compatibility
+                                 .equ	ICES1	= 6	; Input Capture 1 Edge Select
+                                 .equ	ICNC1	= 7	; Input Capture 1 Noise Canceler
+                                 
+                                 ; TCCR1C - Timer/Counter1 Control Register C
+                                 .equ	FOC1C	= 5	; Force Output Compare for channel C
+                                 .equ	FOC1B	= 6	; Force Output Compare for channel B
+                                 .equ	FOC1A	= 7	; Force Output Compare for channel A
+                                 
+                                 
+                                 ; ***** TIMER_COUNTER_2 **************
+                                 ; TCCR2 - Timer/Counter Control Register
+                                 .equ	CS20	= 0	; Clock Select
+                                 .equ	CS21	= 1	; Clock Select
+                                 .equ	CS22	= 2	; Clock Select
+                                 .equ	WGM21	= 3	; Waveform Generation Mode
+                                 .equ	CTC2	= WGM21	; For compatibility
+                                 .equ	COM20	= 4	; Compare Match Output Mode
+                                 .equ	COM21	= 5	; Compare Match Output Mode
+                                 .equ	WGM20	= 6	; Wafeform Generation Mode
+                                 .equ	PWM2	= WGM20	; For compatibility
+                                 .equ	FOC2	= 7	; Force Output Compare
+                                 
+                                 ; TCNT2 - Timer/Counter Register
+                                 .equ	TCNT2_0	= 0	; Timer/Counter Register Bit 0
+                                 .equ	TCNT2_1	= 1	; Timer/Counter Register Bit 1
+                                 .equ	TCNT2_2	= 2	; Timer/Counter Register Bit 2
+                                 .equ	TCNT2_3	= 3	; Timer/Counter Register Bit 3
+                                 .equ	TCNT2_4	= 4	; Timer/Counter Register Bit 4
+                                 .equ	TCNT2_5	= 5	; Timer/Counter Register Bit 5
+                                 .equ	TCNT2_6	= 6	; Timer/Counter Register Bit 6
+                                 .equ	TCNT2_7	= 7	; Timer/Counter Register Bit 7
+                                 
+                                 ; OCR2 - Output Compare Register
+                                 .equ	OCR2_0	= 0	; Output Compare Register Bit 0
+                                 .equ	OCR2_1	= 1	; Output Compare Register Bit 1
+                                 .equ	OCR2_2	= 2	; Output Compare Register Bit 2
+                                 .equ	OCR2_3	= 3	; Output Compare Register Bit 3
+                                 .equ	OCR2_4	= 4	; Output Compare Register Bit 4
+                                 .equ	OCR2_5	= 5	; Output Compare Register Bit 5
+                                 .equ	OCR2_6	= 6	; Output Compare Register Bit 6
+                                 .equ	OCR2_7	= 7	; Output Compare Register Bit 7
+                                 
+                                 ; TIMSK - 
+                                 .equ	TOIE2	= 6	; 
+                                 .equ	OCIE2	= 7	; 
+                                 
+                                 ; TIFR - Timer/Counter Interrupt Flag Register
+                                 .equ	TOV2	= 6	; Timer/Counter2 Overflow Flag
+                                 .equ	OCF2	= 7	; Output Compare Flag 2
+                                 
+                                 
+                                 ; ***** TIMER_COUNTER_3 **************
+                                 ; ETIMSK - Extended Timer/Counter Interrupt Mask Register
+                                 .equ	OCIE3C	= 1	; Timer/Counter3, Output Compare Match Interrupt Enable
+                                 .equ	TOIE3	= 2	; Timer/Counter3 Overflow Interrupt Enable
+                                 .equ	OCIE3B	= 3	; Timer/Counter3 Output CompareB Match Interrupt Enable
+                                 .equ	OCIE3A	= 4	; Timer/Counter3 Output CompareA Match Interrupt Enable
+                                 .equ	TICIE3	= 5	; Timer/Counter3 Input Capture Interrupt Enable
+                                 
+                                 ; ETIFR - Extended Timer/Counter Interrupt Flag register
+                                 .equ	OCF3C	= 1	; Timer/Counter3 Output Compare C Match Flag
+                                 .equ	TOV3	= 2	; Timer/Counter3 Overflow Flag
+                                 .equ	OCF3B	= 3	; Output Compare Flag 1B
+                                 .equ	OCF3A	= 4	; Output Compare Flag 1A
+                                 .equ	ICF3	= 5	; Input Capture Flag 1
+                                 
+                                 ; SFIOR - Special Function IO Register
+                                 ;.equ	PSR321	= 0	; Prescaler Reset, T/C3, T/C2, T/C1
+                                 ;.equ	PSR1	= PSR321	; For compatibility
+                                 ;.equ	PSR2	= PSR321	; For compatibility
+                                 ;.equ	TSM	= 7	; Timer/Counter Synchronization Mode
+                                 
+                                 ; TCCR3A - Timer/Counter3 Control Register A
+                                 .equ	WGM30	= 0	; Waveform Generation Mode Bit 0
+                                 .equ	PWM30	= WGM30	; For compatibility
+                                 .equ	WGM31	= 1	; Waveform Generation Mode Bit 1
+                                 .equ	PWM31	= WGM31	; For compatibility
+                                 .equ	COM3C0	= 2	; Compare Output Mode 3C, bit 0
+                                 .equ	COM3C1	= 3	; Compare Output Mode 3C, bit 1
+                                 .equ	COM3B0	= 4	; Compare Output Mode 3B, bit 0
+                                 .equ	COM3B1	= 5	; Compare Output Mode 3B, bit 1
+                                 .equ	COM3A0	= 6	; Comparet Ouput Mode 3A, bit 0
+                                 .equ	COM3A1	= 7	; Compare Output Mode 3A, bit 1
+                                 
+                                 ; TCCR3B - Timer/Counter3 Control Register B
+                                 .equ	CS30	= 0	; Clock Select 3 bit 0
+                                 .equ	CS31	= 1	; Clock Select 3 bit 1
+                                 .equ	CS32	= 2	; Clock Select3 bit 2
+                                 .equ	WGM32	= 3	; Waveform Generation Mode
+                                 .equ	CTC30	= WGM32	; For compatibility
+                                 .equ	WGM33	= 4	; Waveform Generation Mode
+                                 .equ	CTC31	= WGM33	; For compatibility
+                                 .equ	ICES3	= 6	; Input Capture 3 Edge Select
+                                 .equ	ICNC3	= 7	; Input Capture 3  Noise Canceler
+                                 
+                                 ; TCCR3C - Timer/Counter3 Control Register C
+                                 .equ	FOC3C	= 5	; Force Output Compare for channel C
+                                 .equ	FOC3B	= 6	; Force Output Compare for channel B
+                                 .equ	FOC3A	= 7	; Force Output Compare for channel A
+                                 
+                                 ; TCNT3L - Timer/Counter3 Low Byte
+                                 .equ	TCN3L0	= 0	; Timer/Counter 3 bit 0
+                                 .equ	TCN3L1	= 1	; Timer/Counter 3 bit 1
+                                 .equ	TCN3L2	= 2	; Timer/Counter 3 bit 2
+                                 .equ	TCN3L3	= 3	; Timer/Counter 3 bit 3
+                                 .equ	TCN3L4	= 4	; Timer/Counter 3 bit 4
+                                 .equ	TCN3L5	= 5	; Timer/Counter 3 bit 5
+                                 .equ	TCN3L6	= 6	; Timer/Counter 3 bit 6
+                                 .equ	TCN3L7	= 7	; Timer/Counter 3 bit 7
+                                 
+                                 
+                                 ; ***** WATCHDOG *********************
+                                 ; WDTCR - Watchdog Timer Control Register
+                                 .equ	WDTCSR	= WDTCR	; For compatibility
+                                 .equ	WDP0	= 0	; Watch Dog Timer Prescaler bit 0
+                                 .equ	WDP1	= 1	; Watch Dog Timer Prescaler bit 1
+                                 .equ	WDP2	= 2	; Watch Dog Timer Prescaler bit 2
+                                 .equ	WDE	= 3	; Watch Dog Enable
+                                 .equ	WDCE	= 4	; Watchdog Change Enable
+                                 .equ	WDTOE	= WDCE	; For compatibility
+                                 
+                                 
+                                 ; ***** AD_CONVERTER *****************
+                                 ; ADMUX - The ADC multiplexer Selection Register
+                                 .equ	MUX0	= 0	; Analog Channel and Gain Selection Bits
+                                 .equ	MUX1	= 1	; Analog Channel and Gain Selection Bits
+                                 .equ	MUX2	= 2	; Analog Channel and Gain Selection Bits
+                                 .equ	MUX3	= 3	; Analog Channel and Gain Selection Bits
+                                 .equ	MUX4	= 4	; Analog Channel and Gain Selection Bits
+                                 .equ	ADLAR	= 5	; Left Adjust Result
+                                 .equ	REFS0	= 6	; Reference Selection Bit 0
+                                 .equ	REFS1	= 7	; Reference Selection Bit 1
+                                 
+                                 ; ADCSRA - The ADC Control and Status register
+                                 .equ	ADCSR	= ADCSRA	; For compatibility
+                                 .equ	ADPS0	= 0	; ADC  Prescaler Select Bits
+                                 .equ	ADPS1	= 1	; ADC  Prescaler Select Bits
+                                 .equ	ADPS2	= 2	; ADC  Prescaler Select Bits
+                                 .equ	ADIE	= 3	; ADC Interrupt Enable
+                                 .equ	ADIF	= 4	; ADC Interrupt Flag
+                                 .equ	ADFR	= 5	; ADC  Free Running Select
+                                 .equ	ADSC	= 6	; ADC Start Conversion
+                                 .equ	ADEN	= 7	; ADC Enable
+                                 
+                                 ; ADCH - ADC Data Register High Byte
+                                 .equ	ADCH0	= 0	; ADC Data Register High Byte Bit 0
+                                 .equ	ADCH1	= 1	; ADC Data Register High Byte Bit 1
+                                 .equ	ADCH2	= 2	; ADC Data Register High Byte Bit 2
+                                 .equ	ADCH3	= 3	; ADC Data Register High Byte Bit 3
+                                 .equ	ADCH4	= 4	; ADC Data Register High Byte Bit 4
+                                 .equ	ADCH5	= 5	; ADC Data Register High Byte Bit 5
+                                 .equ	ADCH6	= 6	; ADC Data Register High Byte Bit 6
+                                 .equ	ADCH7	= 7	; ADC Data Register High Byte Bit 7
+                                 
+                                 ; ADCL - ADC Data Register Low Byte
+                                 .equ	ADCL0	= 0	; ADC Data Register Low Byte Bit 0
+                                 .equ	ADCL1	= 1	; ADC Data Register Low Byte Bit 1
+                                 .equ	ADCL2	= 2	; ADC Data Register Low Byte Bit 2
+                                 .equ	ADCL3	= 3	; ADC Data Register Low Byte Bit 3
+                                 .equ	ADCL4	= 4	; ADC Data Register Low Byte Bit 4
+                                 .equ	ADCL5	= 5	; ADC Data Register Low Byte Bit 5
+                                 .equ	ADCL6	= 6	; ADC Data Register Low Byte Bit 6
+                                 .equ	ADCL7	= 7	; ADC Data Register Low Byte Bit 7
+                                 
+                                 
+                                 
+                                 ; ***** LOCKSBITS ********************************************************
+                                 .equ	LB1	= 0	; Lock bit
+                                 .equ	LB2	= 1	; Lock bit
+                                 .equ	BLB01	= 2	; Boot Lock bit
+                                 .equ	BLB02	= 3	; Boot Lock bit
+                                 .equ	BLB11	= 4	; Boot lock bit
+                                 .equ	BLB12	= 5	; Boot lock bit
+                                 
+                                 
+                                 ; ***** FUSES ************************************************************
+                                 ; LOW fuse bits
+                                 .equ	CKSEL0	= 0	; Select Clock Source
+                                 .equ	CKSEL1	= 1	; Select Clock Source
+                                 .equ	CKSEL2	= 2	; Select Clock Source
+                                 .equ	CKSEL3	= 3	; Select Clock Source
+                                 .equ	SUT0	= 4	; Select start-up time
+                                 .equ	SUT1	= 5	; Select start-up time
+                                 .equ	BODEN	= 6	; Brown out detector enable
+                                 .equ	BODLEVEL	= 7	; Brown out detector trigger level
+                                 
+                                 ; HIGH fuse bits
+                                 .equ	BOOTRST	= 0	; Select Reset Vector
+                                 .equ	BOOTSZ0	= 1	; Select Boot Size
+                                 .equ	BOOTSZ1	= 2	; Select Boot Size
+                                 .equ	EESAVE	= 3	; EEPROM memory is preserved through chip erase
+                                 .equ	CKOPT	= 4	; Oscillator Options
+                                 .equ	SPIEN	= 5	; Enable Serial programming and Data Downloading
+                                 .equ	JTAGEN	= 6	; Enable JTAG
+                                 .equ	OCDEN	= 7	; Enable OCD
+                                 
+                                 ; EXTENDED fuse bits
+                                 .equ	WDTON	= 0	; Watchdog timer always on
+                                 .equ	M103C	= 1	; ATmega103 compatibility mode
+                                 
+                                 
+                                 
+                                 ; ***** CPU REGISTER DEFINITIONS *****************************************
+                                 .def	XH	= r27
+                                 .def	XL	= r26
+                                 .def	YH	= r29
+                                 .def	YL	= r28
+                                 .def	ZH	= r31
+                                 .def	ZL	= r30
+                                 
+                                 
+                                 
+                                 ; ***** DATA MEMORY DECLARATIONS *****************************************
+                                 .equ	FLASHEND	= 0xffff	; Note: Word address
+                                 .equ	IOEND	= 0x00ff
+                                 .equ	SRAM_START	= 0x0100
+                                 .equ	SRAM_SIZE	= 4096
+                                 .equ	RAMEND	= 0x10ff
+                                 .equ	XRAMEND	= 0xffff
+                                 .equ	E2END	= 0x0fff
+                                 .equ	EEPROMEND	= 0x0fff
+                                 .equ	EEADRBITS	= 12
+                                 #pragma AVRPART MEMORY PROG_FLASH 131072
+                                 #pragma AVRPART MEMORY EEPROM 4096
+                                 #pragma AVRPART MEMORY INT_SRAM SIZE 4096
+                                 #pragma AVRPART MEMORY INT_SRAM START_ADDR 0x100
+                                 
+                                 
+                                 
+                                 ; ***** BOOTLOADER DECLARATIONS ******************************************
+                                 .equ	NRWW_START_ADDR	= 0xf000
+                                 .equ	NRWW_STOP_ADDR	= 0xffff
+                                 .equ	RWW_START_ADDR	= 0x0
+                                 .equ	RWW_STOP_ADDR	= 0xefff
+                                 .equ	PAGESIZE	= 128
+                                 .equ	FIRSTBOOTSTART	= 0xfe00
+                                 .equ	SECONDBOOTSTART	= 0xfc00
+                                 .equ	THIRDBOOTSTART	= 0xf800
+                                 .equ	FOURTHBOOTSTART	= 0xf000
+                                 .equ	SMALLBOOTSTART	= FIRSTBOOTSTART
+                                 .equ	LARGEBOOTSTART	= FOURTHBOOTSTART
+                                 
+                                 
+                                 
+                                 ; ***** INTERRUPT VECTORS ************************************************
+                                 .equ	INT0addr	= 0x0002	; External Interrupt Request 0
+                                 .equ	INT1addr	= 0x0004	; External Interrupt Request 1
+                                 .equ	INT2addr	= 0x0006	; External Interrupt Request 2
+                                 .equ	INT3addr	= 0x0008	; External Interrupt Request 3
+                                 .equ	INT4addr	= 0x000a	; External Interrupt Request 4
+                                 .equ	INT5addr	= 0x000c	; External Interrupt Request 5
+                                 .equ	INT6addr	= 0x000e	; External Interrupt Request 6
+                                 .equ	INT7addr	= 0x0010	; External Interrupt Request 7
+                                 .equ	OC2addr	= 0x0012	; Timer/Counter2 Compare Match
+                                 .equ	OVF2addr	= 0x0014	; Timer/Counter2 Overflow
+                                 .equ	ICP1addr	= 0x0016	; Timer/Counter1 Capture Event
+                                 .equ	OC1Aaddr	= 0x0018	; Timer/Counter1 Compare Match A
+                                 .equ	OC1Baddr	= 0x001a	; Timer/Counter Compare Match B
+                                 .equ	OVF1addr	= 0x001c	; Timer/Counter1 Overflow
+                                 .equ	OC0addr	= 0x001e	; Timer/Counter0 Compare Match
+                                 .equ	OVF0addr	= 0x0020	; Timer/Counter0 Overflow
+                                 .equ	SPIaddr	= 0x0022	; SPI Serial Transfer Complete
+                                 .equ	URXC0addr	= 0x0024	; USART0, Rx Complete
+                                 .equ	UDRE0addr	= 0x0026	; USART0 Data Register Empty
+                                 .equ	UTXC0addr	= 0x0028	; USART0, Tx Complete
+                                 .equ	ADCCaddr	= 0x002a	; ADC Conversion Complete
+                                 .equ	ERDYaddr	= 0x002c	; EEPROM Ready
+                                 .equ	ACIaddr	= 0x002e	; Analog Comparator
+                                 .equ	OC1Caddr	= 0x0030	; Timer/Counter1 Compare Match C
+                                 .equ	ICP3addr	= 0x0032	; Timer/Counter3 Capture Event
+                                 .equ	OC3Aaddr	= 0x0034	; Timer/Counter3 Compare Match A
+                                 .equ	OC3Baddr	= 0x0036	; Timer/Counter3 Compare Match B
+                                 .equ	OC3Caddr	= 0x0038	; Timer/Counter3 Compare Match C
+                                 .equ	OVF3addr	= 0x003a	; Timer/Counter3 Overflow
+                                 .equ	URXC1addr	= 0x003c	; USART1, Rx Complete
+                                 .equ	UDRE1addr	= 0x003e	; USART1, Data Register Empty
+                                 .equ	UTXC1addr	= 0x0040	; USART1, Tx Complete
+                                 .equ	TWIaddr	= 0x0042	; 2-wire Serial Interface
+                                 .equ	SPMRaddr	= 0x0044	; Store Program Memory Read
+                                 
+                                 .equ	INT_VECTORS_SIZE	= 70	; size in words
+                                 
+                                 #endif  /* _M128DEF_INC_ */
+                                 
+                                 ; ***** END OF FILE ******************************************************
+                                 
+                                 ; asmY.asm
+                                 ;
+                                 ; Created: 2018/9/19 16:21:28
+                                 ; Author : Yunjie Yi
+                                 ;
+                                 
+                                 ; Warnning: before run, set R19 - R16, R23 - R20, and a,b,c, R13(u)
+                                 .include "m128def.inc"
+                                 
+                                 ;***** Created: 2011-02-09 12:03 ******* Source: ATmega128.xml ***********
+                                 ;*************************************************************************
+                                 ;* A P P L I C A T I O N   N O T E   F O R   T H E   A V R   F A M I L Y
+                                 ;* 
+                                 ;* Number            : AVR000
+                                 ;* File Name         : "m128def.inc"
+                                 ;* Title             : Register/Bit Definitions for the ATmega128
+                                 ;* Date              : 2011-02-09
+                                 ;* Version           : 2.35
+                                 ;* Support E-mail    : avr@atmel.com
+                                 ;* Target MCU        : ATmega128
+                                 ;* 
+                                 ;* DESCRIPTION
+                                 ;* When including this file in the assembly program file, all I/O register 
+                                 ;* names and I/O register bit names appearing in the data book can be used.
+                                 ;* In addition, the six registers forming the three data pointers X, Y and 
+                                 ;* Z have been assigned names XL - ZH. Highest RAM address for Internal 
+                                 ;* SRAM is also defined 
+                                 ;* 
+                                 ;* The Register names are represented by their hexadecimal address.
+                                 ;* 
+                                 ;* The Register Bit names are represented by their bit number (0-7).
+                                 ;* 
+                                 ;* Please observe the difference in using the bit names with instructions
+                                 ;* such as "sbr"/"cbr" (set/clear bit in register) and "sbrs"/"sbrc"
+                                 ;* (skip if bit in register set/cleared). The following example illustrates
+                                 ;* this:
+                                 ;* 
+                                 ;* in    r16,PORTB             ;read PORTB latch
+                                 ;* sbr   r16,(1<<PB6)+(1<<PB5) ;set PB6 and PB5 (use masks, not bit#)
+                                 ;* out   PORTB,r16             ;output to PORTB
+                                 ;* 
+                                 ;* in    r16,TIFR              ;read the Timer Interrupt Flag Register
+                                 ;* sbrc  r16,TOV0              ;test the overflow flag (use bit#)
+                                 ;* rjmp  TOV0_is_set           ;jump if set
+                                 ;* ...                         ;otherwise do something else
+                                 ;*************************************************************************
+                                 
+                                 #ifndef _M128DEF_INC_
+                                 #endif  /* _M128DEF_INC_ */
+                                 
+                                 ; ***** END OF FILE ******************************************************
+                                 main:
+                                 ;; Initialize the stack pointer begin --------------
+000000 e1c0                      INIT: ldi r28, high(RAMEND) ; Initialize the stack pointer high byte
+000001 bfce                      out SPH, r28
+000002 efcf                      ldi r28, low(RAMEND) ; Initialize the stack pointer low byte
+000003 bfcd                      out SPL, r28
+                                 ;; Initialize the stack pointer end--------------------
+                                 
+                                 ;;;;;; VECTOR 1 BEGIN��WG
+                                 
+000004 e040                      LDI R20, 0x00
+000005 9340 0521                 STS $521, R20
+000007 e142                      LDI R20, 0x12
+000008 9340 0522                 STS $522, R20
+00000a e04a                      LDI R20, 0x0A
+00000b 9340 0523                 STS $523, R20
+00000d e44b                      LDI R20, 0x4B
+00000e 9340 0524                 STS $524, R20
+000010 e646                      LDI R20, 0x66
+000011 9340 0525                 STS $525, R20
+000013 e04c                      LDI R20, 0x0C
+000014 9340 0526                 STS $526, R20
+000016 e448                      LDI R20, 0x48
+000017 9340 0527                 STS $527, R20
+000019 e743                      LDI R20, 0x73
+00001a 9340 0528                 STS $528, R20
+00001c e749                      LDI R20, 0x79
+00001d 9340 0529                 STS $529, R20
+00001f e34e                      LDI R20, 0x3E
+000020 9340 052a                 STS $52A, R20
+000022 e641                      LDI R20, 0x61
+000023 9340 052b                 STS $52B, R20
+000025 e541                      LDI R20, 0x51
+000026 9340 052c                 STS $52C, R20
+000028 e041                      LDI R20, 0x01
+000029 9340 052d                 STS $52D, R20
+00002b e145                      LDI R20, 0x15
+00002c 9340 052e                 STS $52E, R20
+00002e e147                      LDI R20, 0x17
+00002f 9340 052f                 STS $52F, R20
+000031 e04e                      LDI R20, 0x0E
+000032 9340 0530                 STS $530, R20
+                                 
+000034 e74e                      LDI R20, 0x7E
+000035 9340 0531                 STS $531, R20
+000037 e343                      LDI R20, 0x33
+000038 9340 0532                 STS $532, R20
+00003a e648                      LDI R20, 0x68
+00003b 9340 0533                 STS $533, R20
+00003d e346                      LDI R20, 0x36
+00003e 9340 0534                 STS $534, R20
+000040 e442                      LDI R20, 0x42
+000041 9340 0535                 STS $535, R20
+000043 e345                      LDI R20, 0x35
+000044 9340 0536                 STS $536, R20
+000046 e347                      LDI R20, 0x37
+000047 9340 0537                 STS $537, R20
+000049 e54e                      LDI R20, 0x5E
+00004a 9340 0538                 STS $538, R20
+00004c e543                      LDI R20, 0x53
+00004d 9340 0539                 STS $539, R20
+00004f e44c                      LDI R20, 0x4C
+000050 9340 053a                 STS $53A, R20
+000052 e34f                      LDI R20, 0x3F
+000053 9340 053b                 STS $53B, R20
+000055 e544                      LDI R20, 0x54
+000056 9340 053c                 STS $53C, R20
+000058 e548                      LDI R20, 0x58
+000059 9340 053d                 STS $53D, R20
+00005b e64e                      LDI R20, 0x6E
+00005c 9340 053e                 STS $53E, R20
+00005e e546                      LDI R20, 0x56
+00005f 9340 053f                 STS $53F, R20
+000061 e24a                      LDI R20, 0x2A
+000062 9340 0540                 STS $540, R20
+                                 
+000064 e14d                      LDI R20, 0x1D
+000065 9340 0541                 STS $541, R20
+000067 e245                      LDI R20, 0x25
+000068 9340 0542                 STS $542, R20
+00006a e64d                      LDI R20, 0x6D
+00006b 9340 0543                 STS $543, R20
+00006d e645                      LDI R20, 0x65
+00006e 9340 0544                 STS $544, R20
+000070 e54b                      LDI R20, 0x5B
+000071 9340 0545                 STS $545, R20
+000073 e741                      LDI R20, 0x71
+000074 9340 0546                 STS $546, R20
+000076 e24f                      LDI R20, 0x2F
+000077 9340 0547                 STS $547, R20
+000079 e240                      LDI R20, 0x20
+00007a 9340 0548                 STS $548, R20
+00007c e046                      LDI R20, 0x06
+00007d 9340 0549                 STS $549, R20
+00007f e148                      LDI R20, 0x18
+000080 9340 054a                 STS $54A, R20
+000082 e249                      LDI R20, 0x29
+000083 9340 054b                 STS $54B, R20
+000085 e34a                      LDI R20, 0x3A
+000086 9340 054c                 STS $54C, R20
+000088 e04d                      LDI R20, 0x0D
+000089 9340 054d                 STS $54D, R20
+00008b e74a                      LDI R20, 0x7A
+00008c 9340 054e                 STS $54E, R20
+00008e e64c                      LDI R20, 0x6C
+00008f 9340 054f                 STS $54F, R20
+000091 e14b                      LDI R20, 0x1B
+000092 9340 0550                 STS $550, R20
+                                 
+000094 e149                      LDI R20, 0x19
+000095 9340 0551                 STS $551, R20
+000097 e443                      LDI R20, 0x43
+000098 9340 0552                 STS $552, R20
+00009a e740                      LDI R20, 0x70
+00009b 9340 0553                 STS $553, R20
+00009d e441                      LDI R20, 0x41
+00009e 9340 0554                 STS $554, R20
+0000a0 e449                      LDI R20, 0x49
+0000a1 9340 0555                 STS $555, R20
+0000a3 e242                      LDI R20, 0x22
+0000a4 9340 0556                 STS $556, R20
+0000a6 e747                      LDI R20, 0x77
+0000a7 9340 0557                 STS $557, R20
+0000a9 e640                      LDI R20, 0x60
+0000aa 9340 0558                 STS $558, R20
+0000ac e44f                      LDI R20, 0x4F
+0000ad 9340 0559                 STS $559, R20
+0000af e445                      LDI R20, 0x45
+0000b0 9340 055a                 STS $55A, R20
+0000b2 e545                      LDI R20, 0x55
+0000b3 9340 055b                 STS $55B, R20
+0000b5 e042                      LDI R20, 0x02
+0000b6 9340 055c                 STS $55C, R20
+0000b8 e643                      LDI R20, 0x63
+0000b9 9340 055d                 STS $55D, R20
+0000bb e447                      LDI R20, 0x47
+0000bc 9340 055e                 STS $55E, R20
+0000be e745                      LDI R20, 0x75
+0000bf 9340 055f                 STS $55F, R20
+0000c1 e24d                      LDI R20, 0x2D
+0000c2 9340 0560                 STS $560, R20
+                                 
+0000c4 e440                      LDI R20, 0x40
+0000c5 9340 0561                 STS $561, R20
+0000c7 e446                      LDI R20, 0x46
+0000c8 9340 0562                 STS $562, R20
+0000ca e74d                      LDI R20, 0x7D
+0000cb 9340 0563                 STS $563, R20
+0000cd e54c                      LDI R20, 0x5C
+0000ce 9340 0564                 STS $564, R20
+0000d0 e74c                      LDI R20, 0x7C
+0000d1 9340 0565                 STS $565, R20
+0000d3 e549                      LDI R20, 0x59
+0000d4 9340 0566                 STS $566, R20
+0000d6 e246                      LDI R20, 0x26
+0000d7 9340 0567                 STS $567, R20
+0000d9 e04b                      LDI R20, 0x0B
+0000da 9340 0568                 STS $568, R20
+0000dc e049                      LDI R20, 0x09
+0000dd 9340 0569                 STS $569, R20
+0000df e043                      LDI R20, 0x03
+0000e0 9340 056a                 STS $56A, R20
+0000e2 e547                      LDI R20, 0x57
+0000e3 9340 056b                 STS $56B, R20
+0000e5 e54d                      LDI R20, 0x5D
+0000e6 9340 056c                 STS $56C, R20
+0000e8 e247                      LDI R20, 0x27
+0000e9 9340 056d                 STS $56D, R20
+0000eb e748                      LDI R20, 0x78
+0000ec 9340 056e                 STS $56E, R20
+0000ee e340                      LDI R20, 0x30
+0000ef 9340 056f                 STS $56F, R20
+0000f1 e24e                      LDI R20, 0x2E
+0000f2 9340 0570                 STS $570, R20
+                                 
+0000f4 e444                      LDI R20, 0x44
+0000f5 9340 0571                 STS $571, R20
+0000f7 e542                      LDI R20, 0x52
+0000f8 9340 0572                 STS $572, R20
+0000fa e34b                      LDI R20, 0x3B
+0000fb 9340 0573                 STS $573, R20
+0000fd e048                      LDI R20, 0x08
+0000fe 9340 0574                 STS $574, R20
+000100 e647                      LDI R20, 0x67
+000101 9340 0575                 STS $575, R20
+000103 e24c                      LDI R20, 0x2C
+000104 9340 0576                 STS $576, R20
+000106 e045                      LDI R20, 0x05
+000107 9340 0577                 STS $577, R20
+000109 e64b                      LDI R20, 0x6B
+00010a 9340 0578                 STS $578, R20
+00010c e24b                      LDI R20, 0x2B
+00010d 9340 0579                 STS $579, R20
+00010f e14a                      LDI R20, 0x1A
+000110 9340 057a                 STS $57A, R20
+000112 e241                      LDI R20, 0x21
+000113 9340 057b                 STS $57B, R20
+000115 e348                      LDI R20, 0x38
+000116 9340 057c                 STS $57C, R20
+000118 e047                      LDI R20, 0x07
+000119 9340 057d                 STS $57D, R20
+00011b e04f                      LDI R20, 0x0F
+00011c 9340 057e                 STS $57E, R20
+00011e e44a                      LDI R20, 0x4A
+00011f 9340 057f                 STS $57F, R20
+000121 e141                      LDI R20, 0x11
+000122 9340 0580                 STS $580, R20
+                                 
+000124 e540                      LDI R20, 0x50
+000125 9340 0581                 STS $581, R20
+000127 e64a                      LDI R20, 0x6A
+000128 9340 0582                 STS $582, R20
+00012a e248                      LDI R20, 0x28
+00012b 9340 0583                 STS $583, R20
+00012d e341                      LDI R20, 0x31
+00012e 9340 0584                 STS $584, R20
+000130 e140                      LDI R20, 0x10
+000131 9340 0585                 STS $585, R20
+000133 e44d                      LDI R20, 0x4D
+000134 9340 0586                 STS $586, R20
+000136 e54f                      LDI R20, 0x5F
+000137 9340 0587                 STS $587, R20
+000139 e742                      LDI R20, 0x72
+00013a 9340 0588                 STS $588, R20
+00013c e349                      LDI R20, 0x39
+00013d 9340 0589                 STS $589, R20
+00013f e146                      LDI R20, 0x16
+000140 9340 058a                 STS $58A, R20
+000142 e54a                      LDI R20, 0x5A
+000143 9340 058b                 STS $58B, R20
+000145 e143                      LDI R20, 0x13
+000146 9340 058c                 STS $58C, R20
+000148 e044                      LDI R20, 0x04
+000149 9340 058d                 STS $58D, R20
+00014b e34c                      LDI R20, 0x3C
+00014c 9340 058e                 STS $58E, R20
+00014e e344                      LDI R20, 0x34
+00014f 9340 058f                 STS $58F, R20
+000151 e14f                      LDI R20, 0x1F
+000152 9340 0590                 STS $590, R20
+                                 
+000154 e746                      LDI R20, 0x76
+000155 9340 0591                 STS $591, R20
+000157 e14e                      LDI R20, 0x1E
+000158 9340 0592                 STS $592, R20
+00015a e144                      LDI R20, 0x14
+00015b 9340 0593                 STS $593, R20
+00015d e243                      LDI R20, 0x23
+00015e 9340 0594                 STS $594, R20
+000160 e14c                      LDI R20, 0x1C
+000161 9340 0595                 STS $595, R20
+000163 e342                      LDI R20, 0x32
+000164 9340 0596                 STS $596, R20
+000166 e44e                      LDI R20, 0x4E
+000167 9340 0597                 STS $597, R20
+000169 e74b                      LDI R20, 0x7B
+00016a 9340 0598                 STS $598, R20
+00016c e244                      LDI R20, 0x24
+00016d 9340 0599                 STS $599, R20
+00016f e744                      LDI R20, 0x74
+000170 9340 059a                 STS $59A, R20
+000172 e74f                      LDI R20, 0x7F
+000173 9340 059b                 STS $59B, R20
+000175 e34d                      LDI R20, 0x3D
+000176 9340 059c                 STS $59C, R20
+000178 e649                      LDI R20, 0x69
+000179 9340 059d                 STS $59D, R20
+00017b e644                      LDI R20, 0x64
+00017c 9340 059e                 STS $59E, R20
+00017e e642                      LDI R20, 0x62
+00017f 9340 059f                 STS $59F, R20
+000181 e64f                      LDI R20, 0x6F
+000182 9340 05a0                 STS $5A0, R20
+                                 
+                                 
+                                 
+                                 ;;;;;; VECTOR 2 BEGIN�此�！！！！！！！！！！！！！ r
+                                 
+000184 e040                      LDI R20, 0x00
+000185 9340 0621                 STS $621, R20
+000187 e748                      LDI R20, 0x78
+000188 9340 0622                 STS $622, R20
+00018a e041                      LDI R20, 0x01
+00018b 9340 0623                 STS $623, R20
+00018d e749                      LDI R20, 0x79
+00018e 9340 0624                 STS $624, R20
+000190 e042                      LDI R20, 0x02
+000191 9340 0625                 STS $625, R20
+000193 e74a                      LDI R20, 0x7A
+000194 9340 0626                 STS $626, R20
+000196 e043                      LDI R20, 0x03
+000197 9340 0627                 STS $627, R20
+000199 e74b                      LDI R20, 0x7B
+00019a 9340 0628                 STS $628, R20
+00019c e044                      LDI R20, 0x04
+00019d 9340 0629                 STS $629, R20
+00019f e74c                      LDI R20, 0x7C
+0001a0 9340 062a                 STS $62A, R20
+0001a2 e045                      LDI R20, 0x05
+0001a3 9340 062b                 STS $62B, R20
+0001a5 e74d                      LDI R20, 0x7D
+0001a6 9340 062c                 STS $62C, R20
+0001a8 e046                      LDI R20, 0x06
+0001a9 9340 062d                 STS $62D, R20
+0001ab e74e                      LDI R20, 0x7E
+0001ac 9340 062e                 STS $62E, R20
+0001ae e047                      LDI R20, 0x07
+0001af 9340 062f                 STS $62F, R20
+0001b1 e74f                      LDI R20, 0x7F
+0001b2 9340 0630                 STS $630, R20
+                                 
+0001b4 e048                      LDI R20, 0x08
+0001b5 9340 0631                 STS $631, R20
+0001b7 e740                      LDI R20, 0x70
+0001b8 9340 0632                 STS $632, R20
+0001ba e049                      LDI R20, 0x09
+0001bb 9340 0633                 STS $633, R20
+0001bd e741                      LDI R20, 0x71
+0001be 9340 0634                 STS $634, R20
+0001c0 e04a                      LDI R20, 0x0A
+0001c1 9340 0635                 STS $635, R20
+0001c3 e742                      LDI R20, 0x72
+0001c4 9340 0636                 STS $636, R20
+0001c6 e04b                      LDI R20, 0x0B
+0001c7 9340 0637                 STS $637, R20
+0001c9 e743                      LDI R20, 0x73
+0001ca 9340 0638                 STS $638, R20
+0001cc e04c                      LDI R20, 0x0C
+0001cd 9340 0639                 STS $639, R20
+0001cf e744                      LDI R20, 0x74
+0001d0 9340 063a                 STS $63A, R20
+0001d2 e04d                      LDI R20, 0x0D
+0001d3 9340 063b                 STS $63B, R20
+0001d5 e745                      LDI R20, 0x75
+0001d6 9340 063c                 STS $63C, R20
+0001d8 e04e                      LDI R20, 0x0E
+0001d9 9340 063d                 STS $63D, R20
+0001db e746                      LDI R20, 0x76
+0001dc 9340 063e                 STS $63E, R20
+0001de e04f                      LDI R20, 0x0F
+0001df 9340 063f                 STS $63F, R20
+0001e1 e747                      LDI R20, 0x77
+0001e2 9340 0640                 STS $640, R20
+                                 
+0001e4 e140                      LDI R20, 0x10
+0001e5 9340 0641                 STS $641, R20
+0001e7 e648                      LDI R20, 0x68
+0001e8 9340 0642                 STS $642, R20
+0001ea e141                      LDI R20, 0x11
+0001eb 9340 0643                 STS $643, R20
+0001ed e649                      LDI R20, 0x69
+0001ee 9340 0644                 STS $644, R20
+0001f0 e142                      LDI R20, 0x12
+0001f1 9340 0645                 STS $645, R20
+0001f3 e64a                      LDI R20, 0x6A
+0001f4 9340 0646                 STS $646, R20
+0001f6 e143                      LDI R20, 0x13
+0001f7 9340 0647                 STS $647, R20
+0001f9 e64b                      LDI R20, 0x6B
+0001fa 9340 0648                 STS $648, R20
+0001fc e144                      LDI R20, 0x14
+0001fd 9340 0649                 STS $649, R20
+0001ff e64c                      LDI R20, 0x6C
+000200 9340 064a                 STS $64A, R20
+000202 e145                      LDI R20, 0x15
+000203 9340 064b                 STS $64B, R20
+000205 e64d                      LDI R20, 0x6D
+000206 9340 064c                 STS $64C, R20
+000208 e146                      LDI R20, 0x16
+000209 9340 064d                 STS $64D, R20
+00020b e64e                      LDI R20, 0x6E
+00020c 9340 064e                 STS $64E, R20
+00020e e147                      LDI R20, 0x17
+00020f 9340 064f                 STS $64F, R20
+000211 e64f                      LDI R20, 0x6F
+000212 9340 0650                 STS $650, R20
+                                 
+000214 e148                      LDI R20, 0x18
+000215 9340 0651                 STS $651, R20
+000217 e640                      LDI R20, 0x60
+000218 9340 0652                 STS $652, R20
+00021a e149                      LDI R20, 0x19
+00021b 9340 0653                 STS $653, R20
+00021d e641                      LDI R20, 0x61
+00021e 9340 0654                 STS $654, R20
+000220 e14a                      LDI R20, 0x1A
+000221 9340 0655                 STS $655, R20
+000223 e642                      LDI R20, 0x62
+000224 9340 0656                 STS $656, R20
+000226 e14b                      LDI R20, 0x1B
+000227 9340 0657                 STS $657, R20
+000229 e643                      LDI R20, 0x63
+00022a 9340 0658                 STS $658, R20
+00022c e14c                      LDI R20, 0x1C
+00022d 9340 0659                 STS $659, R20
+00022f e644                      LDI R20, 0x64
+000230 9340 065a                 STS $65A, R20
+000232 e14d                      LDI R20, 0x1D
+000233 9340 065b                 STS $65B, R20
+000235 e645                      LDI R20, 0x65
+000236 9340 065c                 STS $65C, R20
+000238 e14e                      LDI R20, 0x1E
+000239 9340 065d                 STS $65D, R20
+00023b e646                      LDI R20, 0x66
+00023c 9340 065e                 STS $65E, R20
+00023e e14f                      LDI R20, 0x1F
+00023f 9340 065f                 STS $65F, R20
+000241 e647                      LDI R20, 0x67
+000242 9340 0660                 STS $660, R20
+                                 
+000244 e240                      LDI R20, 0x20
+000245 9340 0661                 STS $661, R20
+000247 e548                      LDI R20, 0x58
+000248 9340 0662                 STS $662, R20
+00024a e241                      LDI R20, 0x21
+00024b 9340 0663                 STS $663, R20
+00024d e549                      LDI R20, 0x59
+00024e 9340 0664                 STS $664, R20
+000250 e242                      LDI R20, 0x22
+000251 9340 0665                 STS $665, R20
+000253 e54a                      LDI R20, 0x5A
+000254 9340 0666                 STS $666, R20
+000256 e243                      LDI R20, 0x23
+000257 9340 0667                 STS $667, R20
+000259 e54b                      LDI R20, 0x5B
+00025a 9340 0668                 STS $668, R20
+00025c e244                      LDI R20, 0x24
+00025d 9340 0669                 STS $669, R20
+00025f e54c                      LDI R20, 0x5C
+000260 9340 066a                 STS $66A, R20
+000262 e245                      LDI R20, 0x25
+000263 9340 066b                 STS $66B, R20
+000265 e54d                      LDI R20, 0x5D
+000266 9340 066c                 STS $66C, R20
+000268 e246                      LDI R20, 0x26
+000269 9340 066d                 STS $66D, R20
+00026b e54e                      LDI R20, 0x5E
+00026c 9340 066e                 STS $66E, R20
+00026e e247                      LDI R20, 0x27
+00026f 9340 066f                 STS $66F, R20
+000271 e54f                      LDI R20, 0x5F
+000272 9340 0670                 STS $670, R20
+                                 
+000274 e248                      LDI R20, 0x28
+000275 9340 0671                 STS $671, R20
+000277 e540                      LDI R20, 0x50
+000278 9340 0672                 STS $672, R20
+00027a e249                      LDI R20, 0x29
+00027b 9340 0673                 STS $673, R20
+00027d e541                      LDI R20, 0x51
+00027e 9340 0674                 STS $674, R20
+000280 e24a                      LDI R20, 0x2A
+000281 9340 0675                 STS $675, R20
+000283 e542                      LDI R20, 0x52
+000284 9340 0676                 STS $676, R20
+000286 e24b                      LDI R20, 0x2B
+000287 9340 0677                 STS $677, R20
+000289 e543                      LDI R20, 0x53
+00028a 9340 0678                 STS $678, R20
+00028c e24c                      LDI R20, 0x2C
+00028d 9340 0679                 STS $679, R20
+00028f e544                      LDI R20, 0x54
+000290 9340 067a                 STS $67A, R20
+000292 e24d                      LDI R20, 0x2D
+000293 9340 067b                 STS $67B, R20
+000295 e545                      LDI R20, 0x55
+000296 9340 067c                 STS $67C, R20
+000298 e24e                      LDI R20, 0x2E
+000299 9340 067d                 STS $67D, R20
+00029b e546                      LDI R20, 0x56
+00029c 9340 067e                 STS $67E, R20
+00029e e24f                      LDI R20, 0x2F
+00029f 9340 067f                 STS $67F, R20
+0002a1 e547                      LDI R20, 0x57
+0002a2 9340 0680                 STS $680, R20
+                                 
+0002a4 e340                      LDI R20, 0x30
+0002a5 9340 0681                 STS $681, R20
+0002a7 e448                      LDI R20, 0x48
+0002a8 9340 0682                 STS $682, R20
+0002aa e341                      LDI R20, 0x31
+0002ab 9340 0683                 STS $683, R20
+0002ad e449                      LDI R20, 0x49
+0002ae 9340 0684                 STS $684, R20
+0002b0 e342                      LDI R20, 0x32
+0002b1 9340 0685                 STS $685, R20
+0002b3 e44a                      LDI R20, 0x4A
+0002b4 9340 0686                 STS $686, R20
+0002b6 e343                      LDI R20, 0x33
+0002b7 9340 0687                 STS $687, R20
+0002b9 e44b                      LDI R20, 0x4B
+0002ba 9340 0688                 STS $688, R20
+0002bc e344                      LDI R20, 0x34
+0002bd 9340 0689                 STS $689, R20
+0002bf e44c                      LDI R20, 0x4C
+0002c0 9340 068a                 STS $68A, R20
+0002c2 e345                      LDI R20, 0x35
+0002c3 9340 068b                 STS $68B, R20
+0002c5 e44d                      LDI R20, 0x4D
+0002c6 9340 068c                 STS $68C, R20
+0002c8 e346                      LDI R20, 0x36
+0002c9 9340 068d                 STS $68D, R20
+0002cb e44e                      LDI R20, 0x4E
+0002cc 9340 068e                 STS $68E, R20
+0002ce e347                      LDI R20, 0x37
+0002cf 9340 068f                 STS $68F, R20
+0002d1 e44f                      LDI R20, 0x4F
+0002d2 9340 0690                 STS $690, R20
+                                 
+0002d4 e348                      LDI R20, 0x38
+0002d5 9340 0691                 STS $691, R20
+0002d7 e440                      LDI R20, 0x40
+0002d8 9340 0692                 STS $692, R20
+0002da e349                      LDI R20, 0x39
+0002db 9340 0693                 STS $693, R20
+0002dd e441                      LDI R20, 0x41
+0002de 9340 0694                 STS $694, R20
+0002e0 e34a                      LDI R20, 0x3A
+0002e1 9340 0695                 STS $695, R20
+0002e3 e442                      LDI R20, 0x42
+0002e4 9340 0696                 STS $696, R20
+0002e6 e34b                      LDI R20, 0x3B
+0002e7 9340 0697                 STS $697, R20
+0002e9 e443                      LDI R20, 0x43
+0002ea 9340 0698                 STS $698, R20
+0002ec e34c                      LDI R20, 0x3C
+0002ed 9340 0699                 STS $699, R20
+0002ef e444                      LDI R20, 0x44
+0002f0 9340 069a                 STS $69A, R20
+0002f2 e34d                      LDI R20, 0x3D
+0002f3 9340 069b                 STS $69B, R20
+0002f5 e445                      LDI R20, 0x45
+0002f6 9340 069c                 STS $69C, R20
+0002f8 e34e                      LDI R20, 0x3E
+0002f9 9340 069d                 STS $69D, R20
+0002fb e446                      LDI R20, 0x46
+0002fc 9340 069e                 STS $69E, R20
+0002fe e34f                      LDI R20, 0x3F
+0002ff 9340 069f                 STS $69F, R20
+000301 e447                      LDI R20, 0x47
+000302 9340 06a0                 STS $6A0, R20
+                                 
+                                 
+                                 ;;;;;; VECTOR 3 BEGIN�此�！！！！！！！！！！！  s-box
+                                 
+000304 e24e                      LDI R20, 0x2E
+000305 9340 0721                 STS $721, R20
+000307 e14c                      LDI R20, 0x1C
+000308 9340 0722                 STS $722, R20
+00030a e64d                      LDI R20, 0x6D
+00030b 9340 0723                 STS $723, R20
+00030d e24b                      LDI R20, 0x2B
+00030e 9340 0724                 STS $724, R20
+000310 e345                      LDI R20, 0x35
+000311 9340 0725                 STS $725, R20
+000313 e047                      LDI R20, 0x07
+000314 9340 0726                 STS $726, R20
+000316 e74f                      LDI R20, 0x7F
+000317 9340 0727                 STS $727, R20
+000319 e34b                      LDI R20, 0x3B
+00031a 9340 0728                 STS $728, R20
+00031c e248                      LDI R20, 0x28
+00031d 9340 0729                 STS $729, R20
+00031f e048                      LDI R20, 0x08
+000320 9340 072a                 STS $72A, R20
+000322 e04b                      LDI R20, 0x0B
+000323 9340 072b                 STS $72B, R20
+000325 e54f                      LDI R20, 0x5F
+000326 9340 072c                 STS $72C, R20
+000328 e341                      LDI R20, 0x31
+000329 9340 072d                 STS $72D, R20
+00032b e141                      LDI R20, 0x11
+00032c 9340 072e                 STS $72E, R20
+00032e e14b                      LDI R20, 0x1B
+00032f 9340 072f                 STS $72F, R20
+000331 e44d                      LDI R20, 0x4D
+000332 9340 0730                 STS $730, R20
+                                 
+000334 e64e                      LDI R20, 0x6E
+000335 9340 0731                 STS $731, R20
+000337 e544                      LDI R20, 0x54
+000338 9340 0732                 STS $732, R20
+00033a e04d                      LDI R20, 0x0D
+00033b 9340 0733                 STS $733, R20
+00033d e049                      LDI R20, 0x09
+00033e 9340 0734                 STS $734, R20
+000340 e14f                      LDI R20, 0x1F
+000341 9340 0735                 STS $735, R20
+000343 e445                      LDI R20, 0x45
+000344 9340 0736                 STS $736, R20
+000346 e745                      LDI R20, 0x75
+000347 9340 0737                 STS $737, R20
+000349 e543                      LDI R20, 0x53
+00034a 9340 0738                 STS $738, R20
+00034c e64a                      LDI R20, 0x6A
+00034d 9340 0739                 STS $739, R20
+00034f e54d                      LDI R20, 0x5D
+000350 9340 073a                 STS $73A, R20
+000352 e641                      LDI R20, 0x61
+000353 9340 073b                 STS $73B, R20
+000355 e040                      LDI R20, 0x00
+000356 9340 073c                 STS $73C, R20
+000358 e044                      LDI R20, 0x04
+000359 9340 073d                 STS $73D, R20
+00035b e748                      LDI R20, 0x78
+00035c 9340 073e                 STS $73E, R20
+00035e e046                      LDI R20, 0x06
+00035f 9340 073f                 STS $73F, R20
+000361 e14e                      LDI R20, 0x1E
+000362 9340 0740                 STS $740, R20
+                                 
+000364 e347                      LDI R20, 0x37
+000365 9340 0741                 STS $741, R20
+000367 e64f                      LDI R20, 0x6F
+000368 9340 0742                 STS $742, R20
+00036a e24f                      LDI R20, 0x2F
+00036b 9340 0743                 STS $743, R20
+00036d e449                      LDI R20, 0x49
+00036e 9340 0744                 STS $744, R20
+000370 e644                      LDI R20, 0x64
+000371 9340 0745                 STS $745, R20
+000373 e344                      LDI R20, 0x34
+000374 9340 0746                 STS $746, R20
+000376 e74d                      LDI R20, 0x7D
+000377 9340 0747                 STS $747, R20
+000379 e149                      LDI R20, 0x19
+00037a 9340 0748                 STS $748, R20
+00037c e349                      LDI R20, 0x39
+00037d 9340 0749                 STS $749, R20
+00037f e343                      LDI R20, 0x33
+000380 9340 074a                 STS $74A, R20
+000382 e443                      LDI R20, 0x43
+000383 9340 074b                 STS $74B, R20
+000385 e547                      LDI R20, 0x57
+000386 9340 074c                 STS $74C, R20
+000388 e640                      LDI R20, 0x60
+000389 9340 074d                 STS $74D, R20
+00038b e642                      LDI R20, 0x62
+00038c 9340 074e                 STS $74E, R20
+00038e e143                      LDI R20, 0x13
+00038f 9340 074f                 STS $74F, R20
+000391 e045                      LDI R20, 0x05
+000392 9340 0750                 STS $750, R20
+                                 
+000394 e747                      LDI R20, 0x77
+000395 9340 0751                 STS $751, R20
+000397 e447                      LDI R20, 0x47
+000398 9340 0752                 STS $752, R20
+00039a e44f                      LDI R20, 0x4F
+00039b 9340 0753                 STS $753, R20
+00039d e44b                      LDI R20, 0x4B
+00039e 9340 0754                 STS $754, R20
+0003a0 e14d                      LDI R20, 0x1D
+0003a1 9340 0755                 STS $755, R20
+0003a3 e24d                      LDI R20, 0x2D
+0003a4 9340 0756                 STS $756, R20
+0003a6 e244                      LDI R20, 0x24
+0003a7 9340 0757                 STS $757, R20
+0003a9 e448                      LDI R20, 0x48
+0003aa 9340 0758                 STS $758, R20
+0003ac e744                      LDI R20, 0x74
+0003ad 9340 0759                 STS $759, R20
+0003af e548                      LDI R20, 0x58
+0003b0 9340 075a                 STS $75A, R20
+0003b2 e245                      LDI R20, 0x25
+0003b3 9340 075b                 STS $75B, R20
+0003b5 e54e                      LDI R20, 0x5E
+0003b6 9340 075c                 STS $75C, R20
+0003b8 e54a                      LDI R20, 0x5A
+0003b9 9340 075d                 STS $75D, R20
+0003bb e746                      LDI R20, 0x76
+0003bc 9340 075e                 STS $75E, R20
+0003be e441                      LDI R20, 0x41
+0003bf 9340 075f                 STS $75F, R20
+0003c1 e442                      LDI R20, 0x42
+0003c2 9340 0760                 STS $760, R20
+                                 
+0003c4 e247                      LDI R20, 0x27
+0003c5 9340 0761                 STS $761, R20
+0003c7 e34e                      LDI R20, 0x3E
+0003c8 9340 0762                 STS $762, R20
+0003ca e64c                      LDI R20, 0x6C
+0003cb 9340 0763                 STS $763, R20
+0003cd e041                      LDI R20, 0x01
+0003ce 9340 0764                 STS $764, R20
+0003d0 e24c                      LDI R20, 0x2C
+0003d1 9340 0765                 STS $765, R20
+0003d3 e34c                      LDI R20, 0x3C
+0003d4 9340 0766                 STS $766, R20
+0003d6 e44e                      LDI R20, 0x4E
+0003d7 9340 0767                 STS $767, R20
+0003d9 e14a                      LDI R20, 0x1A
+0003da 9340 0768                 STS $768, R20
+0003dc e241                      LDI R20, 0x21
+0003dd 9340 0769                 STS $769, R20
+0003df e24a                      LDI R20, 0x2A
+0003e0 9340 076a                 STS $76A, R20
+0003e2 e04a                      LDI R20, 0x0A
+0003e3 9340 076b                 STS $76B, R20
+0003e5 e545                      LDI R20, 0x55
+0003e6 9340 076c                 STS $76C, R20
+0003e8 e34a                      LDI R20, 0x3A
+0003e9 9340 076d                 STS $76D, R20
+0003eb e348                      LDI R20, 0x38
+0003ec 9340 076e                 STS $76E, R20
+0003ee e148                      LDI R20, 0x18
+0003ef 9340 076f                 STS $76F, R20
+0003f1 e74e                      LDI R20, 0x7E
+0003f2 9340 0770                 STS $770, R20
+                                 
+0003f4 e04c                      LDI R20, 0x0C
+0003f5 9340 0771                 STS $771, R20
+0003f7 e643                      LDI R20, 0x63
+0003f8 9340 0772                 STS $772, R20
+0003fa e647                      LDI R20, 0x67
+0003fb 9340 0773                 STS $773, R20
+0003fd e546                      LDI R20, 0x56
+0003fe 9340 0774                 STS $774, R20
+000400 e540                      LDI R20, 0x50
+000401 9340 0775                 STS $775, R20
+000403 e74c                      LDI R20, 0x7C
+000404 9340 0776                 STS $776, R20
+000406 e342                      LDI R20, 0x32
+000407 9340 0777                 STS $777, R20
+000409 e74a                      LDI R20, 0x7A
+00040a 9340 0778                 STS $778, R20
+00040c e648                      LDI R20, 0x68
+00040d 9340 0779                 STS $779, R20
+00040f e042                      LDI R20, 0x02
+000410 9340 077a                 STS $77A, R20
+000412 e64b                      LDI R20, 0x6B
+000413 9340 077b                 STS $77B, R20
+000415 e147                      LDI R20, 0x17
+000416 9340 077c                 STS $77C, R20
+000418 e74b                      LDI R20, 0x7B
+000419 9340 077d                 STS $77D, R20
+00041b e549                      LDI R20, 0x59
+00041c 9340 077e                 STS $77E, R20
+00041e e741                      LDI R20, 0x71
+00041f 9340 077f                 STS $77F, R20
+000421 e04f                      LDI R20, 0x0F
+000422 9340 0780                 STS $780, R20
+                                 
+000424 e340                      LDI R20, 0x30
+000425 9340 0781                 STS $781, R20
+000427 e140                      LDI R20, 0x10
+000428 9340 0782                 STS $782, R20
+00042a e242                      LDI R20, 0x22
+00042b 9340 0783                 STS $783, R20
+00042d e34d                      LDI R20, 0x3D
+00042e 9340 0784                 STS $784, R20
+000430 e440                      LDI R20, 0x40
+000431 9340 0785                 STS $785, R20
+000433 e649                      LDI R20, 0x69
+000434 9340 0786                 STS $786, R20
+000436 e542                      LDI R20, 0x52
+000437 9340 0787                 STS $787, R20
+000439 e144                      LDI R20, 0x14
+00043a 9340 0788                 STS $788, R20
+00043c e346                      LDI R20, 0x36
+00043d 9340 0789                 STS $789, R20
+00043f e444                      LDI R20, 0x44
+000440 9340 078a                 STS $78A, R20
+000442 e446                      LDI R20, 0x46
+000443 9340 078b                 STS $78B, R20
+000445 e043                      LDI R20, 0x03
+000446 9340 078c                 STS $78C, R20
+000448 e146                      LDI R20, 0x16
+000449 9340 078d                 STS $78D, R20
+00044b e645                      LDI R20, 0x65
+00044c 9340 078e                 STS $78E, R20
+00044e e646                      LDI R20, 0x66
+00044f 9340 078f                 STS $78F, R20
+000451 e742                      LDI R20, 0x72
+000452 9340 0790                 STS $790, R20
+                                 
+000454 e142                      LDI R20, 0x12
+000455 9340 0791                 STS $791, R20
+000457 e04e                      LDI R20, 0x0E
+000458 9340 0792                 STS $792, R20
+00045a e249                      LDI R20, 0x29
+00045b 9340 0793                 STS $793, R20
+00045d e44a                      LDI R20, 0x4A
+00045e 9340 0794                 STS $794, R20
+000460 e44c                      LDI R20, 0x4C
+000461 9340 0795                 STS $795, R20
+000463 e740                      LDI R20, 0x70
+000464 9340 0796                 STS $796, R20
+000466 e145                      LDI R20, 0x15
+000467 9340 0797                 STS $797, R20
+000469 e246                      LDI R20, 0x26
+00046a 9340 0798                 STS $798, R20
+00046c e749                      LDI R20, 0x79
+00046d 9340 0799                 STS $799, R20
+00046f e541                      LDI R20, 0x51
+000470 9340 079a                 STS $79A, R20
+000472 e243                      LDI R20, 0x23
+000473 9340 079b                 STS $79B, R20
+000475 e34f                      LDI R20, 0x3F
+000476 9340 079c                 STS $79C, R20
+000478 e743                      LDI R20, 0x73
+000479 9340 079d                 STS $79D, R20
+00047b e54b                      LDI R20, 0x5B
+00047c 9340 079e                 STS $79E, R20
+00047e e240                      LDI R20, 0x20
+00047f 9340 079f                 STS $79F, R20
+000481 e54c                      LDI R20, 0x5C
+000482 9340 07a0                 STS $7A0, R20
+                                 
+                                 
+                                 
+                                 ;; RC1_________________________________
+                                 
+000484 e34f                      LDI R20, 0x3F
+000485 9340 0821                 STS $821, R20
+000487 e04f                      LDI R20, 0x0F
+000488 9340 0822                 STS $822, R20
+00048a e043                      LDI R20, 0x03
+00048b 9340 0823                 STS $823, R20
+00048d e440                      LDI R20, 0x40
+00048e 9340 0824                 STS $824, R20
+000490 e140                      LDI R20, 0x10
+000491 9340 0825                 STS $825, R20
+000493 e044                      LDI R20, 0x04
+000494 9340 0826                 STS $826, R20
+000496 e441                      LDI R20, 0x41
+000497 9340 0827                 STS $827, R20
+000499 e340                      LDI R20, 0x30
+00049a 9340 0828                 STS $828, R20
+00049c e04c                      LDI R20, 0x0C
+00049d 9340 0829                 STS $829, R20
+00049f e443                      LDI R20, 0x43
+0004a0 9340 082a                 STS $82A, R20
+0004a2 e540                      LDI R20, 0x50
+0004a3 9340 082b                 STS $82B, R20
+0004a5 e144                      LDI R20, 0x14
+0004a6 9340 082c                 STS $82C, R20
+0004a8 e445                      LDI R20, 0x45
+0004a9 9340 082d                 STS $82D, R20
+0004ab e741                      LDI R20, 0x71
+0004ac 9340 082e                 STS $82E, R20
+0004ae e34c                      LDI R20, 0x3C
+0004af 9340 082f                 STS $82F, R20
+0004b1 e44f                      LDI R20, 0x4F
+0004b2 9340 0830                 STS $830, R20
+                                 
+0004b4 e143                      LDI R20, 0x13
+0004b5 9340 0831                 STS $831, R20
+0004b7 e444                      LDI R20, 0x44
+0004b8 9340 0832                 STS $832, R20
+0004ba e541                      LDI R20, 0x51
+0004bb 9340 0833                 STS $833, R20
+0004bd e344                      LDI R20, 0x34
+0004be 9340 0834                 STS $834, R20
+0004c0 e44d                      LDI R20, 0x4D
+0004c1 9340 0835                 STS $835, R20
+0004c3 e743                      LDI R20, 0x73
+0004c4 9340 0836                 STS $836, R20
+0004c6 e54c                      LDI R20, 0x5C
+0004c7 9340 0837                 STS $837, R20
+0004c9 e547                      LDI R20, 0x57
+0004ca 9340 0838                 STS $838, R20
+0004cc e145                      LDI R20, 0x15
+0004cd 9340 0839                 STS $839, R20
+0004cf e645                      LDI R20, 0x65
+0004d0 9340 083a                 STS $83A, R20
+0004d2 e749                      LDI R20, 0x79
+0004d3 9340 083b                 STS $83B, R20
+0004d5 e34e                      LDI R20, 0x3E
+0004d6 9340 083c                 STS $83C, R20
+0004d8 e24f                      LDI R20, 0x2F
+0004d9 9340 083d                 STS $83D, R20
+0004db e04b                      LDI R20, 0x0B
+0004dc 9340 083e                 STS $83E, R20
+0004de e442                      LDI R20, 0x42
+0004df 9340 083f                 STS $83F, R20
+0004e1 e740                      LDI R20, 0x70
+0004e2 9340 0840                 STS $840, R20
+                                 
+0004e4 e14c                      LDI R20, 0x1C
+0004e5 9340 0841                 STS $841, R20
+0004e7 e447                      LDI R20, 0x47
+0004e8 9340 0842                 STS $842, R20
+0004ea e141                      LDI R20, 0x11
+0004eb 9340 0843                 STS $843, R20
+0004ed e244                      LDI R20, 0x24
+0004ee 9340 0844                 STS $844, R20
+0004f0 e449                      LDI R20, 0x49
+0004f1 9340 0845                 STS $845, R20
+0004f3 e342                      LDI R20, 0x32
+0004f4 9340 0846                 STS $846, R20
+0004f6 e64c                      LDI R20, 0x6C
+0004f7 9340 0847                 STS $847, R20
+0004f9 e54b                      LDI R20, 0x5B
+0004fa 9340 0848                 STS $848, R20
+0004fc e546                      LDI R20, 0x56
+0004fd 9340 0849                 STS $849, R20
+0004ff e345                      LDI R20, 0x35
+000500 9340 084a                 STS $84A, R20
+000502 e64d                      LDI R20, 0x6D
+000503 9340 084b                 STS $84B, R20
+000505 e74b                      LDI R20, 0x7B
+000506 9340 084c                 STS $84C, R20
+000508 e54e                      LDI R20, 0x5E
+000509 9340 084d                 STS $84D, R20
+00050b e347                      LDI R20, 0x37
+00050c 9340 084e                 STS $84E, R20
+00050e e04d                      LDI R20, 0x0D
+00050f 9340 084f                 STS $84F, R20
+000511 e643                      LDI R20, 0x63
+000512 9340 0850                 STS $850, R20
+                                 
+000514 e548                      LDI R20, 0x58
+000515 9340 0851                 STS $851, R20
+000517 e146                      LDI R20, 0x16
+000518 9340 0852                 STS $852, R20
+00051a e245                      LDI R20, 0x25
+00051b 9340 0853                 STS $853, R20
+00051d e649                      LDI R20, 0x69
+00051e 9340 0854                 STS $854, R20
+000520 e34a                      LDI R20, 0x3A
+000521 9340 0855                 STS $855, R20
+000523 e64e                      LDI R20, 0x6E
+000524 9340 0856                 STS $856, R20
+000526 e34b                      LDI R20, 0x3B
+000527 9340 0857                 STS $857, R20
+000529 e44e                      LDI R20, 0x4E
+00052a 9340 0858                 STS $858, R20
+00052c e343                      LDI R20, 0x33
+00052d 9340 0859                 STS $859, R20
+00052f e44c                      LDI R20, 0x4C
+000530 9340 085a                 STS $85A, R20
+000532 e543                      LDI R20, 0x53
+000533 9340 085b                 STS $85B, R20
+000535 e544                      LDI R20, 0x54
+000536 9340 085c                 STS $85C, R20
+000538 e545                      LDI R20, 0x55
+000539 9340 085d                 STS $85D, R20
+00053b e745                      LDI R20, 0x75
+00053c 9340 085e                 STS $85E, R20
+00053e e74d                      LDI R20, 0x7D
+00053f 9340 085f                 STS $85F, R20
+000541 e74f                      LDI R20, 0x7F
+000542 9340 0860                 STS $860, R20
+                                 
+000544 e14f                      LDI R20, 0x1F
+000545 9340 0861                 STS $861, R20
+000547 e047                      LDI R20, 0x07
+000548 9340 0862                 STS $862, R20
+00054a e041                      LDI R20, 0x01
+00054b 9340 0863                 STS $863, R20
+00054d e240                      LDI R20, 0x20
+00054e 9340 0864                 STS $864, R20
+000550 e048                      LDI R20, 0x08
+000551 9340 0865                 STS $865, R20
+000553 e042                      LDI R20, 0x02
+000554 9340 0866                 STS $866, R20
+000556 e640                      LDI R20, 0x60
+000557 9340 0867                 STS $867, R20
+000559 e148                      LDI R20, 0x18
+00055a 9340 0868                 STS $868, R20
+00055c e046                      LDI R20, 0x06
+00055d 9340 0869                 STS $869, R20
+00055f e241                      LDI R20, 0x21
+000560 9340 086a                 STS $86A, R20
+000562 e248                      LDI R20, 0x28
+000563 9340 086b                 STS $86B, R20
+000565 e04a                      LDI R20, 0x0A
+000566 9340 086c                 STS $86C, R20
+000568 e642                      LDI R20, 0x62
+000569 9340 086d                 STS $86D, R20
+00056b e748                      LDI R20, 0x78
+00056c 9340 086e                 STS $86E, R20
+00056e e14e                      LDI R20, 0x1E
+00056f 9340 086f                 STS $86F, R20
+000571 e247                      LDI R20, 0x27
+000572 9340 0870                 STS $870, R20
+                                 
+000574 e049                      LDI R20, 0x09
+000575 9340 0871                 STS $871, R20
+000577 e242                      LDI R20, 0x22
+000578 9340 0872                 STS $872, R20
+00057a e648                      LDI R20, 0x68
+00057b 9340 0873                 STS $873, R20
+00057d e14a                      LDI R20, 0x1A
+00057e 9340 0874                 STS $874, R20
+000580 e646                      LDI R20, 0x66
+000581 9340 0875                 STS $875, R20
+000583 e349                      LDI R20, 0x39
+000584 9340 0876                 STS $876, R20
+000586 e24e                      LDI R20, 0x2E
+000587 9340 0877                 STS $877, R20
+000589 e24b                      LDI R20, 0x2B
+00058a 9340 0878                 STS $878, R20
+00058c e44a                      LDI R20, 0x4A
+00058d 9340 0879                 STS $879, R20
+00058f e742                      LDI R20, 0x72
+000590 9340 087a                 STS $87A, R20
+000592 e74c                      LDI R20, 0x7C
+000593 9340 087b                 STS $87B, R20
+000595 e54f                      LDI R20, 0x5F
+000596 9340 087c                 STS $87C, R20
+000598 e147                      LDI R20, 0x17
+000599 9340 087d                 STS $87D, R20
+00059b e045                      LDI R20, 0x05
+00059c 9340 087e                 STS $87E, R20
+00059e e641                      LDI R20, 0x61
+00059f 9340 087f                 STS $87F, R20
+0005a1 e348                      LDI R20, 0x38
+0005a2 9340 0880                 STS $880, R20
+                                 
+0005a4 e04e                      LDI R20, 0x0E
+0005a5 9340 0881                 STS $881, R20
+0005a7 e243                      LDI R20, 0x23
+0005a8 9340 0882                 STS $882, R20
+0005aa e448                      LDI R20, 0x48
+0005ab 9340 0883                 STS $883, R20
+0005ad e142                      LDI R20, 0x12
+0005ae 9340 0884                 STS $884, R20
+0005b0 e644                      LDI R20, 0x64
+0005b1 9340 0885                 STS $885, R20
+0005b3 e549                      LDI R20, 0x59
+0005b4 9340 0886                 STS $886, R20
+0005b6 e346                      LDI R20, 0x36
+0005b7 9340 0887                 STS $887, R20
+0005b9 e24d                      LDI R20, 0x2D
+0005ba 9340 0888                 STS $888, R20
+0005bc e64b                      LDI R20, 0x6B
+0005bd 9340 0889                 STS $889, R20
+0005bf e54a                      LDI R20, 0x5A
+0005c0 9340 088a                 STS $88A, R20
+0005c2 e746                      LDI R20, 0x76
+0005c3 9340 088b                 STS $88B, R20
+0005c5 e34d                      LDI R20, 0x3D
+0005c6 9340 088c                 STS $88C, R20
+0005c8 e64f                      LDI R20, 0x6F
+0005c9 9340 088d                 STS $88D, R20
+0005cb e14b                      LDI R20, 0x1B
+0005cc 9340 088e                 STS $88E, R20
+0005ce e446                      LDI R20, 0x46
+0005cf 9340 088f                 STS $88F, R20
+                                 
+                                 ;; RC0___________________
+                                 
+0005d1 e74f                      LDI R20, 0x7F
+0005d2 9340 0921                 STS $921, R20
+0005d4 e14f                      LDI R20, 0x1F
+0005d5 9340 0922                 STS $922, R20
+0005d7 e047                      LDI R20, 0x07
+0005d8 9340 0923                 STS $923, R20
+0005da e041                      LDI R20, 0x01
+0005db 9340 0924                 STS $924, R20
+0005dd e240                      LDI R20, 0x20
+0005de 9340 0925                 STS $925, R20
+0005e0 e048                      LDI R20, 0x08
+0005e1 9340 0926                 STS $926, R20
+0005e3 e042                      LDI R20, 0x02
+0005e4 9340 0927                 STS $927, R20
+0005e6 e640                      LDI R20, 0x60
+0005e7 9340 0928                 STS $928, R20
+0005e9 e148                      LDI R20, 0x18
+0005ea 9340 0929                 STS $929, R20
+0005ec e046                      LDI R20, 0x06
+0005ed 9340 092a                 STS $92A, R20
+0005ef e241                      LDI R20, 0x21
+0005f0 9340 092b                 STS $92B, R20
+0005f2 e248                      LDI R20, 0x28
+0005f3 9340 092c                 STS $92C, R20
+0005f5 e04a                      LDI R20, 0x0A
+0005f6 9340 092d                 STS $92D, R20
+0005f8 e642                      LDI R20, 0x62
+0005f9 9340 092e                 STS $92E, R20
+0005fb e748                      LDI R20, 0x78
+0005fc 9340 092f                 STS $92F, R20
+0005fe e14e                      LDI R20, 0x1E
+0005ff 9340 0930                 STS $930, R20
+                                 
+000601 e247                      LDI R20, 0x27
+000602 9340 0931                 STS $931, R20
+000604 e049                      LDI R20, 0x09
+000605 9340 0932                 STS $932, R20
+000607 e242                      LDI R20, 0x22
+000608 9340 0933                 STS $933, R20
+00060a e648                      LDI R20, 0x68
+00060b 9340 0934                 STS $934, R20
+00060d e14a                      LDI R20, 0x1A
+00060e 9340 0935                 STS $935, R20
+000610 e646                      LDI R20, 0x66
+000611 9340 0936                 STS $936, R20
+000613 e349                      LDI R20, 0x39
+000614 9340 0937                 STS $937, R20
+000616 e24e                      LDI R20, 0x2E
+000617 9340 0938                 STS $938, R20
+000619 e24b                      LDI R20, 0x2B
+00061a 9340 0939                 STS $939, R20
+00061c e44a                      LDI R20, 0x4A
+00061d 9340 093a                 STS $93A, R20
+00061f e742                      LDI R20, 0x72
+000620 9340 093b                 STS $93B, R20
+000622 e74c                      LDI R20, 0x7C
+000623 9340 093c                 STS $93C, R20
+000625 e54f                      LDI R20, 0x5F
+000626 9340 093d                 STS $93D, R20
+000628 e147                      LDI R20, 0x17
+000629 9340 093e                 STS $93E, R20
+00062b e045                      LDI R20, 0x05
+00062c 9340 093f                 STS $93F, R20
+00062e e641                      LDI R20, 0x61
+00062f 9340 0940                 STS $940, R20
+                                 
+000631 e348                      LDI R20, 0x38
+000632 9340 0941                 STS $941, R20
+000634 e04e                      LDI R20, 0x0E
+000635 9340 0942                 STS $942, R20
+000637 e243                      LDI R20, 0x23
+000638 9340 0943                 STS $943, R20
+00063a e448                      LDI R20, 0x48
+00063b 9340 0944                 STS $944, R20
+00063d e142                      LDI R20, 0x12
+00063e 9340 0945                 STS $945, R20
+000640 e644                      LDI R20, 0x64
+000641 9340 0946                 STS $946, R20
+000643 e549                      LDI R20, 0x59
+000644 9340 0947                 STS $947, R20
+000646 e346                      LDI R20, 0x36
+000647 9340 0948                 STS $948, R20
+000649 e24d                      LDI R20, 0x2D
+00064a 9340 0949                 STS $949, R20
+00064c e64b                      LDI R20, 0x6B
+00064d 9340 094a                 STS $94A, R20
+00064f e54a                      LDI R20, 0x5A
+000650 9340 094b                 STS $94B, R20
+000652 e746                      LDI R20, 0x76
+000653 9340 094c                 STS $94C, R20
+000655 e34d                      LDI R20, 0x3D
+000656 9340 094d                 STS $94D, R20
+000658 e64f                      LDI R20, 0x6F
+000659 9340 094e                 STS $94E, R20
+00065b e14b                      LDI R20, 0x1B
+00065c 9340 094f                 STS $94F, R20
+00065e e446                      LDI R20, 0x46
+00065f 9340 0950                 STS $950, R20
+                                 
+000661 e341                      LDI R20, 0x31
+000662 9340 0951                 STS $951, R20
+000664 e24c                      LDI R20, 0x2C
+000665 9340 0952                 STS $952, R20
+000667 e44b                      LDI R20, 0x4B
+000668 9340 0953                 STS $953, R20
+00066a e542                      LDI R20, 0x52
+00066b 9340 0954                 STS $954, R20
+00066d e744                      LDI R20, 0x74
+00066e 9340 0955                 STS $955, R20
+000670 e54d                      LDI R20, 0x5D
+000671 9340 0956                 STS $956, R20
+000673 e747                      LDI R20, 0x77
+000674 9340 0957                 STS $957, R20
+000676 e14d                      LDI R20, 0x1D
+000677 9340 0958                 STS $958, R20
+000679 e647                      LDI R20, 0x67
+00067a 9340 0959                 STS $959, R20
+00067c e149                      LDI R20, 0x19
+00067d 9340 095a                 STS $95A, R20
+00067f e246                      LDI R20, 0x26
+000680 9340 095b                 STS $95B, R20
+000682 e249                      LDI R20, 0x29
+000683 9340 095c                 STS $95C, R20
+000685 e24a                      LDI R20, 0x2A
+000686 9340 095d                 STS $95D, R20
+000688 e64a                      LDI R20, 0x6A
+000689 9340 095e                 STS $95E, R20
+00068b e74a                      LDI R20, 0x7A
+00068c 9340 095f                 STS $95F, R20
+00068e e74e                      LDI R20, 0x7E
+00068f 9340 0960                 STS $960, R20
+                                 
+000691 e34f                      LDI R20, 0x3F
+000692 9340 0961                 STS $961, R20
+000694 e04f                      LDI R20, 0x0F
+000695 9340 0962                 STS $962, R20
+000697 e043                      LDI R20, 0x03
+000698 9340 0963                 STS $963, R20
+00069a e440                      LDI R20, 0x40
+00069b 9340 0964                 STS $964, R20
+00069d e140                      LDI R20, 0x10
+00069e 9340 0965                 STS $965, R20
+0006a0 e044                      LDI R20, 0x04
+0006a1 9340 0966                 STS $966, R20
+0006a3 e441                      LDI R20, 0x41
+0006a4 9340 0967                 STS $967, R20
+0006a6 e340                      LDI R20, 0x30
+0006a7 9340 0968                 STS $968, R20
+0006a9 e04c                      LDI R20, 0x0C
+0006aa 9340 0969                 STS $969, R20
+0006ac e443                      LDI R20, 0x43
+0006ad 9340 096a                 STS $96A, R20
+0006af e540                      LDI R20, 0x50
+0006b0 9340 096b                 STS $96B, R20
+0006b2 e144                      LDI R20, 0x14
+0006b3 9340 096c                 STS $96C, R20
+0006b5 e445                      LDI R20, 0x45
+0006b6 9340 096d                 STS $96D, R20
+0006b8 e741                      LDI R20, 0x71
+0006b9 9340 096e                 STS $96E, R20
+0006bb e34c                      LDI R20, 0x3C
+0006bc 9340 096f                 STS $96F, R20
+0006be e44f                      LDI R20, 0x4F
+0006bf 9340 0970                 STS $970, R20
+                                 
+0006c1 e143                      LDI R20, 0x13
+0006c2 9340 0971                 STS $971, R20
+0006c4 e444                      LDI R20, 0x44
+0006c5 9340 0972                 STS $972, R20
+0006c7 e541                      LDI R20, 0x51
+0006c8 9340 0973                 STS $973, R20
+0006ca e344                      LDI R20, 0x34
+0006cb 9340 0974                 STS $974, R20
+0006cd e44d                      LDI R20, 0x4D
+0006ce 9340 0975                 STS $975, R20
+0006d0 e743                      LDI R20, 0x73
+0006d1 9340 0976                 STS $976, R20
+0006d3 e54c                      LDI R20, 0x5C
+0006d4 9340 0977                 STS $977, R20
+0006d6 e547                      LDI R20, 0x57
+0006d7 9340 0978                 STS $978, R20
+0006d9 e145                      LDI R20, 0x15
+0006da 9340 0979                 STS $979, R20
+0006dc e645                      LDI R20, 0x65
+0006dd 9340 097a                 STS $97A, R20
+0006df e749                      LDI R20, 0x79
+0006e0 9340 097b                 STS $97B, R20
+0006e2 e34e                      LDI R20, 0x3E
+0006e3 9340 097c                 STS $97C, R20
+0006e5 e24f                      LDI R20, 0x2F
+0006e6 9340 097d                 STS $97D, R20
+0006e8 e04b                      LDI R20, 0x0B
+0006e9 9340 097e                 STS $97E, R20
+0006eb e442                      LDI R20, 0x42
+0006ec 9340 097f                 STS $97F, R20
+0006ee e740                      LDI R20, 0x70
+0006ef 9340 0980                 STS $980, R20
+                                 
+0006f1 e14c                      LDI R20, 0x1C
+0006f2 9340 0981                 STS $981, R20
+0006f4 e447                      LDI R20, 0x47
+0006f5 9340 0982                 STS $982, R20
+0006f7 e141                      LDI R20, 0x11
+0006f8 9340 0983                 STS $983, R20
+0006fa e244                      LDI R20, 0x24
+0006fb 9340 0984                 STS $984, R20
+0006fd e449                      LDI R20, 0x49
+0006fe 9340 0985                 STS $985, R20
+000700 e342                      LDI R20, 0x32
+000701 9340 0986                 STS $986, R20
+000703 e64c                      LDI R20, 0x6C
+000704 9340 0987                 STS $987, R20
+000706 e54b                      LDI R20, 0x5B
+000707 9340 0988                 STS $988, R20
+000709 e546                      LDI R20, 0x56
+00070a 9340 0989                 STS $989, R20
+00070c e345                      LDI R20, 0x35
+00070d 9340 098a                 STS $98A, R20
+00070f e64d                      LDI R20, 0x6D
+000710 9340 098b                 STS $98B, R20
+000712 e74b                      LDI R20, 0x7B
+000713 9340 098c                 STS $98C, R20
+000715 e54e                      LDI R20, 0x5E
+000716 9340 098d                 STS $98D, R20
+000718 e347                      LDI R20, 0x37
+000719 9340 098e                 STS $98E, R20
+00071b e04d                      LDI R20, 0x0D
+00071c 9340 098f                 STS $98F, R20
+                                 
+                                 
+                                 ;;load key________________________________________!!
+00071e e040                      ldi R20, 0x00    ;load K0, B00 - B07
+00071f 9340 0b50                 STS $B50, R20
+000721 e141                      ldi R20, 0x11
+000722 9340 0b51                 STS $B51, R20
+000724 e141                      ldi R20, 0x11
+000725 9340 0b52                 STS $B52, R20
+000727 e242                      ldi R20, 0x22
+000728 9340 0b53                 STS $B53, R20
+                                 
+00072a e343                      ldi R20, 0x33
+00072b 9340 0b54                 STS $B54, R20
+00072d e545                      ldi R20, 0x55
+00072e 9340 0b55                 STS $B55, R20
+000730 e848                      ldi R20, 0x88
+000731 9340 0b56                 STS $B56, R20
+000733 ed4d                      ldi R20, 0xDD
+000734 9340 0b57                 STS $B57, R20
+000736 e848                      ldi R20, 0x88
+000737 9340 0b58                 STS $B58, R20
+000739 ed4d                      ldi R20, 0xDD
+00073a 9340 0b59                 STS $B59, R20
+                                 
+                                 
+00073c e040                      ldi R20, 0x00    ;load K1, B10 - B17
+00073d 9340 0b60                 STS $B60, R20
+00073f e141                      ldi R20, 0x11
+000740 9340 0b61                 STS $B61, R20
+000742 e141                      ldi R20, 0x11
+000743 9340 0b62                 STS $B62, R20
+000745 e242                      ldi R20, 0x22
+000746 9340 0b63                 STS $B63, R20
+                                 
+000748 e343                      ldi R20, 0x33
+000749 9340 0b64                 STS $B64, R20
+00074b e545                      ldi R20, 0x55
+00074c 9340 0b65                 STS $B65, R20
+00074e e848                      ldi R20, 0x88
+00074f 9340 0b66                 STS $B66, R20
+000751 ed4d                      ldi R20, 0xDD
+000752 9340 0b67                 STS $B67, R20
+000754 e848                      ldi R20, 0x88
+000755 9340 0b68                 STS $B68, R20
+000757 ed4d                      ldi R20, 0xDD
+000758 9340 0b69                 STS $B69, R20
+                                 
+                                 ;;load nonce________________________________________!!    
+                                 
+00075a e141                      ldi R20, 0x11    ;load Nonce 0 C00 - C07
+00075b 9340 0c50                 STS $C50, R20
+00075d e141                      ldi R20, 0x11
+00075e 9340 0c51                 STS $C51, R20
+000760 e242                      ldi R20, 0x22
+000761 9340 0c52                 STS $C52, R20
+000763 e343                      ldi R20, 0x33
+000764 9340 0c53                 STS $C53, R20
+                                 
+000766 e545                      ldi R20, 0x55
+000767 9340 0c54                 STS $C54, R20
+000769 e848                      ldi R20, 0x88
+00076a 9340 0c55                 STS $C55, R20
+00076c ed4d                      ldi R20, 0xDD
+00076d 9340 0c56                 STS $C56, R20
+00076f e040                      ldi R20, 0x00
+000770 9340 0c57                 STS $C57, R20
+000772 ed4d                      ldi R20, 0xDD
+000773 9340 0c58                 STS $C58, R20
+000775 e040                      ldi R20, 0x00
+000776 9340 0c59                 STS $C59, R20
+                                 
+000778 e141                      ldi R20, 0x11   ;load Nonce 1 C10 - C17
+000779 9340 0c60                 STS $C60, R20
+00077b e141                      ldi R20, 0x11
+00077c 9340 0c61                 STS $C61, R20
+00077e e242                      ldi R20, 0x22
+00077f 9340 0c62                 STS $C62, R20
+000781 e343                      ldi R20, 0x33
+000782 9340 0c63                 STS $C63, R20
+                                 
+000784 e545                      ldi R20, 0x55
+000785 9340 0c64                 STS $C64, R20
+000787 e848                      ldi R20, 0x88
+000788 9340 0c65                 STS $C65, R20
+00078a ed4d                      ldi R20, 0xDD
+00078b 9340 0c66                 STS $C66, R20
+00078d e040                      ldi R20, 0x00
+00078e 9340 0c67                 STS $C67, R20
+000790 ed4d                      ldi R20, 0xDD
+000791 9340 0c68                 STS $C68, R20
+000793 e040                      ldi R20, 0x00
+000794 9340 0c69                 STS $C69, R20
+                                 
+                                 
+                                 
+                                 
+                                 ;;load AD________________________________________!!
+                                 
+000796 e141                      ldi R20, 0x11    ;load AD 0   D00 - D07
+000797 9340 0d50                 STS $D50, R20
+000799 e242                      ldi R20, 0x22
+00079a 9340 0d51                 STS $D51, R20
+00079c e343                      ldi R20, 0x33
+00079d 9340 0d52                 STS $D52, R20
+00079f e545                      ldi R20, 0x55
+0007a0 9340 0d53                 STS $D53, R20
+                                 
+0007a2 e848                      ldi R20, 0x88
+0007a3 9340 0d54                 STS $D54, R20
+0007a5 ed4d                      ldi R20, 0xDD
+0007a6 9340 0d55                 STS $D55, R20
+0007a8 e040                      ldi R20, 0x00
+0007a9 9340 0d56                 STS $D56, R20
+0007ab e141                      ldi R20, 0x11
+0007ac 9340 0d57                 STS $D57, R20
+0007ae e040                      ldi R20, 0x00
+0007af 9340 0d58                 STS $D58, R20
+0007b1 e141                      ldi R20, 0x11
+0007b2 9340 0d59                 STS $D59, R20
+                                 
+0007b4 e141                      ldi R20, 0x11    ;load AD 1 D10 - D17
+0007b5 9340 0d60                 STS $D60, R20
+0007b7 e242                      ldi R20, 0x22
+0007b8 9340 0d61                 STS $D61, R20
+0007ba e343                      ldi R20, 0x33
+0007bb 9340 0d62                 STS $D62, R20
+0007bd e545                      ldi R20, 0x55
+0007be 9340 0d63                 STS $D63, R20
+                                 
+0007c0 e848                      ldi R20, 0x88
+0007c1 9340 0d64                 STS $D64, R20
+0007c3 ed4d                      ldi R20, 0xDD
+0007c4 9340 0d65                 STS $D65, R20
+0007c6 e040                      ldi R20, 0x00
+0007c7 9340 0d66                 STS $D66, R20
+0007c9 e840                      ldi R20, 0x80
+0007ca 9340 0d67                 STS $D67, R20
+0007cc e040                      ldi R20, 0x00
+0007cd 9340 0d68                 STS $D68, R20
+0007cf e141                      ldi R20, 0x11
+0007d0 9340 0d69                 STS $D69, R20
+                                 
+                                 
+                                 
+                                 ;;load message________________________________________!!
+                                 
+0007d2 e343                      ldi R20, 0x33    ;load M 0, E00 - E07
+0007d3 9340 0e50                 STS $E50, R20
+0007d5 e545                      ldi R20, 0x55
+0007d6 9340 0e51                 STS $E51, R20
+0007d8 e848                      ldi R20, 0x88
+0007d9 9340 0e52                 STS $E52, R20
+0007db ed4d                      ldi R20, 0xDD
+0007dc 9340 0e53                 STS $E53, R20
+                                 
+0007de e040                      ldi R20, 0x00
+0007df 9340 0e54                 STS $E54, R20
+0007e1 e141                      ldi R20, 0x11
+0007e2 9340 0e55                 STS $E55, R20
+0007e4 e141                      ldi R20, 0x11
+0007e5 9340 0e56                 STS $E56, R20
+0007e7 e242                      ldi R20, 0x22
+0007e8 9340 0e57                 STS $E57, R20
+0007ea e141                      ldi R20, 0x11
+0007eb 9340 0e58                 STS $E58, R20
+0007ed e242                      ldi R20, 0x22
+0007ee 9340 0e59                 STS $E59, R20
+                                 
+                                 
+                                 
+0007f0 e343                      ldi R20, 0x33    ;load M 1, E10 - E17
+0007f1 9340 0e60                 STS $E60, R20
+0007f3 e545                      ldi R20, 0x55
+0007f4 9340 0e61                 STS $E61, R20
+0007f6 e848                      ldi R20, 0x88
+0007f7 9340 0e62                 STS $E62, R20
+0007f9 ed4d                      ldi R20, 0xDD
+0007fa 9340 0e63                 STS $E63, R20
+                                 
+0007fc e040                      ldi R20, 0x00
+0007fd 9340 0e64                 STS $E64, R20
+0007ff e141                      ldi R20, 0x11
+000800 9340 0e65                 STS $E65, R20
+000802 e141                      ldi R20, 0x11
+000803 9340 0e66                 STS $E66, R20
+000805 e840                      ldi R20, 0x80
+000806 9340 0e67                 STS $E67, R20
+000808 e141                      ldi R20, 0x11
+000809 9340 0e68                 STS $E68, R20
+00080b e242                      ldi R20, 0x22
+00080c 9340 0e69                 STS $E69, R20
+                                 
+                                 
+                                 ;; Load total 37*7 bits into designated memory location-------
+                                 
+00080e e040                      ldi R20, 0x00  ;;S36
+00080f 9340 0a24                 STS $A24, R20
+000811 e040                      ldi R20, 0x00  ;; S35  --------D8
+000812 9340 0a23                 STS $A23, R20
+000814 e040                      ldi R20, 0x00 ;; S34  --------D7
+000815 9340 0a22                 STS $A22, R20
+000817 e040                      ldi R20, 0x00  ;; S33
+000818 9340 0a21                 STS $A21, R20
+00081a e040                      ldi R20, 0x00  ;; S32
+00081b 9340 0a20                 STS $A20, R20
+00081d e040                      ldi R20, 0x00  ;; S31
+00081e 9340 0a1f                 STS $A1F, R20
+000820 e040                      ldi R20, 0x00  ;; S30
+000821 9340 0a1e                 STS $A1E, R20
+000823 e040                      ldi R20, 0x00  ;; S29
+000824 9340 0a1d                 STS $A1D, R20
+000826 e040                      ldi R20, 0x00  ;; S28  --------D6
+000827 9340 0a1c                 STS $A1C, R20
+                                 
+000829 e040                      ldi R20, 0x00  ;; S27  --------D5
+00082a 9340 0a1b                 STS $A1B, R20
+00082c e040                      ldi R20, 0x00  ;; S26
+00082d 9340 0a1a                 STS $A1A, R20
+00082f e040                      ldi R20, 0x00  ;; S25
+000830 9340 0a19                 STS $A19, R20
+000832 e040                      ldi R20, 0x00  ;; S24
+000833 9340 0a18                 STS $A18, R20
+000835 e040                      ldi R20, 0x00  ;; S23
+000836 9340 0a17                 STS $A17, R20
+000838 e040                      ldi R20, 0x00  ;; S22
+000839 9340 0a16                 STS $A16, R20
+00083b e040                      ldi R20, 0x00  ;; S21
+00083c 9340 0a15                 STS $A15, R20
+00083e e040                      ldi R20, 0x00  ;; S20
+00083f 9340 0a14                 STS $A14, R20
+000841 e040                      ldi R20, 0x00  ;; S19
+000842 9340 0a13                 STS $A13, R20
+                                 
+000844 e040                      ldi R20, 0x00;;k63  ;; S18 = K18 --------D4
+000845 9340 0a12                 STS $A12, R20
+                                 
+000847 e040                      ldi R20, 0x00  ;; S17 =N15
+000848 9340 0a11                 STS $A11, R20
+                                 
+00084a e040                      ldi R20, 0x00  ;; S16  --------D3
+00084b 9340 0a10                 STS $A10, R20
+00084d e040                      ldi R20, 0x00  ;; S15  --------D2
+00084e 9340 0a0f                 STS $A0F, R20
+000850 e040                      ldi R20, 0x00  ;; S14
+000851 9340 0a0e                 STS $A0E, R20
+000853 e040                      ldi R20, 0x00  ;; S13
+000854 9340 0a0d                 STS $A0D, R20
+000856 e040                      ldi R20, 0x00  ;; S12
+000857 9340 0a0c                 STS $A0C, R20
+000859 e040                      ldi R20, 0x00  ;; S11
+00085a 9340 0a0b                 STS $A0B, R20
+00085c e040                      ldi R20, 0x00  ;; S10
+00085d 9340 0a0a                 STS $A0A, R20
+00085f e040                      ldi R20, 0x00  ;; S9  --------D1
+000860 9340 0a09                 STS $A09, R20
+000862 e040                      ldi R20, 0x00  ;; S8  --------D0
+000863 9340 0a08                 STS $A08, R20
+000865 e040                      ldi R20, 0x00  ;; S7
+000866 9340 0a07                 STS $A07, R20
+                                 
+000868 e040                      ldi R20, 0x00  ;; S6
+000869 9340 0a06                 STS $A06, R20
+00086b e040                      ldi R20, 0x00  ;; S5
+00086c 9340 0a05                 STS $A05, R20
+00086e e040                      ldi R20, 0x00  ;; S4
+00086f 9340 0a04                 STS $A04, R20
+000871 e040                      ldi R20, 0x00  ;; S3
+000872 9340 0a03                 STS $A03, R20
+000874 e040                      ldi R20, 0x00  ;; S2
+000875 9340 0a02                 STS $A02, R20
+000877 e040                      ldi R20, 0x00  ;; S1
+000878 9340 0a01                 STS $A01, R20
+00087a e040                      ldi R20, 0x00  ;; S0
+00087b 9340 0a00                 STS $A00, R20
+                                 
+                                 
+                                 ;;main function:
+                                 
+                                 
+00087d 940e 0881                 CALL FFUN3
+                                 
+00087f e060                      LDI R22, 0X00 ; for test purpose only, do not run this line, remove it in real implementation!!!!
+                                 
+                                 ;; end of main functionW
+                                 start:  ;; infinity loop used to isolate the main and functions
+000880 cfff                      	rjmp start
+                                 
+                                 
+                                 
+                                 
+                                 ;;begin sub functions:
+                                 FFUN3:
+000881 e040                      	LDI R20, 0x00
+000882 e65f                      	LDI R21, 0x6F;;ROUND TIMEs,should be 111 finally
+000883 1745                      	WHIL1:	CP R20, R21; Compare n(START at 0) with limit(=5)
+000884 f418                      			BRSH NEXTD1
+000885 940e 0897                 			CALL FFUN
+000887 cffb                      			rjmp WHIL1 ; Go back to beginning of WHILE loop
+                                 	NEXTD1:
+                                 
+000888 e0ba                      	LDI R27, 0x0A ;; Load required* data to registers from memory
+000889 e0a0                      	LDI R26, 0x00   ;; a24    X
+                                 
+00088a e0da                      	LDI R29, 0x0A ;; Load required* data to registers from memory
+00088b e6cf                      	LDI R28, 0x6F  ;; a6f   Y
+                                 
+00088c e040                      	LDI R20, 0x00
+00088d e255                      	LDI R21, 0x25;;ROUND TIMEs,should be 37 = 23HEX finally
+00088e 1745                      	WHILMOVE:	CP R20, R21; Compare n(START at 0) with limit(=5)
+00088f f430                      			BRSH NEXTDMOVE
+                                 		
+000890 8108                      			LD R16, Y   ;;S36   ;;MOVE Y to X
+000891 930c                      			ST X, R16
+000892 95a3                      			INC R26
+000893 95c3                      			INC R28
+                                 
+000894 9543                      			INC R20
+000895 cff8                      			rjmp WHILMOVE ; Go back to beginning of WHILE loop
+                                 	NEXTDMOVE:
+                                 
+000896 9508                      RET
+                                 
+                                 
+                                 
+                                 FFUN:  ;;DATA: A24,  TABLE: 521 (WG), 621(r), 721(s-box), 821(RC1), 921(RC0)  and R25, we better use R22 R23 R24 as temp regs
+000897 e060                      	LDI R22, 0x00  ;;get result of WG - 521
+000898 e070                      	LDI R23, 0x00  ;;get result of r -621
+000899 e080                      	LDI R24, 0x00  ;;get results of s-box one by one -721
+                                 
+00089a e0ba                      	LDI R27, 0x0A ;; Load required* data to registers from memory
+00089b e2a4                      	LDI R26, 0x24
+00089c 0fa4                      	ADD R26, R20
+                                 
+00089d 910c                      	LD R16, X   ;;S36
+00089e 50a2                      	SUBI R26, 2
+00089f 90fc                      	LD R15, X   ;;S34
+0008a0 50a3                      	SUBI R26, 3
+0008a1 90ec                      	LD R14, X   ;;S31
+0008a2 50a1                      	SUBI R26, 1
+0008a3 90dc                      	LD R13, X  ;;S30
+0008a4 50a3                      	SUBI R26, 3
+0008a5 90cc                      	LD R12, X   ;;S27
+0008a6 50a1                      	SUBI R26, 1
+0008a7 90bc                      	LD R11, X   ;;S26
+0008a8 50a2                      	SUBI R26, 2
+0008a9 90ac                      	LD R10, X   ;;S24
+0008aa 50a5                      	SUBI R26, 5
+0008ab 909c                      	LD R9, X   ;;;S19
+0008ac 50a1                      	SUBI R26, 1
+0008ad 908c                      	LD R8, X  ;S18
+0008ae 50a3                      	SUBI R26, 3
+0008af 907c                      	LD R7, X  ;;S15
+0008b0 50a2                      	SUBI R26, 2
+0008b1 906c                      	LD R6, X  ;;S13
+0008b2 50a1                      	SUBI R26, 1
+0008b3 905c                      	LD R5, X  ;;S12
+0008b4 50a1                      	SUBI R26, 1 
+0008b5 904c                      	LD R4, X  ;;S11
+0008b6 50a3                      	SUBI R26, 3
+0008b7 903c                      	LD R3, X  ;;S8
+0008b8 50a2                      	SUBI R26, 2
+0008b9 902c                      	LD R2, X   ;;S6
+0008ba 50a1                      	SUBI R26, 1
+0008bb 901c                      	LD R1, X   ;;S5
+0008bc 50a5                      	SUBI R26, 5
+0008bd 900c                      	LD R0, X   ;;S0
+                                 
+                                 
+                                 	;;GET WG result begin--------------
+0008be e0b5                      	LDI R27, 0x05 ;; Store fg to the next data location in the memory.
+0008bf e2a1                      	LDI R26, 0x21
+0008c0 0fa0                      	ADD R26, R16  ;; move index to the value correponsing to S36
+0008c1 910c                      	LD R16, X ;;load value from the WG table to R16
+                                 	;;GET WG result end --------------
+                                 
+                                 
+                                 	;;GET r result begin--------------
+0008c2 e0b6                      	LDI R27, 0x06 ;; Store fg to the next data location in the memory.
+0008c3 e2a1                      	LDI R26, 0x21
+0008c4 0da0                      	ADD R26, R0  ;; move index to the value correponsing to S0
+0008c5 900c                      	LD R0, X ;;load value from the r table to R0
+                                 	;;GET r result end--------------
+                                 
+                                 	;;GET RC0
+0008c6 e0b8                      	LDI R27, 0x08 ;; GET RC1 for fb_out
+0008c7 e2a1                      	LDI R26, 0x21
+0008c8 0fa4                      	ADD R26, R20  ;; move index to the value correponsing to S0
+0008c9 916c                      	LD R22, X
+                                 
+                                 	;; get fb-out stored in R22--------
+0008ca 2760                      	EOR R22, R16  ;;36
+0008cb 256e                      	EOR R22, R14  ;;31
+0008cc 256d                      	EOR R22, R13   ;;30
+0008cd 256b                      	EOR R22, R11   ;;26
+0008ce 256a                      	EOR R22, R10  ;;24
+0008cf 2569                      	EOR R22, R9  ;;19
+0008d0 2566                      	EOR R22, R6  ;;13
+0008d1 2565                      	EOR R22, R5  ;;12
+0008d2 2563                      	EOR R22, R3  ;;8
+0008d3 2562                      	EOR R22, R2  ;;6
+0008d4 2560                      	EOR R22, R0  ;;ready to save R22 which is fg now to the new memory place
+                                 	;; get fb-out stored in R22 end--------
+                                 
+                                 
+                                 	;;Begin updateing terms, (30, 24, 19, 11, 5), with s-box of (34, 27, 18, 15, 8)
+0008d5 e0b7                      	LDI R27, 0x07
+0008d6 e2a1                      	LDI R26, 0x21   ;; update 1st value s30
+0008d7 0daf                      	ADD R26, R15  ;; get S-BOX index
+0008d8 918c                      	LD R24, X ;;load value from the S table
+0008d9 26d8                      	EOR R13, R24
+                                 
+0008da e2a1                      	LDI R26, 0x21 ;; update 2nd value s24
+0008db 0dac                      	ADD R26, R12  ;; get S-BOX index
+0008dc 918c                      	LD R24, X ;;load value from the S table
+0008dd 26a8                      	EOR R10, R24
+                                 
+0008de e2a1                      	LDI R26, 0x21 ;; update 4th value s11
+0008df 0da7                      	ADD R26, R7  ;; get S-BOX index
+0008e0 918c                      	LD R24, X ;;load value from the S table
+0008e1 2648                      	EOR R4, R24
+                                 
+0008e2 e2a1                      	LDI R26, 0x21 ;; update 5th value s5
+0008e3 0da3                      	ADD R26, R3  ;; get S-BOX index
+0008e4 918c                      	LD R24, X ;;load value from the S table to R22
+0008e5 2618                      	EOR R1, R24
+                                 
+0008e6 e0b5                      	LDI R27, 0x05
+0008e7 e2a1                      	LDI R26, 0x21   ;;Update 3rd value s19
+0008e8 0da8                      	ADD R26, R8  ;; get WG index
+0008e9 918c                      	LD R24, X ;;load value from the S table
+0008ea 2698                      	EOR R9, R24 ;;S19 XOR WAP(18)
+0008eb e0b9                      	LDI R27, 0x09
+0008ec e2a1                      	LDI R26, 0x21
+0008ed 0fa4                      	ADD R26, R20  ;; get RC0 index
+0008ee 918c                      	LD R24, X ;;load RC0 from the RC0 table
+0008ef 2698                      	EOR R9, R24 ;;S19 XOR WAP(18) XOR RC0
+                                 	;;End updateing terms, (30, 24, 19, 11, 5), with s-box of (34, 27, 18, 15, 8)
+                                 
+                                 
+                                 
+0008f0 e0ba                      	LDI R27, 0x0A ;; Load required* data to registers from memory
+0008f1 e2a4                      	LDI R26, 0x24
+0008f2 0fa4                      	ADD R26, R20
+                                 
+0008f3 50a6                      	SUBI R26, 6
+0008f4 92dc                      	ST X, R13
+0008f5 50a6                      	SUBI R26, 6
+0008f6 92ac                      	ST X, R10
+0008f7 50a5                      	SUBI R26, 5
+0008f8 929c                      	ST X, R9
+0008f9 50a8                      	SUBI R26, 8
+0008fa 924c                      	ST X, R4
+0008fb 50a6                      	SUBI R26, 6
+0008fc 921c                      	ST X, R1
+                                 
+                                 
+0008fd e2a4                      	LDI R26, 0x24 ;; Load required* data to registers from memory
+0008fe 9543                      	INC R20
+0008ff 0fa4                      	ADD R26, R20
+000900 936c                      	ST X, R22
+                                 
+                                 
+000901 9508                      RET
+
+
+RESOURCE USE INFORMATION
+------------------------
+
+Notice:
+The register and instruction counts are symbol table hit counts,
+and hence implicitly used resources are not counted, eg, the
+'lpm' instruction without operands implicitly uses r0 and z,
+none of which are counted.
+
+x,y,z are separate entities in the symbol table and are
+counted separately from r26..r31 here.
+
+.dseg memory usage only counts static data declared with .byte
+
+"ATmega128" register use summary:
+x  :  33 y  :   1 z  :   0 r0 :   4 r1 :   3 r2 :   2 r3 :   3 r4 :   3 
+r5 :   2 r6 :   2 r7 :   2 r8 :   2 r9 :   5 r10:   4 r11:   2 r12:   2 
+r13:   4 r14:   2 r15:   2 r16:   6 r17:   0 r18:   0 r19:   0 r20:1457 
+r21:   4 r22:  15 r23:   1 r24:  13 r25:   0 r26:  47 r27:   9 r28:   6 
+r29:   1 r30:   0 r31:   0 
+Registers used: 28 out of 35 (80.0%)
+
+"ATmega128" instruction use summary:
+.lds  :   0 .sts  :   0 adc   :   0 add   :  12 adiw  :   0 and   :   0 
+andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   0 brge  :   0 brhc  :   0 
+brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
+brne  :   0 brpl  :   0 brsh  :   2 brtc  :   0 brts  :   0 brvc  :   0 
+brvs  :   0 bset  :   0 bst   :   0 call  :   2 cbi   :   0 cbr   :   0 
+clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
+clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   2 cpc   :   0 
+cpi   :   0 cpse  :   0 dec   :   0 elpm  :   0 eor   :  17 fmul  :   0 
+fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   4 
+jmp   :   0 ld    :  27 ldd   :   0 ldi   : 757 lds   :   0 lpm   :   0 
+lsl   :   0 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 
+mulsu :   0 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   2 
+pop   :   0 push  :   0 rcall :   0 ret   :   2 reti  :   0 rjmp  :   3 
+rol   :   0 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 
+sbis  :   0 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 
+seh   :   0 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 
+sev   :   0 sez   :   0 sleep :   0 spm   :   0 st    :   7 std   :   0 
+sts   : 723 sub   :   0 subi  :  21 swap  :   0 tst   :   0 wdr   :   0 
+
+Instructions used: 14 out of 114 (12.3%)
+
+"ATmega128" memory use summary [bytes]:
+Segment   Begin    End      Code   Data   Used    Size   Use%
+---------------------------------------------------------------
+[.cseg] 0x000000 0x001204   4612      0   4612  131072   3.5%
+[.dseg] 0x000100 0x000100      0      0      0    4096   0.0%
+[.eseg] 0x000000 0x000000      0      0      0    4096   0.0%
+
+Assembly complete, 0 errors, 0 warnings

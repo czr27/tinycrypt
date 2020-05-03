@@ -1,0 +1,147 @@
+
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://people.csail.mit.edu/rivest/Rivest-rc5rev.pdf">RC5</a> is a 64-bit block cipher with support for 128-bit keys. It was designed in 1994 by <a href="https://people.csail.mit.edu/rivest/">Ronald Rivest</a> and licensed by RSA security. As of 2019, the patent has expired. It is one of the earliest examples of an add-rotate-xor (ARX) construction being used in a cipher. 12-round RC5 (with 64-bit blocks) is susceptible to a differential attack using $latex 2^{44}$ chosen plaintexts. 20 rounds are suggested as sufficient protection.</p>
+
+<h3><strong>Compact code</strong></h3>
+
+<p>The following function combines key scheduling and encryption in one call. This is obviously slower that seperating the two. <var>mk</var> should point to a 128-bit master key. <var>data</var> should point to a 64-bit block of plaintext to be encrypted.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> RC5_R 12</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> RC5_K </span><span style='color:#808030; '>(</span><span style='color:#004a43; '>2</span><span style='color:#808030; '>*</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>RC5_R</span><span style='color:#808030; '>+</span><span style='color:#004a43; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+
+<span style='color:#800000; font-weight:bold; '>void</span> rc5<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>mk<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>data<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W A<span style='color:#808030; '>=</span><span style='color:#008000; '>0xB7E15163</span><span style='color:#808030; '>,</span>B<span style='color:#808030; '>,</span>i<span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>,</span>X<span style='color:#808030; '>,</span>S<span style='color:#808030; '>[</span>RC5_K<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>L<span style='color:#808030; '>[</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>x<span style='color:#808030; '>=</span>data<span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>K<span style='color:#808030; '>=</span>mk<span style='color:#800080; '>;</span>
+
+    <span style='color:#696969; '>// copy 128-bit key to local buffer</span>
+    F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>K<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// initialize S</span>
+    F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span>RC5_K<span style='color:#808030; '>)</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>A<span style='color:#808030; '>,</span>A<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#008000; '>0x9E3779B9</span><span style='color:#800080; '>;</span>
+    A<span style='color:#808030; '>=</span>B<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span> k<span style='color:#808030; '>=</span>S<span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// create subkeys</span>
+    F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span>RC5_K<span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span>
+      A<span style='color:#808030; '>=</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span>RC5_K<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span>RC5_K<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>(</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>
+      B<span style='color:#808030; '>=</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>(</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#808030; '>(</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// add first two subkeys to 64-bits of plaintext</span>
+    A<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>B<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// do 12 rounds on each 32-bit word</span>
+    F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span>RC5_K<span style='color:#808030; '>-</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span>X<span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>A<span style='color:#808030; '>^</span>B<span style='color:#808030; '>,</span>B<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>255</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>,</span>A<span style='color:#808030; '>=</span>B<span style='color:#808030; '>,</span>B<span style='color:#808030; '>=</span>X<span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// store ciphertext</span>
+    x<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>A<span style='color:#800080; '>;</span> x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>B<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>x86 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>; -----------------------------------------------</span>
+<span style='color:#696969; '>; RC5 in x86 assembly (just encryption)</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; https://people.csail.mit.edu/rivest/Rivest-rc5rev.pdf</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; size: 120 bytes for single call</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; global calls use cdecl convention</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; -----------------------------------------------</span>
+
+  <span style='color:#004a43; '>bits</span> <span style='color:#008c00; '>32</span>
+  
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BIN</span>
+    <span style='color:#004a43; '>global</span> rc5
+    <span style='color:#004a43; '>global</span> _rc5
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%endif</span>
+
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%define</span><span style='color:#004a43; '> RC5_R 12            </span><span style='color:#696969; '>; 20 to increase strength of cipher</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>%define</span><span style='color:#004a43; '> RC5_K (2*(RC5_R+1)) </span><span style='color:#696969; '>; how many sub keys required</span>
+  
+<span style='color:#696969; '>; rc5(void *mk, void *data) </span>
+<span style='color:#e34adc; '>_rc5:</span>
+<span style='color:#e34adc; '>rc5:</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#008c00; '>+4</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; esi = mk</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#008c00; '>+8</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; ebx = data</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>           <span style='color:#696969; '>; ecx = 0</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> RC5_K<span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>+16</span>     <span style='color:#696969; '>; L[4], S[26]</span>
+    <span style='color:#800000; font-weight:bold; '>sub</span>    <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>           <span style='color:#696969; '>; esp = S</span>
+    <span style='color:#696969; '>; copy 128-bit key to local buffer</span>
+    <span style='color:#696969; '>; F(i,4)L[i]=K[i];</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>esp</span>           <span style='color:#696969; '>; edi = L[4]</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsd</span>
+    <span style='color:#696969; '>; initialize S</span>
+    <span style='color:#696969; '>; F(i,RC5_K)S[i]=A,A+=0x9E3779B9;</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>edi</span>                 <span style='color:#696969; '>; save S</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0xB7E15163</span>     <span style='color:#696969; '>; eax = P</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> RC5_K    
+<span style='color:#e34adc; '>r5_L0:</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>                      <span style='color:#696969; '>; S[i] = A</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0x9E3779B9</span>     <span style='color:#696969; '>; A += Q</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>   <span style='color:#e34adc; '>r5_L0</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>edi</span>                 <span style='color:#696969; '>; restore S</span>
+    <span style='color:#696969; '>; A = B = 0; k=S;</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; esi = data</span>
+    <span style='color:#800000; font-weight:bold; '>mul</span>    <span style='color:#000080; '>ecx</span>                 <span style='color:#696969; '>; eax = 0, edx = 0</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; ebx = 0</span>
+    <span style='color:#696969; '>; F(i,RC5_K*3)</span>
+<span style='color:#e34adc; '>r5_L1:</span>    
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebp</span>            <span style='color:#696969; '>; i % 26    </span>
+<span style='color:#e34adc; '>r5_L2:</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> RC5_K
+    <span style='color:#800000; font-weight:bold; '>je</span>     <span style='color:#e34adc; '>r5_L1</span>    
+
+    <span style='color:#696969; '>; A=S[i%RC5_K]=R(S[i%RC5_K]+(A+B),3) </span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; A += B</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ebp</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; A += S[i%26]</span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span>              <span style='color:#696969; '>; A  = R(A, 3)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ebp</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>    <span style='color:#696969; '>; S[i%26] = A</span>
+    
+    <span style='color:#696969; '>; B=L[i% 4]=R(L[i%4]+(A+B),(A+B))</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>            <span style='color:#696969; '>; B += A</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; save A+B in ecx</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; save i</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span>               <span style='color:#696969; '>; %= 4</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>-16</span><span style='color:#808030; '>]</span> <span style='color:#696969; '>; B += L[i%4]    </span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>             <span style='color:#696969; '>; B = ROTL32(B, A+B)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>-16</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span> <span style='color:#696969; '>; L[i%4] = B    </span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; restore i    </span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>ebp</span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; i++</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> RC5_K<span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span>
+    <span style='color:#800000; font-weight:bold; '>jnz</span>    <span style='color:#e34adc; '>r5_L2</span>    
+    
+    <span style='color:#696969; '>; A=x[0]+*k++;B=x[1]+*k++;</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>esi</span>                 <span style='color:#696969; '>; save ptr to data    </span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>                      <span style='color:#696969; '>; A = x[0] + *k++;</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; X(A, B);</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>                      <span style='color:#696969; '>; A = x[1]</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> RC5_K <span style='color:#808030; '>-</span> <span style='color:#008c00; '>1</span>   
+    <span style='color:#800000; font-weight:bold; '>jmp</span>    <span style='color:#e34adc; '>r5_L4</span>
+<span style='color:#e34adc; '>r5_L3:</span>
+    <span style='color:#696969; '>; F(i,RC5_K-2)X=R(A^B,B&amp;255)+*k++,A=B,B=X;</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>             <span style='color:#696969; '>; A ^= B </span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>   <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>             <span style='color:#696969; '>; ecx = B </span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>              <span style='color:#696969; '>; A = R(A ^ B, B)</span>
+<span style='color:#e34adc; '>r5_L4:</span>     
+    <span style='color:#800000; font-weight:bold; '>add</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>           <span style='color:#696969; '>; A += *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>  <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>             <span style='color:#696969; '>; X(A, B);</span>
+    <span style='color:#800000; font-weight:bold; '>dec</span>   <span style='color:#000080; '>edx</span>
+    <span style='color:#800000; font-weight:bold; '>jnz</span>   <span style='color:#e34adc; '>r5_L3</span>    
+    
+    <span style='color:#800000; font-weight:bold; '>pop</span>   <span style='color:#000080; '>esp</span>                  <span style='color:#696969; '>; restore ptr to data    </span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>  <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edi</span>
+    <span style='color:#696969; '>; store ciphertext</span>
+    <span style='color:#696969; '>; x[0]=A; x[1]=B;</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>                      <span style='color:#696969; '>; x[0] = A</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>  <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>                      <span style='color:#696969; '>; x[1] = B         </span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/block/rc5">Sources here.</a></p>

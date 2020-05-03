@@ -1,0 +1,48 @@
+ZX7 file format overview by spke
+
+0 + [xxxxxxxx] -> copy literal
+1 + LEN + OFFSET -> copy match
+
+LEN is a standard Elias Gamma code; it can be
+1	-> 2
+01x	-> 3..4
+001xx		-> 5..8
+0001xxx		-> 9..16
+00001xxx x	-> 17..32
+000001xx xxx		-> 33..64
+0000001x xxxxx		-> 65..128
+00000001 xxxxxxx	-> 129..256
+00000000 1xxxxxxx x	-> 257..512
+00000000 01xxxxxx xxx		-> 513..1024
+00000000 001xxxxx xxxxx		-> 1025..2048
+00000000 0001xxxx xxxxxxx	-> 2049..4096
+00000000 00001xxx xxxxxxxx x	-> 4097..8192
+00000000 000001xx xxxxxxxx xxx		-> 8193..16384
+00000000 0000001x xxxxxxxx xxxxx	-> 16385..32768
+00000000 00000001 xxxxxxxx xxxxxxx	-> 32769..65536
+00000000 00000000 1xxxxxxx xxxxxxxx x		-> ENDCODE (the actual content of x bits is not important)
+
+OFFSET can be
+[0xxxxxxx]	-> 0..127
+[1xxxxxxx] XXXX		-> 128..128+2047=2175
+
+the actual copying copies LEN bytes from $-OFFSET-1 to $
+match nearby packs 2 bytes into 10 bits
+match further away packs 2 bytes into 14 bits
+
+ZX7 compressor was created by Einar Saukas; the decompressors were optimized
+with some help from Antonio Villena, Metalbrain and Urusergi.
+Official downloads are available from http://www.worldofspectrum.org/infoseekid.cgi?id=0027996
+See also discussion at https://worldofspectrum.org/forums/discussion/42037/
+
+ZX7 is derived from Bitbuster created by Team Bomba (2002, 2003).
+The authors' page: http://www.teambomba.net/bombaman/downloadd26a.html
+The list of differences is as follows:
+* ZX7 does not store uncompressed data length (just like in Gasman's Bitbuster Extreme);
+* Bitbuster uses inverted Elias Gamma code (0s and 1s swapped);
+* Bitbuster stores OFFSET after the LEN;
+* Bitbuster does not have an optimal compressor.
+
+Bitbuster is derived from POPCOM!, a CP/M executable file compressor by
+Yoshihiko Mino (1992), who is also the author of PMarc and PMarc2.
+The author's page: http://www.asahi-net.or.jp/~am9y-mn/fswlist.htm

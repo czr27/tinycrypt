@@ -1,0 +1,197 @@
+<h3><strong>Introduction</strong></h3>
+
+<a href="http://people.csail.mit.edu/rivest/pubs/RRSY98.pdf">RC6</a> is a 128-bit block cipher with support for 128, 192, 256-bit key sizes. It was designed by <a href="http://people.csail.mit.edu/rivest/">Ron Rivest</a>, Matthew Robshaw, Ray Sidney, <a href="http://people.csail.mit.edu/yiqun/">Yiqun Lisa Yin</a> and published in 1998. RC6 has a simple structure consisting of two Feistel networks whose data are mixed via <a href="https://patents.google.com/patent/US5835600">data-dependent rotations</a>. It's a more advanced version of RC5 that operates on four 32-bit words instead of two, and includes mitigations against attacks possible on RC5. The security of RC6 relies on the strength of data-dependent rotations, the mixed use of exclusive-or operations and modular additions.</a> As of February 13th 2019, the <a href="https://patents.google.com/patent/US5724428">patent has expired</a>.</p>
+
+<h3><strong>Compact code</strong></h3>
+
+<p>The following is not optimized for performance. It's a simplified version intended to be used as a reference.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> R</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>|</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>(</span><span style='color:#004a43; '>32</span><span style='color:#808030; '>-</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> F</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#004a43; '>for</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>=</span><span style='color:#004a43; '>0</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>&lt;</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>int</span> W<span style='color:#800080; '>;</span>
+
+<span style='color:#800000; font-weight:bold; '>void</span> rc6<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span><span style='color:#808030; '>*</span>mk<span style='color:#808030; '>,</span><span style='color:#800000; font-weight:bold; '>void</span><span style='color:#808030; '>*</span>p<span style='color:#808030; '>)</span><span style='color:#800080; '>{</span>
+    W A<span style='color:#808030; '>=</span><span style='color:#008000; '>0xB7E15163</span><span style='color:#808030; '>,</span>B<span style='color:#808030; '>,</span>C<span style='color:#808030; '>,</span>D<span style='color:#808030; '>,</span>i<span style='color:#808030; '>,</span>X<span style='color:#808030; '>,</span>Y<span style='color:#808030; '>,</span>S<span style='color:#808030; '>[</span><span style='color:#008c00; '>44</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>L<span style='color:#808030; '>[</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>x<span style='color:#808030; '>=</span>p<span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>=</span>mk<span style='color:#800080; '>;</span>
+
+    <span style='color:#696969; '>// copy 256-bit key</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>k<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>k<span style='color:#808030; '>=</span>S<span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// initialize state</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>44</span><span style='color:#808030; '>)</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>A<span style='color:#808030; '>,</span>A<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#008000; '>0x9E3779B9</span><span style='color:#800080; '>;</span>
+    A<span style='color:#808030; '>=</span>B<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// create subkeys</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>44</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span>
+      A<span style='color:#808030; '>=</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>44</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>S<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>44</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>,</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>
+      B<span style='color:#808030; '>=</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>L<span style='color:#808030; '>[</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>,</span>A<span style='color:#808030; '>+</span>B<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      
+    <span style='color:#696969; '>// load plaintext, add key</span>
+    A<span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>x<span style='color:#800080; '>;</span>B<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>C<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>D<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    B<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>D<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+
+    <span style='color:#696969; '>// apply 20 rounds of encryption</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>20</span><span style='color:#808030; '>)</span>
+      X<span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>+</span>B<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>
+      Y<span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>D<span style='color:#808030; '>*</span><span style='color:#808030; '>(</span>D<span style='color:#808030; '>+</span>D<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>
+      A<span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>A<span style='color:#808030; '>^</span>X<span style='color:#808030; '>,</span>Y<span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>,</span>
+      C<span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>C<span style='color:#808030; '>^</span>Y<span style='color:#808030; '>,</span>X<span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>,</span>
+      X<span style='color:#808030; '>=</span>A<span style='color:#808030; '>,</span>A<span style='color:#808030; '>=</span>B<span style='color:#808030; '>,</span>B<span style='color:#808030; '>=</span>C<span style='color:#808030; '>,</span>C<span style='color:#808030; '>=</span>D<span style='color:#808030; '>,</span>D<span style='color:#808030; '>=</span>X<span style='color:#800080; '>;</span>
+      
+    <span style='color:#696969; '>// add key, store ciphertext</span>
+    A<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>C<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>k<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+    <span style='color:#808030; '>*</span>x<span style='color:#808030; '>=</span>A<span style='color:#800080; '>;</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>B<span style='color:#800080; '>;</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>C<span style='color:#800080; '>;</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>D<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>x86 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>; -----------------------------------------------</span>
+<span style='color:#696969; '>; RC6 block cipher in x86 assembly (encryption only)</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; https://people.csail.mit.edu/rivest/pubs/RRSY98.pdf</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; size: 170 bytes</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; global calls use cdecl convention</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; -----------------------------------------------</span>
+
+        <span style='color:#004a43; '>bits</span> <span style='color:#008c00; '>32</span>
+
+
+<span style='color:#004a43; '>&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;</span><span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BIN</span>
+          <span style='color:#004a43; '>global</span> rc6
+          <span style='color:#004a43; '>global</span> _rc6
+<span style='color:#004a43; '>&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;</span><span style='color:#004a43; '>%endif</span>
+        
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> RC6_ROUNDS 20</span>
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> RC6_KR     (2*(RC6_ROUNDS+2))</span>
+
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> A esi</span>
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> B ebx</span>
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> C edx</span>
+<span style='color:#004a43; '>%define</span><span style='color:#004a43; '> D ebp</span>
+        
+<span style='color:#e34adc; '>rc6:</span>
+<span style='color:#e34adc; '>_rc6:</span>
+    <span style='color:#800000; font-weight:bold; '>pushad</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#008c00; '>+4</span><span style='color:#808030; '>]</span>     <span style='color:#696969; '>; edi = key / L</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>esp</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>32</span><span style='color:#008c00; '>+8</span><span style='color:#808030; '>]</span>     <span style='color:#696969; '>; esi = data</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>            <span style='color:#696969; '>; ecx = 0</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> RC6_KR<span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>+32</span>     <span style='color:#696969; '>; allocate space for key and sub keys</span>
+    <span style='color:#800000; font-weight:bold; '>sub</span>    <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>            <span style='color:#696969; '>; esp = S</span>
+    <span style='color:#696969; '>; copy 256-bit key to local buffer</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>esp</span>            <span style='color:#696969; '>; edi = L</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>32</span>
+    <span style='color:#800000; font-weight:bold; '>rep</span>    <span style='color:#800000; font-weight:bold; '>movsb</span>
+    <span style='color:#696969; '>; initialize S / sub keys </span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>edi</span>                 <span style='color:#696969; '>; save S</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0xB7E15163</span>     <span style='color:#696969; '>; eax = RC6_P</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> RC6_KR    
+<span style='color:#e34adc; '>init_subkeys:</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>                      <span style='color:#696969; '>; S[i] = A</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008000; '>0x9E3779B9</span>     <span style='color:#696969; '>; A += RC6_Q</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>   <span style='color:#e34adc; '>init_subkeys</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>edi</span>                 <span style='color:#696969; '>; restore S</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>esi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; esi = data</span>
+    <span style='color:#800000; font-weight:bold; '>mul</span>    <span style='color:#000080; '>ecx</span>                 <span style='color:#696969; '>; eax = 0, edx = 0</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; ebx = 0</span>
+<span style='color:#e34adc; '>set_idx:</span>    
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebp</span>            <span style='color:#696969; '>; i % RC6_KR    </span>
+<span style='color:#e34adc; '>init_key_loop:</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>ebp</span><span style='color:#808030; '>,</span> RC6_KR
+    <span style='color:#800000; font-weight:bold; '>je</span>     <span style='color:#e34adc; '>set_idx</span>    
+
+    <span style='color:#696969; '>; A = S[i%RC6_KR] = ROTL32(S[i%RC6_KR] + A+B, 3); </span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; A += B</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ebp</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; A += S[i%RC6_KR]</span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span>              <span style='color:#696969; '>; A  = ROTL32(A, 3)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>ebp</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>    <span style='color:#696969; '>; S[i%RC6_KR] = A</span>
+    
+    <span style='color:#696969; '>; B = L[i%4] = ROTL32(L[i%4] + A+B, A+B);</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>            <span style='color:#696969; '>; B += A</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span>            <span style='color:#696969; '>; save A+B in ecx</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; save i</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>7</span>               <span style='color:#696969; '>; %= 8</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>-32</span><span style='color:#808030; '>]</span> <span style='color:#696969; '>; B += L[i%8]    </span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>ebx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>             <span style='color:#696969; '>; B = ROTL32(B, A+B)</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>+</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>4</span><span style='color:#008c00; '>-32</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ebx</span> <span style='color:#696969; '>; L[i%8] = B    </span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; restore i    </span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>ebp</span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>edx</span>                 <span style='color:#696969; '>; i++</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> RC6_KR<span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span>        <span style='color:#696969; '>; i&lt;RC6_KR*3</span>
+    <span style='color:#800000; font-weight:bold; '>jnz</span>    <span style='color:#e34adc; '>init_key_loop</span>   
+
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>esi</span>               <span style='color:#696969; '>; save ptr to data    </span>
+    <span style='color:#696969; '>; load plaintext</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>eax</span>               <span style='color:#696969; '>; save A</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> B            <span style='color:#696969; '>; load B</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#004a43; '>C</span>            <span style='color:#696969; '>; load C</span>
+    <span style='color:#800000; font-weight:bold; '>lodsd</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> D            <span style='color:#696969; '>; load D</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    A                 <span style='color:#696969; '>; restore A</span>
+    
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#008c00; '>20</span>                <span style='color:#696969; '>; ecx = RC6_ROUNDS</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>ecx</span>    
+    <span style='color:#696969; '>; B += *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    B<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#696969; '>; D += *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    D<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+<span style='color:#e34adc; '>r6c_l3:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#000080; '>ecx</span>    
+    <span style='color:#696969; '>; T0 = ROTL32(B * (2 * B + 1), 5);</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>B<span style='color:#808030; '>+</span>B<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>imul</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> B
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>5</span>
+    <span style='color:#696969; '>; T1 = ROTL32(D * (2 * D + 1), 5);</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>D<span style='color:#808030; '>+</span>D<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>imul</span>   <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> D
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>5</span>
+    <span style='color:#696969; '>; A = ROTL32(A ^ T0, T1) + *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    A<span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    A<span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>       <span style='color:#696969; '>; T1 should be ecx</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    A<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; += *k; </span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>              <span style='color:#696969; '>; k++;</span>
+    <span style='color:#696969; '>; C = ROTL32(C ^ T1, T0) + *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#004a43; '>C</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>      <span style='color:#696969; '>; C ^= T1</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>    <span style='color:#696969; '>; </span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    <span style='color:#004a43; '>C</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>       <span style='color:#696969; '>; rotate by T0</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#004a43; '>C</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#696969; '>; swap</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   D<span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#004a43; '>C</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   B<span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   A<span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   D<span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>
+    <span style='color:#696969; '>; decrease counter</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>ecx</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>   <span style='color:#e34adc; '>r6c_l3</span>
+    
+    <span style='color:#696969; '>; A += *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    A<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#696969; '>; C += *k; k++;</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#004a43; '>C</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>edi</span><span style='color:#808030; '>]</span>
+    <span style='color:#800000; font-weight:bold; '>scasd</span>
+    <span style='color:#696969; '>; save ciphertext  </span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    <span style='color:#000080; '>esp</span>         <span style='color:#696969; '>; esp = data</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>esp</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edi</span>    <span style='color:#696969; '>; esp = fixed stack, edi = data</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> A
+    <span style='color:#800000; font-weight:bold; '>stosd</span>              <span style='color:#696969; '>; save A</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> B      
+    <span style='color:#800000; font-weight:bold; '>stosd</span>              <span style='color:#696969; '>; save B </span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#004a43; '>C</span>
+    <span style='color:#800000; font-weight:bold; '>stosd</span>              <span style='color:#696969; '>; save C </span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> D 
+    <span style='color:#800000; font-weight:bold; '>stosd</span>              <span style='color:#696969; '>; save D</span>
+    <span style='color:#800000; font-weight:bold; '>popad</span>
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/block/rc6">Sources here.</a></p>

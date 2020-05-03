@@ -1,0 +1,287 @@
+<!DOCTYPE html PUBLIC "-//W30//DTD W3 HTML 2.0//EN">
+<html><!-- This file was generated using SDF 2.001 by
+     Ian Clatworthy (ianc@mincom.com). SDF is freely
+     available from http://www.mincom.com/mtr/sdf. --><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<title>OpenLDAP Software 2.4 Administrator's Guide: Security Considerations</title>
+</head>
+<body>
+
+<div class="header">
+<a href="http://www.openldap.org/">
+<p><img src="OpenLDAP%20Software%202.4%20Administrator%27s%20Guide%20%20Security%20Considerations_files/LDAPlogo.gif" align="Left" border="0"></p>
+</a>
+<div class="navigate">
+<p align="Center"><a href="http://www.openldap.org/doc/admin24/index.html">Contents</a> | <a href="http://www.openldap.org/doc/admin24/index.html">Parent Topic</a> | <a href="http://www.openldap.org/doc/admin24/schema.html">Previous Topic</a> | <a href="http://www.openldap.org/doc/admin24/sasl.html">Next Topic</a> <br><a href="http://www.openldap.org/">Home</a> | <a href="http://www.openldap.org/doc/index.html">Catalog</a></p>
+</div>
+<br clear="Left">
+</div>
+<div class="main">
+<h1>14. Security Considerations</h1>
+<p>OpenLDAP Software is designed to run in a wide variety of computing 
+environments from tightly-controlled closed networks to the global 
+Internet.  Hence, OpenLDAP Software supports many different security 
+mechanisms.  This chapter describes these mechanisms and discusses 
+security considerations for using OpenLDAP Software.</p>
+<hr>
+<h2><a name="Network Security">14.1. Network Security</a></h2>
+<h3><a name="Selective Listening">14.1.1. Selective Listening</a></h3>
+<p>By default, <em>slapd</em>(8) will listen on both the IPv4 and IPv6 "any" addresses.  It is often desirable to have <em>slapd</em> listen on select address/port pairs.  For example, listening only on the IPv4 address <tt>127.0.0.1</tt> will disallow remote access to the directory server. E.g.:</p>
+<pre>        slapd -h ldap://127.0.0.1
+</pre>
+<p>While the server can be configured to listen on a particular 
+interface address, this doesn't necessarily restrict access to the 
+server to only those networks accessible via that interface.   To 
+selective restrict remote access, it is recommend that an <a href="http://www.openldap.org/doc/admin24/security.html#IP%20Firewall">IP Firewall</a> be used to restrict access.</p>
+<p>See <sect>Command-line Options</sect> and <em>slapd</em>(8) for more information.</p>
+<h3><a name="IP Firewall">14.1.2. IP Firewall</a></h3>
+<p><term>IP</term> firewall capabilities of the server system can be 
+used to restrict access based upon the client's IP address and/or 
+network interface used to communicate with the client.</p>
+<p>Generally, <em>slapd</em>(8) listens on port 389/tcp for <a href="ldap://">ldap://</a> sessions and port 636/tcp for <a href="ldaps://">ldaps://</a>) sessions.  <em>slapd</em>(8) may be configured to listen on other ports.</p>
+<p>As specifics of how to configure IP firewall are dependent on the 
+particular kind of IP firewall used, no examples are provided here. See 
+the document associated with your IP firewall.</p>
+<h3><a name="TCP Wrappers">14.1.3. TCP Wrappers</a></h3>
+<p><em>slapd</em>(8) supports <term>TCP</term> Wrappers.  TCP Wrappers 
+provide a rule-based access control system for controlling TCP/IP access
+ to the server.  For example, the <em>host_options</em>(5) rule:</p>
+<pre>        slapd: 10.0.0.0/255.0.0.0 127.0.0.1 : ALLOW
+        slapd: ALL : DENY
+</pre>
+<p>allows only incoming connections from the private network <tt>10.0.0.0</tt> and localhost (<tt>127.0.0.1</tt>) to access the directory service.</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>IP addresses are used as <em>slapd</em>(8) is not normally configured to perform reverse lookups.
+<hr align="Left" width="80%"><p></p>
+<p>It is noted that TCP wrappers require the connection to be accepted. 
+As significant processing is required just to deny a connection, it is 
+generally advised that IP firewall protection be used instead of TCP 
+wrappers.</p>
+<p>See <em>hosts_access</em>(5) for more information on TCP wrapper rules.</p>
+<hr>
+<h2><a name="Data Integrity and Confidentiality Protection">14.2. Data Integrity and Confidentiality Protection</a></h2>
+<p><term>Transport Layer Security</term> (TLS) can be used to provide data integrity and confidentiality protection.  OpenLDAP supports negotiation of <term>TLS</term> (<term>SSL</term>) via both StartTLS and <a href="ldaps://">ldaps://</a>. See the <a href="http://www.openldap.org/doc/admin24/tls.html">Using TLS</a> chapter for more information.  StartTLS is the standard track mechanism.</p>
+<p>A number of <term>Simple Authentication and Security Layer</term> (SASL) mechanisms, such as <term>DIGEST-MD5</term> and <term>GSSAPI</term>, also provide data integrity and confidentiality protection.  See the <a href="http://www.openldap.org/doc/admin24/sasl.html">Using SASL</a> chapter for more information.</p>
+<h3><a name="Security Strength Factors">14.2.1. Security Strength Factors</a></h3>
+<p>The server uses <term>Security Strength Factor</term>s (SSF) to 
+indicate the relative strength of protection.  A SSF of zero (0) 
+indicates no protections are in place.  A SSF of one (1) indicates 
+integrity protection are in place.  A SSF greater than one (&gt;1) 
+roughly correlates to the effective encryption key length.  For example,
+ <term>DES</term> is 56, <term>3DES</term> is 112, and <term>AES</term> 128, 192, or 256.</p>
+<p>A number of administrative controls rely on SSFs associated with TLS and SASL protection in place on an LDAP session.</p>
+<p><tt>security</tt> controls disallow operations when appropriate protections are not in place.  For example:</p>
+<pre>        security ssf=1 update_ssf=112
+</pre>
+<p>requires integrity protection for all operations and encryption 
+protection, 3DES equivalent, for update operations (e.g. add, delete, 
+modify, etc.).  See <em>slapd.conf</em>(5) for details.</p>
+<p>For fine-grained control, SSFs may be used in access controls. See the <a href="http://www.openldap.org/doc/admin24/access-control.html">Access Control</a> section for more information.</p>
+<hr>
+<h2><a name="Authentication Methods">14.3. Authentication Methods</a></h2>
+<h3><a name="&quot;simple&quot; method">14.3.1. "simple" method</a></h3>
+<p>The LDAP "simple" method has three modes of operation:</p>
+<ul>
+<li>anonymous,
+</li><li>unauthenticated, and
+</li><li>user/password authenticated.</li></ul>
+<p>Anonymous access is requested by providing no name and no password to
+ the "simple" bind operation.  Unauthenticated access is requested by 
+providing a name but no password.  Authenticated access is requested by 
+providing a valid name and password.</p>
+<p>An anonymous bind results in an <em>anonymous</em> authorization association.  Anonymous bind mechanism is enabled by default, but can be disabled by specifying "<tt>disallow bind_anon</tt>" in <em>slapd.conf</em>(5).</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>Disabling the anonymous bind mechanism does not 
+prevent anonymous access to the directory. To require authentication to 
+access the directory, one should instead specify "<tt>require authc</tt>".
+<hr align="Left" width="80%"><p></p>
+<p>An unauthenticated bind also results in an <em>anonymous</em> authorization association.  Unauthenticated bind mechanism is disabled by default, but can be enabled by specifying "<tt>allow bind_anon_cred</tt>" in <em>slapd.conf</em>(5).
+  As a number of LDAP applications mistakenly generate unauthenticated 
+bind request when authenticated access was intended (that is, they do 
+not ensure a password was provided), this mechanism should generally 
+remain disabled.</p>
+<p>A successful user/password authenticated bind results in a user 
+authorization identity, the provided name, being associated with the 
+session.  User/password authenticated bind is enabled by default. 
+However, as this mechanism itself offers no eavesdropping protection 
+(e.g., the password is set in the clear), it is recommended that it be 
+used only in tightly controlled systems or when the LDAP session is 
+protected by other means (e.g., TLS, <term>IPsec</term>). Where the 
+administrator relies on TLS to protect the password, it is recommended 
+that unprotected authentication be disabled.  This is done using the <tt>security</tt> directive's <tt>simple_bind</tt> option, which provides fine grain control over the level of confidential protection to require for <em>simple</em> user/password authentication. E.g., using <tt>security simple_bind=56</tt> would require <em>simple</em> binds to use encryption of DES equivalent or better.</p>
+<p>The user/password authenticated bind mechanism can be completely disabled by setting "<tt>disallow bind_simple</tt>".</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>An unsuccessful bind always results in the session having an <em>anonymous</em> authorization association.
+<hr align="Left" width="80%"><p></p>
+<h3><a name="SASL method">14.3.2. SASL method</a></h3>
+<p>The LDAP <term>SASL</term> method allows the use of any SASL authentication mechanism. The <a href="http://www.openldap.org/doc/admin24/sasl.html">Using SASL</a> section discusses the use of SASL.</p>
+<hr>
+<h2><a name="Password Storage">14.4. Password Storage</a></h2>
+<p>LDAP passwords are normally stored in the <em>userPassword</em> attribute. <a href="http://www.rfc-editor.org/rfc/rfc4519.txt">RFC4519</a>
+ specifies that passwords are not stored in encrypted (or hashed) form. 
+ This allows a wide range of password-based authentication mechanisms, 
+such as <tt>DIGEST-MD5</tt> to be used. This is also the most interoperable storage scheme.</p>
+<p>However, it may be desirable to store a hash of password instead. <em>slapd</em>(8) supports a variety of storage schemes for the administrator to choose from.</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>Values of password attributes, regardless of 
+storage scheme used, should be protected as if they were clear text.  
+Hashed passwords are subject to <em>dictionary attacks</em> and <em>brute-force attacks</em>.
+<hr align="Left" width="80%"><p></p>
+<p>The <em>userPassword</em> attribute is allowed to have more than one 
+value, and it is possible for each value to be stored in a different 
+form. During authentication, <em>slapd</em> will iterate through the 
+values until it finds one that matches the offered password or until it 
+runs out of values to inspect.  The storage scheme is stored as a prefix
+ on the value, so a hashed password using the Salted SHA1 (<tt>SSHA</tt>) scheme looks like:</p>
+<pre> userPassword: {SSHA}DkMTwBl+a/3DQTxCYEApdUtNXGgdUac3
+</pre>
+<p>The advantage of hashed passwords is that an attacker which discovers
+ the hash does not have direct access to the actual password. 
+Unfortunately, as dictionary and brute force attacks are generally quite
+ easy for attackers to successfully mount, this advantage is marginal at
+ best (this is why all modern Unix systems use shadow password files).</p>
+<p>The disadvantages of hashed storage is that they are non-standard, 
+may cause interoperability problem, and generally preclude the use of 
+stronger than Simple (or SASL/PLAIN) password-based authentication 
+mechanisms such as <tt>DIGEST-MD5</tt>.</p>
+<h3><a name="SSHA password storage scheme">14.4.1. SSHA password storage scheme</a></h3>
+<p>This is the salted version of the SHA scheme. It is believed to be the most secure password storage scheme supported by <em>slapd</em>.</p>
+<p>These values represent the same password:</p>
+<pre> userPassword: {SSHA}DkMTwBl+a/3DQTxCYEApdUtNXGgdUac3
+ userPassword: {SSHA}d0Q0626PSH9VUld7yWpR0k6BlpQmtczb
+</pre>
+<h3><a name="CRYPT password storage scheme">14.4.2. CRYPT password storage scheme</a></h3>
+<p>This scheme uses the operating system's <em>crypt(3)</em> hash function. It normally produces the traditional Unix-style 13 character hash, but on systems with <tt>glibc2</tt> it can also generate the more secure 34-byte MD5 hash.</p>
+<pre> userPassword: {CRYPT}aUihad99hmev6
+ userPassword: {CRYPT}$1$czBJdDqS$TmkzUAb836oMxg/BmIwN.1
+</pre>
+<p>The advantage of the CRYPT scheme is that passwords can be 
+transferred to or from an existing Unix password file without having to 
+know the cleartext form. Both forms of <em>crypt</em> include salt so they have some resistance to dictionary attacks.</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>Since this scheme uses the operating system's <em>crypt(3)</em> hash function, it is therefore operating system specific.
+<hr align="Left" width="80%"><p></p>
+<h3><a name="MD5 password storage scheme">14.4.3. MD5 password storage scheme</a></h3>
+<p>This scheme simply takes the MD5 hash of the password and stores it in base64 encoded form:</p>
+<pre> userPassword: {MD5}Xr4ilOzQ4PCOq3aQ0qbuaQ==
+</pre>
+<p>Although safer than cleartext storage, this is not a very secure 
+scheme. The MD5 algorithm is fast, and because there is no salt the 
+scheme is vulnerable to a dictionary attack.</p>
+<h3><a name="SMD5 password storage scheme">14.4.4. SMD5 password storage scheme</a></h3>
+<p>This improves on the basic MD5 scheme by adding salt (random data 
+which means that there are many possible representations of a given 
+plaintext password). For example, both of these values represent the 
+same password:</p>
+<pre> userPassword: {SMD5}4QWGWZpj9GCmfuqEvm8HtZhZS6E=
+ userPassword: {SMD5}g2/J/7D5EO6+oPdklp5p8YtNFk4=
+</pre>
+<h3><a name="SHA password storage scheme">14.4.5. SHA password storage scheme</a></h3>
+<p>Like the MD5 scheme, this simply feeds the password through an SHA 
+hash process. SHA is thought to be more secure than MD5, but the lack of
+ salt leaves the scheme exposed to dictionary attacks.</p>
+<pre> userPassword: {SHA}5en6G6MezRroT3XKqkdPOmY/BfQ=
+</pre>
+<h3><a name="SASL password storage scheme">14.4.6. SASL password storage scheme</a></h3>
+<p>This is not really a password storage scheme at all. It uses the value of the <em>userPassword</em> attribute to delegate password verification to another process. See below for more information.</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>This is not the same as using SASL to authenticate the LDAP session.
+<hr align="Left" width="80%"><p></p>
+<hr>
+<h2><a name="Pass-Through authentication">14.5. Pass-Through authentication</a></h2>
+<p>Since OpenLDAP 2.0 <em>slapd</em> has had the ability to delegate password verification to a separate process. This uses the <em>sasl_checkpass(3)</em>
+ function so it can use any back-end server that Cyrus SASL supports for
+ checking passwords. The choice is very wide, as one option is to use <em>saslauthd(8)</em> which in turn can use local files, Kerberos, an IMAP server, another LDAP server, or anything supported by the PAM mechanism.</p>
+<p>The server must be built with the <tt>--enable-spasswd</tt> configuration option to enable pass-through authentication.</p>
+<p></p><hr align="Left" width="80%">
+<strong>Note: </strong>This is not the same as using a SASL mechanism to authenticate the LDAP session.
+<hr align="Left" width="80%"><p></p>
+<p>Pass-Through authentication works only with plaintext passwords, as 
+used in the "simple bind" and "SASL PLAIN" authentication mechanisms.}}</p>
+<p>Pass-Through authentication is selective: it only affects users whose <em>userPassword</em> attribute has a value marked with the "{SASL}" scheme. The format of the attribute is:</p>
+<pre> userPassword: {SASL}username@realm
+</pre>
+<p>The <em>username</em> and <em>realm</em> are passed to the SASL 
+authentication mechanism and are used to identify the account whose 
+password is to be verified. This allows arbitrary mapping between 
+entries in OpenLDAP and accounts known to the backend authentication 
+service.</p>
+<p>It would be wise to use access control to prevent users from changing
+ their passwords through LDAP where they have pass-through 
+authentication enabled.</p>
+<h3><a name="Configuring slapd to use an authentication provider">14.5.1. Configuring slapd to use an authentication provider</a></h3>
+<p>Where an entry has a "{SASL}" password value, OpenLDAP delegates the 
+whole process of validating that entry's password to Cyrus SASL. All the
+ configuration is therefore done in SASL config files.</p>
+<p>The first file to be considered is confusingly named <em>slapd.conf</em> and is typically found in the SASL library directory, often <tt>/usr/lib/sasl2/slapd.conf</tt> This file governs the use of SASL when talking LDAP to <em>slapd</em> as well as the use of SASL backends for pass-through authentication. See <tt>options.html</tt> in the <a href="http://asg.web.cmu.edu/sasl/sasl-library.html">Cyrus SASL</a> docs for full details. Here is a simple example for a server that will use <em>saslauthd</em> to verify passwords:</p>
+<pre> mech_list: plain
+ pwcheck_method: saslauthd
+ saslauthd_path: /var/run/sasl2/mux
+</pre>
+<h3><a name="Configuring saslauthd">14.5.2. Configuring saslauthd</a></h3>
+<p><em>saslauthd</em> is capable of using many different authentication services: see <em>saslauthd(8)</em> for details. A common requirement is to delegate some or all authentication to another LDAP server. Here is a sample <tt>saslauthd.conf</tt> that uses Microsoft Active Directory (AD):</p>
+<pre> ldap_servers: ldap://dc1.example.com/ ldap://dc2.example.com/
+
+ ldap_search_base: cn=Users,DC=ad,DC=example,DC=com
+ ldap_filter: (userPrincipalName=%u)
+
+ ldap_bind_dn: cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com
+ ldap_password: secret
+</pre>
+<p>In this case, <em>saslauthd</em> is run with the <tt>ldap</tt> authentication mechanism and is set to combine the SASL realm with the login name:</p>
+<pre> saslauthd -a ldap -r
+</pre>
+<p>This means that the "username@realm" string from the <em>userPassword</em>
+ attribute ends up being used to search AD for 
+"userPrincipalName=username@realm" - the password is then verified by 
+attempting to bind to AD using the entry found by the search and the 
+password supplied by the LDAP client.</p>
+<h3><a name="Testing pass-through authentication">14.5.3. Testing pass-through authentication</a></h3>
+<p>It is usually best to start with the back-end authentication provider and work through <em>saslauthd</em> and <em>slapd</em> towards the LDAP client.</p>
+<p>In the AD example above, first check that the DN and password that <em>saslauthd</em> will use when it connects to AD are valid:</p>
+<pre> ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com \
+      -w secret \
+      -b '' \
+      -s base
+</pre>
+<p>Next check that a sample AD user can be found:</p>
+<pre> ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com \
+      -w secret \
+      -b cn=Users,DC=ad,DC=example,DC=com \
+      "(userPrincipalName=user@ad.example.com)"
+</pre>
+<p>Check that the user can bind to AD:</p>
+<pre> ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=user,cn=Users,DC=ad,DC=example,DC=com \
+      -w userpassword \
+      -b cn=user,cn=Users,DC=ad,DC=example,DC=com \
+      -s base \
+        "(objectclass=*)"
+</pre>
+<p>If all that works then <em>saslauthd</em> should be able to do the same:</p>
+<pre> testsaslauthd -u user@ad.example.com -p userpassword
+ testsaslauthd -u user@ad.example.com -p wrongpassword
+</pre>
+<p>Now put the magic token into an entry in OpenLDAP:</p>
+<pre> userPassword: {SASL}user@ad.example.com
+</pre>
+<p>It should now be possible to bind to OpenLDAP using the DN of that entry and the password of the AD user.</p>
+<p></p>
+</div>
+<div class="footer">
+<hr>
+<div class="navigate">
+<p align="Center"><a href="http://www.openldap.org/doc/admin24/index.html">Contents</a> | <a href="http://www.openldap.org/doc/admin24/index.html">Parent Topic</a> | <a href="http://www.openldap.org/doc/admin24/schema.html">Previous Topic</a> | <a href="http://www.openldap.org/doc/admin24/sasl.html">Next Topic</a> <br><a href="http://www.openldap.org/">Home</a> | <a href="http://www.openldap.org/doc/index.html">Catalog</a></p>
+</div>
+<p>
+<font color="#808080" size="1" face="Arial,Verdana,Helvetica"><b>
+________________<br>
+<small>© Copyright 2011, <a href="http://www.openldap.org/foundation/">OpenLDAP Foundation</a>, <a href="mailto:info@OpenLDAP.org">info@OpenLDAP.org</a></small></b></font>
+
+</p></div>
+
+
+
+</body></html>

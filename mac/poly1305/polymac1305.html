@@ -1,0 +1,301 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://cr.yp.to/mac.html">Poly1305</a> is a cryptographic Message Authentication Code (MAC) that provides 128-bit security. It was designed and published in 2004 by <a href="https://cr.yp.to/djb.html">Daniel J. Bernstein</a>. It can be used to verify the integrity and authenticity of a message. <a href="https://www.imperialviolet.org/">Adam Langley</a> from Google has published details of an alternative to AES-128-GCM in <a href="https://tools.ietf.org/rfc/rfc7539.txt">RFC 8439</a> that uses ChaCha20 and Poly1305 for Authenticated Encryption Associated Data (AEAD). The reasons to use ChaCha20-Poly1305 instead of AES-GCM are not for lack of confidence in AES, but simply due to its performance on ARM architectures that do not have hardware acceleration. Vlad Krasnov from Cloudflare offers a sound review of both poly1305 and chacha20 in <a href="https://blog.cloudflare.com/it-takes-two-to-chacha-poly/">It takes two to ChaCha (Poly)</a>. The C code here is derived from <a href="https://cr.yp.to/mac/poly1305aes-20050218.tar.gz">a reference implementation</a> provided by Dan on his site except I'm using test vectors and specification from RFC 8439.</p>
+
+<h3><strong>Addition</strong></h3>
+
+<p>The addition is performed on 8-bit bytes stored as 32-bit words. At the end of every number added to the accumulator is a byte: 0, 1 or 252. So rather than expecting the caller to pad a buffer with zeros, poly1305_add() takes care of this.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#3f5fbf;'>/**********************************************</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;* poly1305 addition</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;**********************************************/</span>
+<span style='color:#800000;font-weight:bold;'>void</span> poly1305_add<span style='color:#808030;'>(</span>
+    uint32_t out<span style='color:#808030;'>[</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t in<span style='color:#808030;'>[</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>int</span> inlen<span style='color:#808030;'>,</span> 
+    uint8_t last<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t c<span style='color:#808030;'>,</span> i<span style='color:#808030;'>,</span> x <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+  uint8_t <span style='color:#808030;'>*</span>p <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>in<span style='color:#800080;'>;</span>
+
+  <span style='color:#696969;'>// add in to out</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>17</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c <span style='color:#808030;'>=</span> <span style='color:#808030;'>*</span>p<span style='color:#800080;'>;</span>
+    c <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>i <span style='color:#808030;'>=</span><span style='color:#808030;'>=</span> inlen<span style='color:#808030;'>)</span> <span style='color:#800080;'>?</span> last <span style='color:#800080;'>:</span> c<span style='color:#800080;'>;</span>
+    c <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>i  <span style='color:#808030;'>&gt;</span> inlen<span style='color:#808030;'>)</span> <span style='color:#800080;'>?</span> <span style='color:#008c00;'>0</span>    <span style='color:#800080;'>:</span> c<span style='color:#800080;'>;</span>
+    p <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>i  <span style='color:#808030;'>&lt;</span> inlen<span style='color:#808030;'>)</span> <span style='color:#800080;'>?</span> p<span style='color:#808030;'>+</span><span style='color:#008c00;'>1</span>  <span style='color:#800080;'>:</span> p<span style='color:#800080;'>;</span>
+    
+    x <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> out<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span> c<span style='color:#800080;'>;</span> 
+    out<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> x <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>255</span><span style='color:#800080;'>;</span> 
+    x <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>8</span><span style='color:#800080;'>;</span> 
+  <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p>Even though ADC (Add with Carry) is available and in fact works fine I've stuck with the original reference provided by Dan. Function expects accumulator in EDI, the input bytes in ESI, inlen in ECX and last byte in AL. ADC only increments <var>p</var> if <var>i</var> is less than <var>inlen</var>.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; ***************************************</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; poly1305 addition</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; al  = last </span>
+<span style='color:#696969;'>; ecx = inlen</span>
+<span style='color:#696969;'>; edi = out</span>
+<span style='color:#696969;'>; esi = p</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; ***************************************</span>
+<span style='color:#e34adc;'>_poly1305_addx:</span>
+<span style='color:#e34adc;'>poly1305_addx:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>al</span>            <span style='color:#696969;'>; edx = last</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>           <span style='color:#696969;'>; x = 0</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>           <span style='color:#696969;'>; ecx = 0    </span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>           <span style='color:#696969;'>; i = 0</span>
+<span style='color:#e34adc;'>add_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>byte</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; c = *p </span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span>_ecx<span style='color:#808030;'>]</span>    <span style='color:#696969;'>; EFLAGS = (i - inlen)</span>
+    <span style='color:#800000;font-weight:bold;'>cmovz</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>           <span style='color:#696969;'>; c = (i == inlen) ? last : c;</span>
+    <span style='color:#800000;font-weight:bold;'>cmova</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>           <span style='color:#696969;'>; c = (i  &gt; inlen) ? 0    : c;</span>
+    <span style='color:#800000;font-weight:bold;'>adc</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>           <span style='color:#696969;'>; p = (i  &lt; inlen) ? p+1  : p;</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>         <span style='color:#696969;'>; x += out[i]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; x += c</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>             <span style='color:#696969;'>; al = x</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                     <span style='color:#696969;'>; out[i] = x &amp; 255</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>             <span style='color:#696969;'>; x &gt;&gt;= 8</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ebp</span>                <span style='color:#696969;'>; i++</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span> 
+    <span style='color:#800000;font-weight:bold;'>jb</span>     <span style='color:#e34adc;'>add_l0</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+ 
+<strong>Modular Multiplication</strong>
+
+<p>The modulus is $latex 2^{130-5}$ or <var>0x3fffffffffffffffffffffffffffffffb</var> and Dan explains in his paper the reason for choosing this number specifically.</p>
+
+<blockquote>I chose 2^130-5 because its sparse form makes divisions particularly easy in both software and hardware. My encoding of messages as polynomials takes advantage of the gap between 2^128 and 2^130-5.</blockquote>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#3f5fbf;'>/**********************************************</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;* poly1305 modular multiplication</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;* "P" is 2^130-5 or 3fffffffffffffffffffffffffffffffb</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;**********************************************/</span>
+<span style='color:#800000;font-weight:bold;'>void</span> poly1305_mulmod<span style='color:#808030;'>(</span>
+    uint32_t acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>17</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span>
+    <span style='color:#800000;font-weight:bold;'>const</span> uint32_t r<span style='color:#808030;'>[</span><span style='color:#008c00;'>17</span><span style='color:#808030;'>]</span><span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t hr<span style='color:#808030;'>[</span><span style='color:#008c00;'>17</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+  uint32_t i<span style='color:#808030;'>,</span> j<span style='color:#808030;'>,</span> u<span style='color:#800080;'>;</span>
+
+  <span style='color:#603000;'>memcpy</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>hr<span style='color:#808030;'>,</span> <span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>acc<span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// multiply</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>17</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    u <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>j<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>=</span>i<span style='color:#800080;'>;</span> j<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      u <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> hr<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span> <span style='color:#808030;'>*</span> r<span style='color:#808030;'>[</span>i <span style='color:#808030;'>-</span> j<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>17</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      u <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> hr<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span> <span style='color:#808030;'>*</span> r<span style='color:#808030;'>[</span>i <span style='color:#808030;'>+</span> <span style='color:#808030;'>(</span><span style='color:#008c00;'>17</span> <span style='color:#808030;'>-</span> j<span style='color:#808030;'>)</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>*</span> <span style='color:#008c00;'>320</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> u<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>u<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> j<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>2</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span>
+  <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> 
+    <span style='color:#800080;'>{</span> 
+      u <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> u <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>255</span><span style='color:#800080;'>;</span> 
+      u <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>8</span><span style='color:#800080;'>;</span> 
+    <span style='color:#800080;'>}</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>!</span>j<span style='color:#808030;'>)</span> 
+    <span style='color:#800080;'>{</span>
+      u <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> u <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>3</span><span style='color:#800080;'>;</span>
+      u <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>u <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>2</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>*</span> <span style='color:#008c00;'>5</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+  <span style='color:#800080;'>}</span>
+  acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> u<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p>The assembly sticks close to the original C code provided. I attempted to use a different implementation of modular multiplication but the reduction in code was negligible.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; ***************************************</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; poly1305 modular multiplication</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; "P" is 2^130-5 or 3fffffffffffffffffffffffffffffffb</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; esi = acc </span>
+<span style='color:#696969;'>; ebx = r</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; ***************************************</span>
+<span style='color:#e34adc;'>poly1305_mulmodx:</span>
+<span style='color:#e34adc;'>_poly1305_mulmodx:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#696969;'>; memcpy ((uint8_t*)hr, (uint8_t*)acc, 17*4); </span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>17</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>            <span style='color:#696969;'>; esi = acc</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>            <span style='color:#696969;'>; edi = hr</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>esi</span>                 <span style='color:#696969;'>; save acc</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>                 <span style='color:#696969;'>; edi = acc</span>
+    
+    <span style='color:#696969;'>; multiply</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>            <span style='color:#696969;'>; esi = r</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>            <span style='color:#696969;'>; i = 0</span>
+<span style='color:#e34adc;'>mm_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>            <span style='color:#696969;'>; j = 0</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>            <span style='color:#696969;'>; u = 0</span>
+<span style='color:#e34adc;'>mm_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; eax = hr[j]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>            <span style='color:#696969;'>; ebp = i</span>
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>            <span style='color:#696969;'>; ebp = i - j</span>
+    <span style='color:#800000;font-weight:bold;'>imul</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebp</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; eax *= r[i - j]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>            <span style='color:#696969;'>; u += eax</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>                 <span style='color:#696969;'>; j++</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>            <span style='color:#696969;'>; j &lt;= i</span>
+    <span style='color:#800000;font-weight:bold;'>jbe</span>    <span style='color:#e34adc;'>mm_l1</span>
+<span style='color:#e34adc;'>mm_l2:</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>17</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ebp</span>
+    
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>            <span style='color:#696969;'>; i &lt; 17</span>
+    <span style='color:#800000;font-weight:bold;'>jae</span>    <span style='color:#e34adc;'>mm_l3</span>
+
+    <span style='color:#800000;font-weight:bold;'>sub</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>            <span style='color:#696969;'>; ebp = 17 - j          </span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>            <span style='color:#696969;'>; ebp += i</span>
+    
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>64</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ah</span>                  <span style='color:#696969;'>; eax = 320</span>
+    <span style='color:#800000;font-weight:bold;'>imul</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebp</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; eax *= r[i+17-j]</span>
+    <span style='color:#800000;font-weight:bold;'>imul</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; eax *= hr[j]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>            <span style='color:#696969;'>; u += eax </span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>                 <span style='color:#696969;'>; j++</span>
+    <span style='color:#800000;font-weight:bold;'>jmp</span>    <span style='color:#e34adc;'>mm_l2</span>
+<span style='color:#e34adc;'>mm_l3:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>    <span style='color:#696969;'>; acc[i] = u</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span>
+    <span style='color:#800000;font-weight:bold;'>jb</span>     <span style='color:#e34adc;'>mm_l0</span>
+    
+    <span style='color:#696969;'>; reduce</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>            <span style='color:#696969;'>; u = 0</span>
+<span style='color:#e34adc;'>f_lx:</span>    
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>            <span style='color:#696969;'>; esi = acc</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>edi</span>    
+<span style='color:#e34adc;'>f_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                      <span style='color:#696969;'>; eax = acc[i]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>            <span style='color:#696969;'>; u += acc[i]</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>dl</span>             <span style='color:#696969;'>; eax = u &amp; 255</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                      <span style='color:#696969;'>; acc[i] = eax</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>              <span style='color:#696969;'>; u &gt;&gt;= 8</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>f_l0</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>    <span style='color:#000080;'>ebx</span>                 <span style='color:#696969;'>;  </span>
+    <span style='color:#800000;font-weight:bold;'>jnp</span>    <span style='color:#e34adc;'>f_l1</span>    
+    <span style='color:#696969;'>; ---------------</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                      <span style='color:#696969;'>; eax = acc[16]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>            <span style='color:#696969;'>; u += eax</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>dl</span>             <span style='color:#696969;'>; </span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span>               <span style='color:#696969;'>; al &amp;= 3</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                      <span style='color:#696969;'>; acc[16] = eax</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>2</span>              <span style='color:#696969;'>; u &gt;&gt;= 2</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; u = (u &gt;&gt; 2) * 5</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>jmp</span>    <span style='color:#e34adc;'>f_lx</span>
+<span style='color:#e34adc;'>f_l1:</span>    
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>          <span style='color:#696969;'>; acc[16] += u;</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span> <span style='color:#808030;'>+</span> <span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<strong>MAC function</strong>
+
+<p>This is the main function called to generate 128-bit MAC of message. First r is "clamped".</p>
+
+<blockquote>I constrained r to simplify and accelerate implementations of Poly1305-AES in various contexts. A wider range of r|e.g., all 128-bit integers would allow a quantitatively better security bound, but the current bound DL=2106 will be perfectly satisfactory for the foreseeable future, whereas slower authenticator computations would not be perfectly satisfactory.</blockquote>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#3f5fbf;'>/**********************************************</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;* poly1305 mac function</span>
+<span style='color:#3f5fbf;'>&#xa0;*</span>
+<span style='color:#3f5fbf;'>&#xa0;**********************************************/</span>
+<span style='color:#800000;font-weight:bold;'>void</span> poly1305_mac <span style='color:#808030;'>(</span>
+    uint8_t <span style='color:#808030;'>*</span>out<span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t <span style='color:#808030;'>*</span>in<span style='color:#808030;'>,</span> 
+    uint32_t inlen<span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t <span style='color:#808030;'>*</span>k<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t i<span style='color:#808030;'>,</span> len<span style='color:#808030;'>,</span> neg<span style='color:#800080;'>;</span>
+  uint32_t r<span style='color:#808030;'>[</span><span style='color:#008c00;'>17</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>17</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+  uint8_t  minusp<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#808030;'>=</span><span style='color:#800080;'>{</span><span style='color:#008c00;'>5</span><span style='color:#800080;'>}</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// copy r</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    r<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  <span style='color:#696969;'>// clamp r</span>
+  r<span style='color:#808030;'>[</span> <span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span> <span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span><span style='color:#008c00;'>11</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span><span style='color:#008c00;'>15</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span>
+  
+  r<span style='color:#808030;'>[</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>252</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>252</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span><span style='color:#008c00;'>12</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>252</span><span style='color:#800080;'>;</span>
+  r<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span>  <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#696969;'>// zero initialize accumulator</span>
+  <span style='color:#603000;'>memset</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>acc<span style='color:#808030;'>,</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span><span style='color:#800080;'>;</span><span style='color:#800080;'>;</span><span style='color:#808030;'>)</span> 
+  <span style='color:#800080;'>{</span>
+    <span style='color:#696969;'>// if zero length, break</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>inlen<span style='color:#808030;'>=</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800000;font-weight:bold;'>break</span><span style='color:#800080;'>;</span>
+    
+    <span style='color:#696969;'>// process 16 bytes or remaining</span>
+    len <span style='color:#808030;'>=</span> inlen <span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>16</span> <span style='color:#800080;'>?</span> inlen <span style='color:#800080;'>:</span> <span style='color:#008c00;'>16</span><span style='color:#800080;'>;</span>
+    
+    <span style='color:#696969;'>// add bytes to acc</span>
+    poly1305_add <span style='color:#808030;'>(</span>acc<span style='color:#808030;'>,</span> in<span style='color:#808030;'>,</span> len<span style='color:#808030;'>,</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+    <span style='color:#696969;'>// multiply accumulator by r mod p</span>
+    poly1305_mulmod <span style='color:#808030;'>(</span>acc<span style='color:#808030;'>,</span> r<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+    <span style='color:#696969;'>// update length and buffer position</span>
+    in    <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> len<span style='color:#800080;'>;</span>
+    inlen <span style='color:#808030;'>-</span><span style='color:#808030;'>=</span> len<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+
+  <span style='color:#603000;'>memcpy</span> <span style='color:#808030;'>(</span>r<span style='color:#808030;'>,</span> acc<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>sizeof</span><span style='color:#808030;'>(</span>r<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+  poly1305_add <span style='color:#808030;'>(</span>acc<span style='color:#808030;'>,</span> minusp<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>252</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  neg <span style='color:#808030;'>=</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>(</span>acc<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#008c00;'>7</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>17</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> neg <span style='color:#808030;'>&amp;</span> <span style='color:#808030;'>(</span>r<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span> acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  
+  <span style='color:#696969;'>// add s</span>
+  poly1305_add <span style='color:#808030;'>(</span>acc<span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>k<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// return tag</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    out<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> acc<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/mac/poly1305">Sources here</a>.</p>

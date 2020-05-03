@@ -1,0 +1,295 @@
+<h3><strong>Introduction</strong></h3>
+
+<p>RC4 is an infamous stream cipher designed in 1987 by <a href="http://people.csail.mit.edu/rivest/">Ron Rivest</a>. It was an RSA trade secret up until September 1994 when an anonymous user posted source code to the <a href="http://cypherpunks.venona.com/archive/1994/09/msg00304.html">cypherpunks mailing list</a>. Having been used extensively in commercial applications and protocols, it gained notoriety among the security community as a result of a research paper published in 2001 that helped develop the first WEP key recovery tools. <a href="http://www.crypto.com/papers/others/rc4_ksaproc.pdf">Weaknesses in the Key Scheduling Algorithm of RC4</a> by Fluhrer, Mantin and Shamir quickly saw the demise of RC4 as a secure cipher.</p>
+
+<p>If you want more background into the cipher itself, Matthew Green from John Hopkins University has a great post called <a href="http://blog.cryptographyengineering.com/2011/12/whats-deal-with-rc4.html">What's the deal with RC4?</a>. What follows is a tiny implementation in x86 assembler, optimized for size. You really shouldn't be using RC4 anymore, but if you require a version optimized for speed, consider using a library such as <a href="https://www.openssl.org/">OpenSSL</a></p>
+
+<h3><strong>Key-scheduling algorithm (KSA)</strong></h3>
+
+<p>The KSA is very simple and consists of mixing key bytes with 256 8-bit element array we call sbox (substitution box). In order to optimize the KSA, some implementations use 32-bit elements (OpenSSL for example) but of course, this requires more code and my goal is to optimize for size.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>for</span> i from <span style='color:#008c00;'>0</span> to <span style='color:#008c00;'>255</span>
+    S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> i
+endfor
+j <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span>
+<span style='color:#800000;font-weight:bold;'>for</span> i from <span style='color:#008c00;'>0</span> to <span style='color:#008c00;'>255</span>
+    j <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>j <span style='color:#808030;'>+</span> S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span> key<span style='color:#808030;'>[</span>i mod keylength<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> mod <span style='color:#008c00;'>256</span>
+    swap values of S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> and S<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span>
+endfor
+</pre>
+
+<p>The structure I'm using for key context is similar to those you see in many open source libraries. x and y are 32-bit integers because when loading/storing we only use 1 byte each which also happens to zero out the 32-bit register. You could load a byte but then have to zero the upper 24-bits for indexing the sbox array.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>typedef</span> <span style='color:#800000;font-weight:bold;'>struct</span> _RC4_KEY <span style='color:#800080;'>{</span>
+  uint32_t x<span style='color:#808030;'>,</span> y<span style='color:#800080;'>;</span>
+  uint8_t s<span style='color:#808030;'>[</span><span style='color:#008c00;'>256</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span> RC4_KEY<span style='color:#800080;'>;</span>
+</pre>
+
+<p>Written in C, the above pseudocode looks like the following which is essentially the code posted to cipherpunks mailing list with some minor modifications.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> RC4_set_key <span style='color:#808030;'>(</span>RC4_KEY <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> uint32_t len<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>key<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  <span style='color:#800000;font-weight:bold;'>int</span> i<span style='color:#808030;'>,</span> j<span style='color:#808030;'>,</span> t<span style='color:#800080;'>;</span>
+  uint8_t <span style='color:#808030;'>*</span>k<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>key<span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Initialize ctx with identity sbox</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>)</span>i<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>y <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+  
+  <span style='color:#696969;'>// Randomize the sbox using key data</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> j<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    j <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>j <span style='color:#808030;'>+</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span> k<span style='color:#808030;'>[</span>i <span style='color:#808030;'>%</span> len<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>%</span> <span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span>
+    
+    t <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> t<span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+And the x86 assembler version where we attempt to reduce space.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc;'>_rc4_setkey:</span>
+<span style='color:#e34adc;'>rc4_setkey:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>               <span style='color:#696969;'>; i=0</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>                           <span style='color:#696969;'>; j=0</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                         <span style='color:#696969;'>; x=0</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                         <span style='color:#696969;'>; y=0</span>
+<span style='color:#e34adc;'>r4_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>al</span>          <span style='color:#696969;'>; s[i] = i</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                     <span style='color:#696969;'>; i++</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>r4_l0</span>
+<span style='color:#e34adc;'>r4_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>               <span style='color:#696969;'>; if (key_idx == key_len)</span>
+    <span style='color:#800000;font-weight:bold;'>jne</span>    <span style='color:#e34adc;'>r4_l2</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; key_idx = 0</span>
+<span style='color:#e34adc;'>r4_l2:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span>          <span style='color:#696969;'>; s[i]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>                 <span style='color:#696969;'>; j += s[i]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>]</span>          <span style='color:#696969;'>; j += key[key_idx]</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>]</span>          <span style='color:#696969;'>; s[j] = s[i]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>          <span style='color:#696969;'>; s[i] = s[j]</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>                    <span style='color:#696969;'>; key_idx++</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                     <span style='color:#696969;'>; i++</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>r4_l1</span>                  <span style='color:#696969;'>;</span>
+    
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>Pseudo-random generation algorithm (PRGA)</strong></h3>
+
+A PRNG originally part of OpenBSD until version 5.5 (released in may 2014) used RC4. It now uses ChaCha20 instead.
+
+<pre style='color:#000000;background:#ffffff;'>i <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span>
+j <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span>
+<span style='color:#800000;font-weight:bold;'>while</span> GeneratingOutput<span style='color:#800080;'>:</span>
+    i <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>i <span style='color:#808030;'>+</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> mod <span style='color:#008c00;'>256</span>
+    j <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>j <span style='color:#808030;'>+</span> S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> mod <span style='color:#008c00;'>256</span>
+    swap values of S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> and S<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span>
+    K <span style='color:#800080;'>:</span><span style='color:#808030;'>=</span> S<span style='color:#808030;'>[</span><span style='color:#808030;'>(</span>S<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span> S<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> mod <span style='color:#008c00;'>256</span><span style='color:#808030;'>]</span>
+    output K
+endwhile
+</pre>
+
+The implementation in C is similar to the KSA.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> RC4 <span style='color:#808030;'>(</span>RC4_KEY <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> uint32_t len<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>in<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>out<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t i<span style='color:#800080;'>;</span>
+  uint8_t  x<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>)</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>,</span> y<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>)</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>y<span style='color:#808030;'>,</span> j<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>,</span> t<span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span>len<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    <span style='color:#696969;'>// Update x and y</span>
+    x <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>x <span style='color:#808030;'>+</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>%</span> <span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span>
+    y <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>y <span style='color:#808030;'>+</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>%</span> <span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span>
+
+    <span style='color:#696969;'>// Modify sbox</span>
+    t <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>y<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>y<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> t<span style='color:#800080;'>;</span>
+
+    <span style='color:#696969;'>// Encrypt/decrypt next byte</span>
+    j <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>y<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>%</span> <span style='color:#008c00;'>256</span><span style='color:#800080;'>;</span>
+    <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>in<span style='color:#808030;'>)</span><span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>s<span style='color:#808030;'>[</span>j<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x <span style='color:#808030;'>=</span> x<span style='color:#800080;'>;</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>y <span style='color:#808030;'>=</span> y<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+The assembler function.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc;'>_rc4:</span>
+<span style='color:#e34adc;'>rc4:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>jecxz</span>  <span style='color:#e34adc;'>r4_l1</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>esi</span>               <span style='color:#696969;'>; save pointer to ctx</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; eax = x</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>      
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; ebx = y</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>
+<span style='color:#e34adc;'>r4_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                <span style='color:#696969;'>; x++</span>
+    
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; dl = s[x]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>dl</span>            <span style='color:#696969;'>; y += dl</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; swap s[y], s[x]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>dl</span>     <span style='color:#696969;'>; s[x] = s[y]</span>
+    
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; dl = s[x] + s[y]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; dl = s[ dl ]</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>dl</span>         <span style='color:#696969;'>; *p ^= (s[ s[x] + s[y] ])</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>edi</span>               <span style='color:#696969;'>; p++    </span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>r4_l0</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>               <span style='color:#696969;'>; edi = rc4key</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                    <span style='color:#696969;'>; save x</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span> 
+    <span style='color:#800000;font-weight:bold;'>stosd</span>                    <span style='color:#696969;'>; save y</span>
+<span style='color:#e34adc;'>r4_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>Encryption in one call</strong></h3>
+
+I had an idea to shrink rc4 and the reason it wasn't implemented was because you couldn't save x+y. 
+
+However, since this <a href="https://github.com/peterferrie/x86rc4">version written by Peter Ferrie</a> doesn't save x+y either, I decided to revisit the initial idea and here it is in 64 bytes.
+
+The size of buffer is BUFSIZ or whatever you define it to be.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; Single call RC4 in x86 assembly (for 128-bit keys)</span>
+<span style='color:#696969;'>; Odzhan</span>
+<span style='color:#696969;'>;</span>
+<span style='color:#696969;'>; 64 bytes</span>
+
+<span style='color:#696969;'>;rc4_ctx struct</span>
+<span style='color:#696969;'>;  sbox db 256 dup (?)   ; uint8_t s[256];</span>
+<span style='color:#696969;'>;  key  db 16 dup (?)    ; uint8_t k[16];</span>
+<span style='color:#696969;'>;  len  dd ?             ; uint32_t len;</span>
+<span style='color:#696969;'>;  buf  db BUFSIZ dup(?) ; uint8_t buf[BUFSIZ];</span>
+<span style='color:#696969;'>;rc4_ctx ends</span>
+    
+    <span style='color:#004a43;'>bits</span> <span style='color:#008c00;'>32</span>
+    
+<span style='color:#004a43;'>%ifndef</span><span style='color:#004a43;'> BIN</span>
+    <span style='color:#004a43;'>global</span> RC4Z
+    <span style='color:#004a43;'>global</span> _RC4Z
+<span style='color:#004a43;'>%endif</span>
+
+<span style='color:#e34adc;'>_RC4Z:</span>
+<span style='color:#e34adc;'>RC4Z:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; edi=rc4_key</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>          <span style='color:#696969;'>; esi=rc4_key</span>
+    <span style='color:#696969;'>; x=0, y=0, i=0            </span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>          <span style='color:#696969;'>;</span>
+    <span style='color:#800000;font-weight:bold;'>mul</span>    <span style='color:#000080;'>ecx</span>
+<span style='color:#696969;'>; --------------------------------------------</span>
+<span style='color:#696969;'>; KSA. edi=s + key, esi=s, eax=i, edx=j</span>
+<span style='color:#696969;'>; --------------------------------------------</span>
+<span style='color:#e34adc;'>init_sbox:</span>
+    <span style='color:#800000;font-weight:bold;'>stosb</span>                    <span style='color:#696969;'>; s[i]=i</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                <span style='color:#696969;'>; i++</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>init_sbox</span>
+    <span style='color:#696969;'>; edi now points to 128-bit key</span>
+<span style='color:#e34adc;'>init_key:</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>al</span>           <span style='color:#696969;'>; ebx = k_idx</span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>15</span>            <span style='color:#696969;'>; %= 16</span>
+    
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; j += k[k_idx % 16]</span>
+    <span style='color:#800000;font-weight:bold;'>jmp</span>    <span style='color:#e34adc;'>swap</span>
+<span style='color:#e34adc;'>upd_idx:</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                <span style='color:#696969;'>; i++</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>init_key</span>          <span style='color:#696969;'>; i&lt;256</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>                      <span style='color:#696969;'>; y=0 </span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; ecx = len</span>
+<span style='color:#696969;'>; -----------------------------------------------</span>
+<span style='color:#696969;'>; PRNG. edi=buf, esi=s, eax=x, edx=y, ecx=len </span>
+<span style='color:#696969;'>; -----------------------------------------------</span>
+<span style='color:#e34adc;'>crypt_data:</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>al</span>                <span style='color:#696969;'>; x++</span>
+<span style='color:#e34adc;'>swap:</span>    
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; bl = s[i] or bl=s[x]</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>            <span style='color:#696969;'>; j += bl or y += bl </span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; XCHG(bl, s[j]) or XCHG(bl, s[y])</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>
+    <span style='color:#800000;font-weight:bold;'>jecxz</span>  <span style='color:#e34adc;'>upd_idx</span>           <span style='color:#696969;'>; if ecx == 0 goto upd_idx</span>
+    
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; bl = s[x] + s[y]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>bl</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>]</span>     <span style='color:#696969;'>; bl = s[ bl ]</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>16</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>bl</span>    <span style='color:#696969;'>; *p ^= (s[ s[x] + s[y] ])</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>edi</span>               <span style='color:#696969;'>; p++     </span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>crypt_data</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+Below is just a C string with the RC4 assembly code which uses cdecl calling convention. It's only for x86 architecture. If you wanted to change buf to void* and use malloc() instead, it would require changes to the code. 
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>#</span><span style='color:#004a43;'>define</span><span style='color:#004a43;'> RC4Z_SIZE 64</span>
+
+<span style='color:#800000;font-weight:bold;'>char</span> RC4Z<span style='color:#808030;'>[</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#800080;'>{</span>
+  <span style='color:#696969;'>/* 0000 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x60</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* pushad              */</span>
+  <span style='color:#696969;'>/* 0001 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x8b</span><span style='color:#0f69ff;'>\x7c</span><span style='color:#0f69ff;'>\x24</span><span style='color:#0f69ff;'>\x24</span><span style='color:#800000;'>"</span> <span style='color:#696969;'>/* mov edi, [esp+0x24] */</span>
+  <span style='color:#696969;'>/* 0005 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x89</span><span style='color:#0f69ff;'>\xfe</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* mov esi, edi        */</span>
+  <span style='color:#696969;'>/* 0007 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x31</span><span style='color:#0f69ff;'>\xc9</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* xor ecx, ecx        */</span>
+  <span style='color:#696969;'>/* 0009 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xf7</span><span style='color:#0f69ff;'>\xe1</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* mul ecx             */</span>
+  <span style='color:#696969;'>/* 000B */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xaa</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* stosb               */</span>
+  <span style='color:#696969;'>/* 000C */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xfe</span><span style='color:#0f69ff;'>\xc0</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* inc al              */</span>
+  <span style='color:#696969;'>/* 000E */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x75</span><span style='color:#0f69ff;'>\xfb</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* jnz 0xb             */</span>
+  <span style='color:#696969;'>/* 0010 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x0f</span><span style='color:#0f69ff;'>\xb6</span><span style='color:#0f69ff;'>\xd8</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* movzx ebx, al       */</span>
+  <span style='color:#696969;'>/* 0013 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x80</span><span style='color:#0f69ff;'>\xe3</span><span style='color:#0f69ff;'>\x0f</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* and bl, 0xf         */</span>
+  <span style='color:#696969;'>/* 0016 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x02</span><span style='color:#0f69ff;'>\x14</span><span style='color:#0f69ff;'>\x1f</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* add dl, [edi+ebx]   */</span>
+  <span style='color:#696969;'>/* 0019 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xeb</span><span style='color:#0f69ff;'>\x0a</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* jmp 0x25            */</span>
+  <span style='color:#696969;'>/* 001B */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xfe</span><span style='color:#0f69ff;'>\xc0</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* inc al              */</span>
+  <span style='color:#696969;'>/* 001D */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x75</span><span style='color:#0f69ff;'>\xf1</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* jnz 0x10            */</span>
+  <span style='color:#696969;'>/* 001F */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x99</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* cdq                 */</span>
+  <span style='color:#696969;'>/* 0020 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x8b</span><span style='color:#0f69ff;'>\x4f</span><span style='color:#0f69ff;'>\x10</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* mov ecx, [edi+0x10] */</span>
+  <span style='color:#696969;'>/* 0023 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xfe</span><span style='color:#0f69ff;'>\xc0</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* inc al              */</span>
+  <span style='color:#696969;'>/* 0025 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x8a</span><span style='color:#0f69ff;'>\x1c</span><span style='color:#0f69ff;'>\x06</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* mov bl, [esi+eax]   */</span>
+  <span style='color:#696969;'>/* 0028 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x00</span><span style='color:#0f69ff;'>\xda</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* add dl, bl          */</span>
+  <span style='color:#696969;'>/* 002A */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x86</span><span style='color:#0f69ff;'>\x1c</span><span style='color:#0f69ff;'>\x16</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* xchg [esi+edx], bl  */</span>
+  <span style='color:#696969;'>/* 002D */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x88</span><span style='color:#0f69ff;'>\x1c</span><span style='color:#0f69ff;'>\x06</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* mov [esi+eax], bl   */</span>
+  <span style='color:#696969;'>/* 0030 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xe3</span><span style='color:#0f69ff;'>\xe9</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* jecxz 0x1b          */</span>
+  <span style='color:#696969;'>/* 0032 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x02</span><span style='color:#0f69ff;'>\x1c</span><span style='color:#0f69ff;'>\x16</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* add bl, [esi+edx]   */</span>
+  <span style='color:#696969;'>/* 0035 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x8a</span><span style='color:#0f69ff;'>\x1c</span><span style='color:#0f69ff;'>\x1e</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* mov bl, [esi+ebx]   */</span>
+  <span style='color:#696969;'>/* 0038 */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x30</span><span style='color:#0f69ff;'>\x5f</span><span style='color:#0f69ff;'>\x14</span><span style='color:#800000;'>"</span>     <span style='color:#696969;'>/* xor [edi+0x14], bl  */</span>
+  <span style='color:#696969;'>/* 003B */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x47</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* inc edi             */</span>
+  <span style='color:#696969;'>/* 003C */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xe2</span><span style='color:#0f69ff;'>\xe5</span><span style='color:#800000;'>"</span>         <span style='color:#696969;'>/* loop 0x23           */</span>
+  <span style='color:#696969;'>/* 003E */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\x61</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* popad               */</span>
+  <span style='color:#696969;'>/* 003F */</span> <span style='color:#800000;'>"</span><span style='color:#0f69ff;'>\xc3</span><span style='color:#800000;'>"</span>             <span style='color:#696969;'>/* ret                 */</span>
+<span style='color:#800080;'>}</span><span style='color:#800080;'>;</span>
+</pre>
+
+<h3><strong>Summary</strong></h3>
+
+<p>The x64 version was surprisingly smaller than the 32-bit version, mostly because it uses the fastcall convention. The 32-bit could be modified to use fastcall instead of cdecl which would save more space but only the tiny version has this option.</p>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/stream/rc4">Source code for x86 and x86-64 here</a></p>
+

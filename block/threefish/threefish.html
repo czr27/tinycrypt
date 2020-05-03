@@ -1,0 +1,182 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://www.schneier.com/academic/skein/threefish.html">Threefish</a> is a tweakable block cipher that was designed as part of the <a href="http://www.skein-hash.info/">Skein cryptographic hash</a> function submitted to the NIST SHA-3 competition in 2008. It supports block and key sizes of 256, 512, and  1024-bits. It's designers are <a href="https://www.iacr.org/cryptodb/data/author.php?authorkey=1366">Niels Ferguson</a>, <a href="https://www.uni-weimar.de/en/media/institutes/digital-bauhaus-lab/people/prof-dr-stefan-lucks/">Stefan Lucks</a>, <a href="https://www.schneier.com/">Bruce Schneier</a>, Doug Whiting, <a href="https://cseweb.ucsd.edu/~mihir/">Mihir Bellare</a>, <a href="https://homes.cs.washington.edu/~yoshi/">Tadayoshi Kohno</a>, <a href="https://twitter.com/joncallas">Jon Callas</a> and <a href="http://eecs.oregonstate.edu/people/walker-jesse">Jesse Walker</a>. Threefish uses an ARX(Add-Rotate-Xor) construction like ChaCha, Salsa, Speck, Chaskey, LEA and CHAM block ciphers to name a few. The choice of construction makes it suitable for a wide range of architectures and mitigates against cache timing attacks. Only Threefish-256/256 is implemented here and is not optimized for performance.</p>
+
+<h3><strong>Encryption</strong></h3>
+
+<p><var>mk</var> should first point to a 256-bit master key followed by a 128-bit tweak value. <var>data</var> should point to a 256-bit block of data to be encrypted.</p>
+  
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> F</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>)</span><span style='color:#004a43; '>for</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>=</span><span style='color:#004a43; '>0</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>&lt;</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> R</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>|</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>(</span><span style='color:#004a43; '>64</span><span style='color:#808030; '>-</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>long</span> <span style='color:#800000; font-weight:bold; '>long</span> W<span style='color:#800080; '>;</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>char</span> B<span style='color:#800080; '>;</span>
+
+<span style='color:#800000; font-weight:bold; '>void</span> threefish<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span><span style='color:#808030; '>*</span>mk<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span><span style='color:#808030; '>*</span>data<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W c<span style='color:#808030; '>[</span><span style='color:#008c00; '>10</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>i<span style='color:#808030; '>,</span>j<span style='color:#808030; '>,</span>r<span style='color:#808030; '>,</span><span style='color:#808030; '>*</span>x<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>data<span style='color:#808030; '>,</span>t<span style='color:#800080; '>;</span>
+    
+    t<span style='color:#808030; '>=</span><span style='color:#008000; '>0x1BD11BDAA9FC1A22</span><span style='color:#006600; '>ULL</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// initialize key and tweak</span>
+    F<span style='color:#808030; '>(</span>i<span style='color:#808030; '>,</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span>t<span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>c<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>mk<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span> c<span style='color:#808030; '>[</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>t<span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>[</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>mk<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>c<span style='color:#808030; '>[</span><span style='color:#008c00; '>6</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>W<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>mk<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>[</span><span style='color:#008c00; '>7</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>c<span style='color:#808030; '>[</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span>c<span style='color:#808030; '>[</span><span style='color:#008c00; '>6</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>[</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#008000; '>0x203a2e190517340e</span><span style='color:#006600; '>ULL</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>[</span><span style='color:#008c00; '>9</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#008000; '>0x20160c2125283910</span><span style='color:#006600; '>ULL</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// apply 72 rounds</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#696969; '>// add key every 4 rounds</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span><span style='color:#808030; '>=</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        t<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>F<span style='color:#808030; '>(</span>j<span style='color:#808030; '>,</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>c<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span>j<span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#808030; '>+</span>t<span style='color:#808030; '>,</span>
+        t<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>j<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span><span style='color:#800080; '>?</span>c<span style='color:#808030; '>[</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span>j<span style='color:#808030; '>)</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>]</span><span style='color:#800080; '>:</span>i<span style='color:#808030; '>/</span><span style='color:#008c00; '>4</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>72</span><span style='color:#808030; '>)</span><span style='color:#800000; font-weight:bold; '>break</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// mixing function</span>
+      <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>j<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>j<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>4</span><span style='color:#800080; '>;</span>j<span style='color:#808030; '>+</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span>
+        r<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>c<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span><span style='color:#008c00; '>64</span><span style='color:#808030; '>+</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>%</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>+</span><span style='color:#808030; '>(</span>j<span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>2</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>
+        x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>r<span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>+</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span>j<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// permute</span>
+      t<span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span>x<span style='color:#808030; '>[</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>t<span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>AMD64 assembly</strong></h3>
+
+<p>Threefish works on 64-bit integers and is therefore unsuitable for implementation on 32-bit architectures. If you are writing code for a 32-bit CPU, consider using a more suitable algorithm. Tested on 64-bit Linux. The parameters for 64-bit Windows are different.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>; -----------------------------------------------</span>
+<span style='color:#696969; '>; Threefish-256/256 block cipher in AMD64 assembly (Encryption only)</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; size: 205 bytes</span>
+<span style='color:#696969; '>;</span>
+<span style='color:#696969; '>; -----------------------------------------------</span>
+
+    <span style='color:#004a43; '>bits</span> <span style='color:#008c00; '>64</span>
+    
+<span style='color:#004a43; '>&#xa0;&#xa0;&#xa0;&#xa0;</span><span style='color:#004a43; '>%ifndef</span><span style='color:#004a43; '> BIN</span>
+      <span style='color:#004a43; '>global</span> threefish
+<span style='color:#004a43; '>&#xa0;&#xa0;&#xa0;&#xa0;</span><span style='color:#004a43; '>%endif</span>
+    
+<span style='color:#e34adc; '>threefish:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rbx             <span style='color:#696969; '>; save rbx</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rbp
+    <span style='color:#696969; '>; allocate 96-bytes of local memory</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#008c00; '>96</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rcx
+    <span style='color:#800000; font-weight:bold; '>sub</span>    rsp<span style='color:#808030; '>,</span> rcx
+    <span style='color:#696969; '>; rbx = data</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rsi
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rbx
+    <span style='color:#696969; '>; rsi = master key</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rdi
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rsi
+    <span style='color:#696969; '>; rdi = &amp;c[0]</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rsp
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rdi
+    <span style='color:#696969; '>; copy 256-bit master key to local memory</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>4</span>
+    <span style='color:#696969; '>; t = 0x1BD11BDAA9FC1A22;</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rax<span style='color:#808030; '>,</span> <span style='color:#008000; '>0x1BD11BDAA9FC1A22</span>
+<span style='color:#e34adc; '>tx_L0:</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    rax<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>]</span>       <span style='color:#696969; '>; t ^= mk[i]</span>
+    movsq                   <span style='color:#696969; '>; c[i] = mk[i]</span>
+    <span style='color:#800000; font-weight:bold; '>loop</span>   <span style='color:#e34adc; '>tx_L0</span>
+    stosq                   <span style='color:#696969; '>; c[4] = t</span>
+    <span style='color:#696969; '>; copy 128-bit tweak to local memory</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rax<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>]</span>       <span style='color:#696969; '>; t = mk[4]</span>
+    movsq                   <span style='color:#696969; '>; c[5] = mk[4]</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    rax<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>]</span>       <span style='color:#696969; '>; t ^= mk[5]</span>
+    movsq                   <span style='color:#696969; '>; c[6] = mk[5]</span>
+    stosq                   <span style='color:#696969; '>; c[7] = c[5] ^ c[6]</span>
+    <span style='color:#696969; '>; store rotational values</span>
+    <span style='color:#696969; '>; c[8] = 0x203a2e190517340e</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rax<span style='color:#808030; '>,</span> <span style='color:#008000; '>0x203a2e190517340e</span>
+    stosq
+    <span style='color:#696969; '>; c[9] = 0x20160c2125283910</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rax<span style='color:#808030; '>,</span> <span style='color:#008000; '>0x20160c2125283910</span>
+    stosq
+    <span style='color:#800000; font-weight:bold; '>push</span>   rsp
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rsi              <span style='color:#696969; '>; rsi = &amp;c[0]</span>
+    <span style='color:#696969; '>; apply 72 rounds</span>
+    <span style='color:#696969; '>; i=0</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>
+<span style='color:#e34adc; '>tf_main:</span>
+    <span style='color:#696969; '>; add key every 4 rounds</span>
+    <span style='color:#696969; '>; if (!(i &amp; 3))</span>
+    <span style='color:#800000; font-weight:bold; '>test</span>   <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>3</span>
+    <span style='color:#800000; font-weight:bold; '>je</span>     <span style='color:#e34adc; '>add_key</span>
+<span style='color:#e34adc; '>tf_end:</span>
+    <span style='color:#800000; font-weight:bold; '>cdq</span>                             <span style='color:#696969; '>; j = 0</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>al</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>72</span>                   <span style='color:#696969; '>; if(i==72) break;</span>
+    <span style='color:#800000; font-weight:bold; '>jne</span>    <span style='color:#e34adc; '>tf_mix</span>
+    
+    <span style='color:#800000; font-weight:bold; '>add</span>    rsp<span style='color:#808030; '>,</span> <span style='color:#008c00; '>96</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rbp
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rbx
+    <span style='color:#800000; font-weight:bold; '>ret</span>
+<span style='color:#e34adc; '>tf_mix:</span>
+    <span style='color:#696969; '>; r=((B*)c)[8+(i%8)+(j&lt;&lt;2)], x[j] += x[j+1],</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>eax</span>                 <span style='color:#696969; '>; ecx = i % 8</span>
+    <span style='color:#800000; font-weight:bold; '>and</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>7</span>
+    <span style='color:#800000; font-weight:bold; '>lea</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span><span style='color:#000080; '>ecx</span><span style='color:#808030; '>+</span><span style='color:#008c00; '>4</span><span style='color:#808030; '>*</span><span style='color:#000080; '>edx</span><span style='color:#808030; '>]</span>         <span style='color:#696969; '>; ecx += (j&lt;&lt;2)</span>
+    <span style='color:#800000; font-weight:bold; '>movzx</span>  <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>byte</span><span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span>rcx<span style='color:#808030; '>+</span><span style='color:#008c00; '>64</span><span style='color:#808030; '>]</span>    <span style='color:#696969; '>; set r</span>
+    
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rdi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>       <span style='color:#696969; '>; rdi = x[j+1]</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rdi         <span style='color:#696969; '>; x[j] += rdi</span>
+    
+    <span style='color:#696969; '>; x[j+1] = R(x[j+1], r), x[j+1] ^= x[j];</span>
+    <span style='color:#800000; font-weight:bold; '>rol</span>    rdi<span style='color:#808030; '>,</span> <span style='color:#000080; '>cl</span>                  <span style='color:#696969; '>; rdi = R(rdi, cl)</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    rdi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>]</span>         <span style='color:#696969; '>; rdi ^= x[j]</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rdi         <span style='color:#696969; '>; x[j+1] = rdi</span>
+    
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span>                    <span style='color:#696969; '>; j += 2</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>dl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>4</span>                    <span style='color:#696969; '>; j &lt; 4</span>
+    <span style='color:#800000; font-weight:bold; '>jne</span>    <span style='color:#e34adc; '>tf_mix</span>
+    
+    <span style='color:#696969; '>; permute</span>
+    <span style='color:#696969; '>; t=x[1],x[1]=x[3],x[3]=t;</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rdi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span>           <span style='color:#696969; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>xchg</span>   <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>3</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rdi           <span style='color:#696969; '>; X(x[1], x[3])</span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rdi           <span style='color:#696969; '>; </span>
+    
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>al</span>                       <span style='color:#696969; '>; i++</span>
+    <span style='color:#800000; font-weight:bold; '>jmp</span>    <span style='color:#e34adc; '>tf_main</span>
+    <span style='color:#696969; '>; create subkey and add to block</span>
+<span style='color:#e34adc; '>add_key:</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>ecx</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>                 <span style='color:#696969; '>; j = 0</span>
+    <span style='color:#800000; font-weight:bold; '>xor</span>    <span style='color:#000080; '>edi</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>edi</span>                 <span style='color:#696969; '>; t = 0</span>
+<span style='color:#e34adc; '>ak_L0:</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rax                      <span style='color:#696969; '>; save i</span>
+    <span style='color:#800000; font-weight:bold; '>shr</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span>                   <span style='color:#696969; '>; i /= 4</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rax                      <span style='color:#696969; '>; save i/4</span>
+    <span style='color:#696969; '>; x[j] += c[((i/4) + j) % 5] + t</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#000080; '>eax</span><span style='color:#808030; '>,</span> <span style='color:#000080; '>ecx</span>                 <span style='color:#696969; '>; rax = (i/4) + j</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   rax                      <span style='color:#696969; '>; save (i/4) + j</span>
+    <span style='color:#800000; font-weight:bold; '>cdq</span>                             <span style='color:#696969; '>; rdx = 0</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#008c00; '>5</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rbp
+    <span style='color:#800000; font-weight:bold; '>div</span>    <span style='color:#000080; '>ebp</span>                      <span style='color:#696969; '>; </span>
+    <span style='color:#800000; font-weight:bold; '>mov</span>    rax<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>]</span>         <span style='color:#696969; '>; rax = c[(((i/4)+j)%5] </span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    rax<span style='color:#808030; '>,</span> rdi                 <span style='color:#696969; '>; rax += t</span>
+    <span style='color:#800000; font-weight:bold; '>add</span>    <span style='color:#808030; '>[</span>rbx<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rcx<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> rax         <span style='color:#696969; '>; x[j] += rax</span>
+    <span style='color:#696969; '>; t = (j &lt; 2) ? c[(((i/4)+j) % 3) + 5] : i/4</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rax                      <span style='color:#696969; '>; restore (i/4) + j</span>
+    <span style='color:#800000; font-weight:bold; '>cdq</span>
+    <span style='color:#800000; font-weight:bold; '>push</span>   <span style='color:#008c00; '>3</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rbp
+    <span style='color:#800000; font-weight:bold; '>div</span>    <span style='color:#000080; '>ebp</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rdi                      <span style='color:#696969; '>; restore i/4</span>
+    <span style='color:#800000; font-weight:bold; '>pop</span>    rax                      <span style='color:#696969; '>; restore i</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>2</span>                   
+    <span style='color:#800000; font-weight:bold; '>cmovb</span>  rdi<span style='color:#808030; '>,</span> <span style='color:#808030; '>[</span>rsi<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>*</span>rdx<span style='color:#808030; '>+</span><span style='color:#008c00; '>5</span><span style='color:#808030; '>*</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span>     <span style='color:#696969; '>; (j&lt;2)</span>
+    <span style='color:#800000; font-weight:bold; '>inc</span>    <span style='color:#000080; '>cl</span>
+    <span style='color:#800000; font-weight:bold; '>cmp</span>    <span style='color:#000080; '>cl</span><span style='color:#808030; '>,</span> <span style='color:#008c00; '>4</span>
+    <span style='color:#800000; font-weight:bold; '>jne</span>    <span style='color:#e34adc; '>ak_L0</span>
+    <span style='color:#800000; font-weight:bold; '>jmp</span>    <span style='color:#e34adc; '>tf_end</span>
+    
+
+</pre>
+
+<a href="https://github.com/odzhan/tinycrypt/tree/master/block/threefish">sources here.</a>
+

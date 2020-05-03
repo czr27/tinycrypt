@@ -1,0 +1,13 @@
+OSS_CVC_7.00b-x86_64-rhel6x of 07/07/14 (Linux-elf).
+Copyright (c) 1991-2014 Tachyon Design Automation Corp.
+  All Rights reserved.  Licensed software subject to prohibitions and
+  restrictions.  See OSS CVC artistic license included with release.
+Today is Sun Sep 22 12:23:56 2019.
+Elaborating source file "tb_drygascon128.v"
+Elaborating source file "drygascon128_use_funcs.v"
+Highest level modules:
+tb_drygascon128
+
+sim pass
+Halted at location **tb_drygascon128.v(360) time 3280000 ps from call to $finish.
+  There were 0 error(s), 0 warning(s), and 102 inform(s).

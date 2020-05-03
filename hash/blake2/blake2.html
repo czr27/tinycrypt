@@ -1,0 +1,156 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://blake2.net/">BLAKE2</a> is a cryptographic hash and Message Authentication Code (MAC) that was designed by <a href="https://131002.net/">Jean-Philippe Aumasson</a>, <a href="https://eden.dei.uc.pt/~sneves/">Samuel Neves</a>, <a href="https://en.wikipedia.org/wiki/Zooko_Wilcox-O'Hearn">Zooko Wilcox-O'Hearn</a>, and <a href="https://codesinchaos.wordpress.com/">Christian Winnerlein</a>. It comes in two versions:</p>
+
+<ul>
+	<li>BLAKE2s is optimized for 8- to 32-bit platforms and produces digests of any size between 1 and 32 bytes.</li>
+	<li>BLAKE2b (or just BLAKE2) is optimized for 64-bit platforms and produces digests of any size between 1 and 64 bytes.</li>
+</ul>
+
+<p>The C code here was derived from <a href="https://tools.ietf.org/rfc/rfc7693.txt">RFC 7693</a> by <a href="https://mjos.fi/">Markku-Juhani O. Saarinen</a>. However, it has only been tested on little-endian architecture.</p>
+
+<h3><strong>Macros, structures and data types</strong></h3>
+
+<p>Both versions are supported in one file by supplying different parameters. BLAKE2b is used by default. Define <var>S</var> for BLAKE2s.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> R</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>|</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>v</span><span style='color:#808030; '>)</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>WORDLEN</span><span style='color:#808030; '>-</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> X</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>,</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>t</span><span style='color:#808030; '>)</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>a</span><span style='color:#808030; '>)</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>)</span><span style='color:#808030; '>,</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>b</span><span style='color:#808030; '>)</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>t</span><span style='color:#808030; '>)</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> F</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>)</span><span style='color:#004a43; '>for</span><span style='color:#808030; '>(</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>=</span><span style='color:#004a43; '>0</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>&lt;</span><span style='color:#004a43; '>n</span><span style='color:#808030; '>;</span><span style='color:#004a43; '>i</span><span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span>
+
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>char</span> B<span style='color:#800080; '>;</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>long</span> <span style='color:#800000; font-weight:bold; '>long</span> Q<span style='color:#800080; '>;</span>
+
+<span style='color:#696969; '>// parameters for BLAKE2s</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>ifdef</span><span style='color:#004a43; '> S</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> VERSION  </span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>s</span><span style='color:#800000; '>"</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN  32</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> BLOCKLEN 64</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS   80</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROTATION 0x07080C10</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> OUTLEN   32</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> KEYLEN   32</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>int</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>else</span>
+<span style='color:#696969; '>// parameters for BLAKE2b</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> VERSION   </span><span style='color:#800000; '>"</span><span style='color:#0000e6; '>b</span><span style='color:#800000; '>"</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> WORDLEN   64</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> BLOCKLEN 128</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROUNDS    96</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> ROTATION 0x3F101820</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> OUTLEN    64</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>define</span><span style='color:#004a43; '> KEYLEN    64</span>
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>unsigned</span> <span style='color:#800000; font-weight:bold; '>long</span> <span style='color:#800000; font-weight:bold; '>long</span> W<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>#</span><span style='color:#004a43; '>endif</span>
+
+<span style='color:#800000; font-weight:bold; '>typedef</span> <span style='color:#800000; font-weight:bold; '>struct</span> _blake2_ctx <span style='color:#800080; '>{</span>
+    W s<span style='color:#808030; '>[</span><span style='color:#008c00; '>16</span><span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> idx<span style='color:#808030; '>,</span> outlen<span style='color:#800080; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>union</span> <span style='color:#800080; '>{</span>
+      B b<span style='color:#808030; '>[</span>BLOCKLEN<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      W w<span style='color:#808030; '>[</span>BLOCKLEN<span style='color:#808030; '>/</span><span style='color:#808030; '>(</span>WORDLEN<span style='color:#808030; '>/</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>x<span style='color:#800080; '>;</span>
+    Q len<span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span> blake2_ctx<span style='color:#800080; '>;</span>
+</pre>
+
+<h3><strong>Initialization</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>int</span> blake2_init <span style='color:#808030; '>(</span>blake2_ctx <span style='color:#808030; '>*</span>c<span style='color:#808030; '>,</span>W outlen<span style='color:#808030; '>,</span><span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>key<span style='color:#808030; '>,</span>W keylen<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W i<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>outlen <span style='color:#808030; '>=</span><span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span> <span style='color:#808030; '>|</span><span style='color:#808030; '>|</span> outlen <span style='color:#808030; '>></span> OUTLEN <span style='color:#808030; '>|</span><span style='color:#808030; '>|</span> keylen <span style='color:#808030; '>></span> KEYLEN<span style='color:#808030; '>)</span> <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#808030; '>-</span><span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// set the initial values</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>iv<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>s<span style='color:#808030; '>[</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>]</span>  <span style='color:#808030; '>^</span><span style='color:#808030; '>=</span> <span style='color:#008000; '>0x01010000</span><span style='color:#808030; '>^</span><span style='color:#808030; '>(</span>keylen<span style='color:#808030; '>&lt;</span><span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span><span style='color:#808030; '>^</span>outlen<span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>len    <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx    <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>outlen <span style='color:#808030; '>=</span> outlen<span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// zero initialize buffer</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span>keylen<span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>BLOCKLEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>x<span style='color:#808030; '>.</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// add key if provided</span>
+    <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>keylen<span style='color:#808030; '>></span><span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      blake2_update<span style='color:#808030; '>(</span>c<span style='color:#808030; '>,</span>key<span style='color:#808030; '>,</span>keylen<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx <span style='color:#808030; '>=</span> BLOCKLEN<span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+    <span style='color:#800000; font-weight:bold; '>return</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>Updating</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> blake2_update<span style='color:#808030; '>(</span>blake2_ctx <span style='color:#808030; '>*</span>c<span style='color:#808030; '>,</span><span style='color:#800000; font-weight:bold; '>const</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>in<span style='color:#808030; '>,</span>W len<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    B <span style='color:#808030; '>*</span>p<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>in<span style='color:#800080; '>;</span>
+    W i<span style='color:#800080; '>;</span>
+    
+    F<span style='color:#808030; '>(</span>len<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#696969; '>// buffer filled?</span>
+      <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx <span style='color:#808030; '>=</span><span style='color:#808030; '>=</span> BLOCKLEN<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        <span style='color:#696969; '>// update length</span>
+        c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>len <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> BLOCKLEN<span style='color:#800080; '>;</span>
+        blake2_compress<span style='color:#808030; '>(</span>c<span style='color:#808030; '>,</span> <span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+        <span style='color:#696969; '>// reset buffer index</span>
+        c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+      <span style='color:#696969; '>// add byte to buffer, increase index</span>
+      c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>x<span style='color:#808030; '>.</span>b<span style='color:#808030; '>[</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> p<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span> c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>Finalization</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> blake2_final<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>out<span style='color:#808030; '>,</span> blake2_ctx <span style='color:#808030; '>*</span>c<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W i<span style='color:#800080; '>;</span>
+    
+    c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>len <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx<span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// zero remainder of buffer</span>
+    <span style='color:#800000; font-weight:bold; '>while</span><span style='color:#808030; '>(</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx <span style='color:#808030; '>&lt;</span> BLOCKLEN<span style='color:#808030; '>)</span> c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>x<span style='color:#808030; '>.</span>b<span style='color:#808030; '>[</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>idx<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// permute</span>
+    blake2_compress<span style='color:#808030; '>(</span>c<span style='color:#808030; '>,</span> <span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// return hash</span>
+    F<span style='color:#808030; '>(</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>outlen<span style='color:#808030; '>)</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>out<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span><span style='color:#808030; '>(</span>B<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>c<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>s<span style='color:#808030; '>)</span><span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<h3><strong>Compression</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> blake2_compress<span style='color:#808030; '>(</span>blake2_ctx <span style='color:#808030; '>*</span>ctx<span style='color:#808030; '>,</span> W last<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    W i<span style='color:#808030; '>,</span> j<span style='color:#808030; '>,</span> a<span style='color:#808030; '>,</span> b<span style='color:#808030; '>,</span> c<span style='color:#808030; '>,</span> d<span style='color:#808030; '>,</span> r<span style='color:#808030; '>,</span> t<span style='color:#808030; '>,</span> s<span style='color:#808030; '>[</span><span style='color:#008c00; '>16</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    Q z<span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>p<span style='color:#808030; '>=</span>sigma<span style='color:#800080; '>;</span>
+      
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>ctx<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>iv<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>ifdef</span><span style='color:#004a43; '> S</span>
+    z<span style='color:#808030; '>=</span>ctx<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>len<span style='color:#800080; '>;</span>
+    s<span style='color:#808030; '>[</span><span style='color:#008c00; '>12</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>z<span style='color:#808030; '>&amp;</span><span style='color:#008000; '>0xFFFFFFFF</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    s<span style='color:#808030; '>[</span><span style='color:#008c00; '>13</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>z<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#008c00; '>32</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>else</span>
+    s<span style='color:#808030; '>[</span><span style='color:#008c00; '>12</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>ctx<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>len<span style='color:#800080; '>;</span>
+<span style='color:#004a43; '>&#xa0;&#xa0;</span><span style='color:#004a43; '>#</span><span style='color:#004a43; '>endif</span>
+    s<span style='color:#808030; '>[</span><span style='color:#008c00; '>14</span><span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span><span style='color:#808030; '>-</span>last<span style='color:#800080; '>;</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>ROUNDS<span style='color:#800080; '>;</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      z<span style='color:#808030; '>=</span><span style='color:#808030; '>*</span>p<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+      <span style='color:#800000; font-weight:bold; '>do</span> <span style='color:#800080; '>{</span>
+        d<span style='color:#808030; '>=</span>v_idx<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>%</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+        a<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>d<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>15</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>b<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>d<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#008c00; '>4</span><span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>15</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+        c<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>d<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#008c00; '>8</span><span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>15</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>d<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>=</span><span style='color:#008c00; '>12</span><span style='color:#800080; '>;</span>
+        r<span style='color:#808030; '>=</span>ROTATION<span style='color:#800080; '>;</span>
+        <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>j<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>j<span style='color:#808030; '>&lt;</span><span style='color:#008c00; '>4</span><span style='color:#800080; '>;</span>j<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+          <span style='color:#800000; font-weight:bold; '>if</span><span style='color:#808030; '>(</span><span style='color:#808030; '>!</span><span style='color:#808030; '>(</span>j<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+            s<span style='color:#808030; '>[</span>a<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>ctx<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>x<span style='color:#808030; '>.</span>w<span style='color:#808030; '>[</span>z<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>15</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+            z<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>=</span><span style='color:#008c00; '>4</span><span style='color:#800080; '>;</span>
+          <span style='color:#800080; '>}</span>
+          s<span style='color:#808030; '>[</span>a<span style='color:#808030; '>]</span><span style='color:#808030; '>+</span><span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span>b<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+          s<span style='color:#808030; '>[</span>d<span style='color:#808030; '>]</span><span style='color:#808030; '>=</span>R<span style='color:#808030; '>(</span>s<span style='color:#808030; '>[</span>d<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span>s<span style='color:#808030; '>[</span>a<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span><span style='color:#808030; '>(</span>r<span style='color:#808030; '>&amp;</span><span style='color:#008c00; '>255</span><span style='color:#808030; '>)</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+          X<span style='color:#808030; '>(</span>a<span style='color:#808030; '>,</span>c<span style='color:#808030; '>)</span><span style='color:#808030; '>,</span>X<span style='color:#808030; '>(</span>b<span style='color:#808030; '>,</span>d<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+          r<span style='color:#808030; '>></span><span style='color:#808030; '>></span><span style='color:#808030; '>=</span><span style='color:#008c00; '>8</span><span style='color:#800080; '>;</span>
+        <span style='color:#800080; '>}</span>
+      <span style='color:#800080; '>}</span> <span style='color:#800000; font-weight:bold; '>while</span><span style='color:#808030; '>(</span>z<span style='color:#808030; '>!</span><span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+    F<span style='color:#808030; '>(</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>)</span>ctx<span style='color:#808030; '>-</span><span style='color:#808030; '>></span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span><span style='color:#808030; '>=</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#808030; '>^</span>s<span style='color:#808030; '>[</span>i<span style='color:#808030; '>+</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/hash/blake2">Sources here.</a></p>

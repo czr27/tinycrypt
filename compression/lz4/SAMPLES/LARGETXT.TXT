@@ -1,0 +1,425 @@
+{{Use dmy dates|date=December 2011}}
+{{Refimprove|date=March 2008}}
+
+{{Demoscene}}
+The '''demoscene''' is a [[computer art]] [[subculture]] that specializes in producing [[Demo (computer programming)|demos]], which are audio-visual presentations that run in [[Real-time computing|real-time]] on a computer. The main goal of a demo is to show off [[computer programming|programming]], artistic, and [[music scene (programming)|musical skills]].
+
+The demoscene first appeared during the [[History of video game consoles (third generation)|8-bit era]] on computers such as the [[Commodore 64]], [[ZX Spectrum]], [[Atari 800]] and [[Amstrad CPC]], and came to prominence during the rise of the [[Motorola 68000|16/32-bit]] [[home computer]]s (Mainly the [[Amiga]] or [[Atari ST]]). In the early years, demos had a strong connection with [[software cracking]].{{Citation needed|reason=vague statement|date=March 2012}} When a cracked program was started, the cracker or his team would take credit with a graphical introduction called a "[[crack intro]]" (shortened ''cracktro''). Within a year or two,<ref>[http://noname.c64.org/csdb/release/?id=3161 [CSDb&#93; - The First Demo Disk Collection for the Commodore 64 by Ash & Dave and Ian & Mic and Ikari and Reptilia Design (1988)<!-- Bot generated title -->]</ref> the making of intros and standalone demos evolved into a new subculture independent of [[Warez (scene)|the software (piracy) scene]].<ref>http://pouet.net/prod.php?which=1667</ref>
+
+==Concept==
+<!-- Deleted image removed: [[Image:DemoSample.jpg|270px|thumb|A screenshot of the 64-kilobyte demo ''Heaven Seven'' by ''Exceed''.|{{Deletable image-caption|1=Thursday, 23 April 2009|date=March 2012}}]] -->
+[[File:Second-reality-screen.gif|270px|thumb|right|Screen shot from [[Second Reality]], a famous<ref name="top10hacks">{{cite web
+| url=http://slashdot.org/features/99/12/13/0943241.shtml
+| title=Slashdot's "Top 10 Hacks of All Time"
+|accessdate=25 December 2010
+|date=13 December 1999
+|publisher=slashdot.org
+|language=english
+|quote=''Second Reality by Future Crew – Awesome, Mindblowing, Unbelievable, Impossible. Some of the words used to describe what this piece of code from demoscene gods Future Crew did on 1993-era PC hardware. Even by today's standards, what this program can do without relying on any kind of 3D graphics acceleration is impressive. As if the graphics weren't impressive enough, it can even playback in Dolby Surround Sound.''
+}}</ref> demo by [[Future Crew]].]]
+Prior to the popularity of [[IBM PC compatible]]s, most home computers of a given line had relatively little variance in their basic hardware, which made their capabilities practically identical. Therefore, the variations among [[Demo (computer programming)|demo]]s created for one computer line were attributed to programming alone, rather than one computer having better hardware. This created a competitive environment in which [[demo group|demoscene groups]] would try to outperform each other in creating amazing [[demo effect|effects]], and often to demonstrate why they felt one machine was better than another (for example [[Commodore 64]] or [[Amiga]] versus [[Atari 800]] or [[Atari ST|ST]]).
+
+Demo writers went to great lengths to get every last bit of performance out of their target machine. Where games and application writers were concerned with the stability and functionality of their software, the demo writer was typically interested in how many [[Central processing unit|CPU]] cycles a routine would consume and, more generally, how best to squeeze great activity onto the screen. Writers went so far as to [[exploit]] known hardware errors to produce effects that the manufacturer of the computer had not intended. The perception that the demo scene was going to extremes and charting new territory added to its draw.
+
+Recent computer hardware advancements include faster [[central processing unit|processor]]s, more [[memory]], faster [[graphics processing unit|video graphics processor]]s, and hardware [[3D acceleration]]. With many of the past's challenges removed, the focus in making demos has moved from squeezing as much out of the computer as possible to making stylish, beautiful, well-designed real time artwork – a directional shift that many "old school demosceners" seem to disapprove of. This can be explained by the break introduced by the PC world, where the platform varies and most of the programming work that used to be hand-programmed is now done by the graphics card. This gives demo-groups a lot more artistic freedom, but can frustrate some of the old-schoolers for lack of a programming challenge. The old tradition still lives on, though. Demo parties have competitions with varying limitations in program size or platform (different series are called [[compo]]s). On a modern computer the executable size may be limited to 64 kB or 4 kB. Programs of limited size are usually called [[Demo (computer programming)|intros]]. In other compos the choice of platform is restricted; only old computers, like the 8-bit [[Atari 800]] or [[Commodore 64]], or the 16-bit [[Amiga]], or [[Atari ST]], or mobile devices like handheld phones or [[Personal digital assistant|PDAs]] are allowed. Such restrictions provide a challenge for coders, musicians and graphics artists and bring back the old motive of making a device do more than was intended in its original design.
+
+==History==
+{{see also|Music scene (programming)|Chiptune}}
+<!--[[Image:Game Music 4.png|thumb|270px|Game Music IV on the [[Commodore 64]] by [[Charles Deenen]] (also known as "The Mercenary Cracker" (TMC)) was perhaps one of the very first demos ever produced. Though TMC dated all his productions to 1991, this demo is known to have been produced in 1985.]]-->
+The earliest computer programs that have some resemblance to demos and [[demo effect]]s can be found among the so-called [[display hack]]s. Display hacks predate the demoscene by several decades, with the [[First video game|earliest examples]] dating back to the early 1950s.
+
+Demos in the demoscene sense began as [[Software cracking|software cracker]]s' "signatures", that is, crack screens and [[crack intro]]s attached to software whose [[copy protection]] was removed. The first crack screens appeared on the [[Apple II family|Apple II computers]] in the late 1970s and early 1980s, and they were often nothing but plain text screens crediting the cracker or his group. Gradually, these static screens evolved into increasingly impressive-looking introductions containing animated effects and music. Eventually, many cracker groups started to release intro-like programs separately, without being attached to pirated software. These programs were initially known by various names, such as ''letters'' or ''messages'', but they later came to be known as ''demos''.{{Citation needed|date=October 2010}}
+
+Simple demo-like music collections were put together on the C64 in 1985 by [[Charles Deenen]], inspired by crack intros, using music taken from games and adding some homemade color graphics. In the following year the movement now known as the demoscene was born. The Dutch groups [[1001 Crew]] and [[The Judges (c64 group)|The Judges]], both Commodore 64-based, are often mentioned as the earliest demo groups.  Whilst competing with each other in 1986, they both produced pure demos with original graphics and music involving more than just casual work, and used extensive hardware trickery. At the same time demos from others, such as [[Antony Crowther]] (Ratt), had started circulating on [[Compunet]] in the United Kingdom. On the [[ZX Spectrum]], [[Castor Cracking Group]] released their first demo called ''Castor Intro'' in 1986.  The [[ZX Spectrum demos|ZX Spectrum demo scene]] was slow to start, but it started to rise in the late 1980s, most noticeably in Eastern Europe.
+
+==Competition== 
+The demoscene is a largely competition-oriented subculture, with groups and individual artists competing against each other in technical and artistic excellence. In the early days, this competition came in the form of setting records, like the number of "bobs" ([[blitter object]]s) on the screen per frame, or the number of [[Commodore 64 demos|DYCP]] (different Y Character position) scrollers on a C64. These days, there are organized competitions, or [[compo (slang word)|compos]], held at [[Demoparty|demoparties]], although there have been some online competitions as well. It has also been common for [[Disk magazine|diskmags]] to have voting-based ''charts'' which provide ranking lists for the best coders, graphicians, musicians, demos and other things. However, the respect for charts has diminished since the 1990s.
+
+Party-based competitions usually require the artist or a group member to be present at the event. The winners are selected by a public voting amongst the visitors and awarded at a prizegiving ceremony at the end of the party. Competitions at a typical demo event include a ''demo compo'', an ''intro compo'' (usually 4kB or 64kB), a ''graphics compo'' and a ''music compo''. Most parties also split some categories by platform, format or style.
+
+There are no criteria or rules the voters should be bound by, and a visitor typically just votes for those entries that made the biggest impression on him or her. In the old demos, the impression was often attempted with programming techniques introducing new effects and breaking performance records in old effects. Over the years, the emphasis has moved from technical excellence to more artistic values such as overall design, audiovisual impact and mood.
+
+The demoscene constitutes the most part of its own audience, with the opinions of the community itself considered the most valid. For example, it is often considered ''lame'' to win large events with works that appeal to the non-demomaking masses but do not adhere to good demoscene aesthetics. However, most of the demos regarded as the best of all time have appealed both to the demomaking community itself and a larger audience.{{Citation needed|date=December 2007}}
+
+In the recent years, an initiative to award demos in an alternative way arose by the name of the [[Scene.org Awards]]. The essential concept of the awards was to avoid the subjectivity of mass-voting at parties, and select a well-renowned jury to handle the task of selecting the given year's best productions on several aspects, such as Best Graphics or Best 64k Intro.
+
+==Parties==
+[[Image:Assembly2004-areena01.jpg|thumb|270px|[[Assembly (demo party)|Assembly]] 2004 – a combination of a demoparty and a [[LAN party]]]]
+{{main|Demoparty}}
+A demoparty is an event which gathers demomakers and provides them [[Compo (slang word)|competitions]] to compete in. A typical demoparty is a non-stop event lasting over a weekend, providing the visitors a lot of time for socializing. The competing works, at least those in the most important competitions, are usually shown at night, using a [[video projector]] and big [[loudspeaker]]s.<ref name=demographics>{{cite web|url=http://www.archive.org/details/Demographics_BehindtheScene |first=Jeremy|last=Williams |year=2002|title=Demographics: Behind the Scene|publisher=archive.org|accessdate=17 February 2011}}</ref>
+
+Demoparties started to appear in the 1980s in the form of [[copyparty|copyparties]] where software pirates and demomakers gathered to meet each other and share their software. Competitions did not become a major aspect of the events until the beginning of the 1990s.
+
+Demoscene events are most frequent in Europe, with around fifty parties every year. For comparison, there have only been a dozen or so demoparties in the United States and Canada in total (such as Spring Break and NAID). Most events are local, gathering demomakers mostly from a single country, while the largest international parties (such as [[Breakpoint demo party|Breakpoint]] and [[Assembly demo party|Assembly]]) attract visitors from all over the globe.
+
+==Demo types==
+{{main|Demo (computer programming) }}
+<!-- Deleted image removed: [[Image:Ptn-gift.jpg|thumb|270px|Screenshot from ''Gift'' by [[Potion (demogroup)|Potion]], winner of the [[Mekka & Symposium]] 2000 [[Amiga]] 64k intro competition ([http://www.youtube.com/watch?v=nWeh9VQyP3E Youtube])]] -->
+The demoscene still exists on many platforms, including the [[IBM PC|PC]], [[Commodore 64|C64]], [[MSX]], [[ZX Spectrum]], [[Amstrad CPC]], [[Amiga]], [[Atari]], [[Dreamcast]] and [[Game Boy Advance]]. The large variety of platforms makes their respective demos hard to compare. Some 3D benchmark programs also have a demo or showcase mode, which derives its roots from the days of the 16-bit platforms.
+
+There are several categories demos are informally classified into, the most important being the division between the "full-size" '''demos''' and the size-restricted '''intros''', a difference visible in the competitions of nearly any demo party. The most typical competition categories for intros are the '''[[64k intro|64K intro]]''' and the '''4K intro''', where the size of the executable file is restricted to 65536 and 4096 bytes, respectively.
+
+==Groups==
+[[Image:Demo PC BlackMaiden Interceptor.jpg|thumb|270px|PC-Demo: Interceptor by [[Black Maiden]].]]
+{{main|Demogroup}}
+A typical demo is created by a '''demogroup''', which is a team of demosceners. Although some demogroups boast dozens of members, the number of individuals involved in a single production rarely exceeds ten. Since the demogroup is also a major way of self-identification for demosceners, even individual creations are usually associated with a group.
+
+A demoscener is typically specialized in a certain area of creativity. The traditional division is in '''coders''', '''graphicians''' and '''musicians''', who are specialized in programming (often including overall design), still graphics (including 2D art and 3D modelling) and music, respectively. There are also demosceners who have little involvement in the actual demomaking but that do considerable work in areas such as party organizing.
+
+==Impact==
+[[Image:Mobile demo anal party iv.jpg|thumb|270px|A demo running on a [[TI-86]] calculator]]
+Although demos are still a more or less obscure form of art even in the traditionally active demoscene countries, the scene has had an impact on areas such as [[Video game|computer games industry]] and [[new media art]].
+
+A great deal of European game programmers, artists and musicians have come from the demoscene, often cultivating the learned techniques, practices and philosophies in their work. For example, the Finnish company [[Remedy Entertainment]], known for the [[Max Payne]] series of games, was founded by the PC group [[Future Crew]], and most of its employees are former or active Finnish demosceners.<ref>{{cite web|url=http://www.4players.de/4sceners.php?LAYOUT=dispbericht&world=4sceners&BERICHTID=5157&autorid=260 |publisher=4players.de|title= Sceners in the Games Industry|date=18 January 2007|author=Bobic|accessdate=17 February 2011}}</ref><ref>{{cite web |url=http://sci.aalto.fi/en/current/news/view/2012-09-28/ |title=Jaakko Lehtinen appointed as a Professor in the School of Science |date=2012-09-28 |quote=The so-called demoscene has laid a foundation for the active and internationally astonishingly successful Finnish games industry.}}</ref> 
+Sometimes demos even provide direct influence even to game developers that have no demoscene affiliation: for instance, [[Will Wright (game designer)|Will Wright]] names demoscene as a major influence on the [[Maxis]] game [[Spore (computer game)|Spore]],  which is largely based on [[Procedural generation|procedural content generation]].<ref>{{cite web |url=http://www.gamespy.com/articles/595/595975p1.html |title=Will Wright Presents Spore... and a New Way to Think About Games |work=[[GameSpy]] |author=Dave 'Fargo' Kosak |date=2005-03-14}}</ref> Similarly, at [[QuakeCon]] in 2011, [[John Carmack]] noted that he "thinks highly" of people who do [[64k intro]]s, as an example of artificial limitations encouraging creative programming.<ref>{{cite web |url=http://www.youtube.com/watch?v=4zgYG-_ha28#t=4827s |title=QuakeCon 2011 - John Carmack Keynote |work=[[YouTube]] |date=2011-08-05}}</ref> [[Jerry Holkins]] from [[Penny Arcade (webcomic)|Penny Arcade]] claimed to have an "abiding love" for the demoscene, and noted that it's "stuff worth knowing".<ref>{{cite web |url=http://penny-arcade.com/2012/04/13/lickr |date=2012-04-13 |title=Lickr}}</ref>
+
+Certain forms of computer art have a strong affiliation with the demoscene. [[Tracker (music software)|Tracker music]], for example, originated in the Amiga games industry but was soon heavily dominated by demoscene musicians; some music producers like [[deadmau5]]<ref>{{cite web |url=http://www.youtube.com/watch?v=oh_ZhO-Qy3U&t=2m7s |title=Deadmau5 interview |work=[[YouTube]]}}</ref> and [[KiloWatts (musician)|KiloWatts]] claim to have tracker/demoscene roots. Currently, there is a major tracking scene separate from the actual demoscene. A form of static computer graphics where demosceners have traditionally excelled is [[pixel art]]; see ''[[artscene]]'' for more information on the related subculture.
+
+Over the years, desktop computer hardware capabilities have improved by orders of magnitude, and so for most programmers, tight hardware restrictions are no longer a common issue. Nevertheless, demosceners continue to study and experiment with creating impressive effects on limited hardware. Since [[handheld console]]s and cellular phones have comparable processing power or capabilities to the desktop platforms of old (such as low resolution screens which require pixel-art, or very limited storage and memory for music replay), many demosceners have been able to apply their niche skills to develop games for these platforms, and earn a living doing so: one particular example is [[Angry Birds]], whose lead designer [[Jaakko Iisalo]] was an active and well-known demoscener in the 90s.<ref>http://www.edge-online.com/features/meet-man-behind-angry-birds/</ref>
+
+Some attempts have been made to increase the familiarity of demos as an art form. For example, there have been demo shows, demo galleries and demoscene-related books, sometimes even TV programs introducing the subculture and its works.<ref>[http://scene.org/dir.php?dir=%2Fresources%2Fmedia/ scene.org – file browser]</ref>
+
+The museum [[IT-ceum]] in Linköping, Sweden, have an exhibition about the demo scene.<ref>{{cite web |url=http://www.arrivalguides.com/en/Travelguides/Europe/Sweden/LINKOPING/doandsee |title=Linköping - Do & See - Datamuseet It-ceum |quote=and visitors can also learn more about today’s demo scene}}</ref>
+
+Sometimes a demoscene-based production may become very famous in technical contexts. For example, the 96-kilobyte [[first-person shooter|FPS]] game ''[[.kkrieger]]'' by [[Farbrausch]] uses procedural content generation algorithms that are quite common on today's 64K intros but largely unknown to the computer games enthusiasts and the US-based game development community.
+
+==See also==
+{{multicol}}
+*[[Algorithmic composition]]
+*[[Computer art scene]]
+*[[Demo (computer programming)|Demo]]
+*[[Demogroup]]
+*[[Demoparty]]
+*[[Hacker subculture]]
+*[[Netlabel]]
+*[[Module file]] (MOD music)
+
+===Specific platforms===
+*[[Amiga demos]]
+*[[Apple IIgs demos]]
+*[[Atari demos]] (Atari ST)
+*[[Commodore 64 demos]]
+*[[Commodore VIC-20 demos]]
+*[[Text mode demos]]
+*[[ZX Spectrum demos]]
+{{col-break}}
+
+===Websites and products===
+*[[MindCandy]]
+*[[Scene.org]]
+{{col-end}}
+
+==References==
+{{reflist}}
+
+==Further reading==
+* {{cite book |title=FREAX: Volume 1|last=Polgár|first=Tamás ("Tomcat")|year=2005|publisher=CSW-Verlag|isbn=3-9810494-0-3}}
+* Vigh, David and Polgár, Tamás ("Tomcat"): ''FREAX Art Album''. CSW-Verlag 2006
+* {{cite book |title=DEMOSCENE: the Art of Real-Time|last=Tasajärvi|first=Lassi|year=2004|publisher=Evenlake Studios|isbn=952-91-7022-X|url=http://www.demoscenebook.com/}}
+* {{cite book |title=DEMOSCENE: the Art of Real-Time eBook (pdf)|last=Tasajärvi|first=Lassi|year=2009|publisher=Evenlake Studios|isbn=978-952-92-6129-1|url=http://www.demoscenebook.com/}}
+* [http://www.acid.org/images/sfdemo04/IA4_1demosceneshoreval.pdf ''DEMOing: Art or Craft? 1984–2002''] (PDF), ''Write-up by ''Shirley Shor'' about the demoscene''
+* {{cite web |url=http://www.wired.com/wired/archive/3.07/democoders.html|title=Demo or Die!|accessdate=31 December 2007|last=Green|first=Dave|year=1995|month=July|publisher=[[Wired magazine]]}}
+* [http://www.kameli.net/demoresearch2/ Demoscene Research] – bibliography of scientific publications about the demoscene.
+* [http://www.digitalekultur.org/files/dk_whatisthedemoscene.pdf ''The Demoscene''] (PDF), ''Flyer by ''Digitale Kultur e. V.'' about the demoscene''
+* Vigh, David: [http://grass.untergrund.net/pixelstorm_hi.pdf ''Pixelstorm''] (PDF), – '' selected artworks of demoscene graphicians 2003, bugfixed 2007''
+* Demoscene & Paris art scene [http://www.mustekala.info/epublish/1/36] – Special issue of mustekala.info webzine focused on demoscene with several articles, some only on Finnish though.
+* {{cite book |title=Computer Demos – What Makes Them Tick?|last=Reunanen|first=Markku|year=2010|publisher=Aalto University School of Science and Technology|url=http://www.kameli.net/demoresearch2/reunanen-licthesis.pdf}}
+
+==External links==
+{{commons category|Demoscene}}
+<!--===========================({{NoMoreLinks}})===============================
+    | PLEASE BE CAUTIOUS IN ADDING MORE LINKS TO THIS ARTICLE. WIKIPEDIA IS   |
+    | NOT A COLLECTION OF LINKS.                                              |
+    |                                                                         |
+    |               Excessive or inappropriate links WILL BE DELETED.         |
+    |  See [[Wikipedia:External links]] and [[Wikipedia:Spam]] for details.   |
+    |                                                                         |
+    | If there are already plentiful links, please propose additions or       |
+    | replacements on this article's discussion page.  Or submit your link    |
+    | to the appropriate category at the Open Directory Project (www.dmoz.org)|
+    | and link back to that category using the {{dmoz}} template.             |
+    ===========================({{NoMoreLinks}})===============================-->
+* [http://www.demoscene.info demoscene.info], ''A webportal providing information on the demoscene''
+* [http://www.slengpung.com slengpung.com], ''Pictures from parties and demoscene related events''
+* [http://www.demoparty.net demoparty.net], ''Database of past and future demoparties, location and travel info''
+* [http://www.bitfellas.org bitfellas.org], ''Demoscene community and information portal''
+* [http://www.facebook.com/video/video.php?v=23541762087], ''What Is Demoscene?'' an introductory movie by demoscene.tv.
+* [http://pouet.net Pouet.net] Database of demos, with download links
+* [http://scenesat.com/ SceneSat] ''Demoscene radio station with music from the demoscene and live shows from demoparties''
+<!--===========================({{NoMoreLinks}})===============================
+    | PLEASE BE CAUTIOUS IN ADDING MORE LINKS TO THIS ARTICLE. WIKIPEDIA IS   |
+    | NOT A COLLECTION OF LINKS.                                              |
+    |                                                                         |
+    |               Excessive or inappropriate links WILL BE DELETED.         |
+    |  See [[Wikipedia:External links]] and [[Wikipedia:Spam]] for details.   |
+    |                                                                         |
+    | If there are already plentiful links, please propose additions or       |
+    | replacements on this article's discussion page.  Or submit your link    |
+    | to the appropriate category at the Open Directory Project (www.dmoz.org)|
+    | and link back to that category using the {{dmoz}} template.             |
+    ===========================({{NoMoreLinks}})===============================-->
+
+{{Independent production}}
+
+[[Category:Computer art]]
+[[Category:Demoscene| ]]
+[[Category:Home computer software]]
+
+{{Link FA|hu}}
+
+[[ar:??????]]
+[[ca:Demoscene]]
+[[cs:Demoscéna]]
+[[de:Demoszene]]
+[[el:Demoscene]]
+[[es:Demoscene]]
+[[fr:Scène démo]]
+[[it:Demoscene]]
+[[hu:Demoscene]]
+[[nl:Demoscene]]
+[[ja:?????]]
+[[no:Demoscenen]]
+[[pl:Demoscena]]
+[[pt:Demoscene]]
+[[ru:?????????]]
+[[sq:Demoskena]]
+[[fi:Demoskene]]
+[[sv:Demoscenen]]
+[[tr:Demoscene]]
+[[uk:?????????]]
+
+
+
+
+'''Lossless data compression''' is a class of [[data compression]] [[algorithm]]s that allows the exact original data to be reconstructed from the compressed data.  The term ''lossless'' is in contrast to [[lossy data compression]], which only allows constructing an approximation of the original data, in exchange for better [[Bit_rate#Bitrates_in_multimedia|compression rates]].
+
+Lossless data compression is used in many applications. For example, it is used in the [[ZIP (file format)|ZIP]] file format and in the [[Unix]] tool [[gzip]]. It is also often used as a component within lossy data compression technologies (e.g. lossless [[Joint (audio engineering)#M/S stereo coding|mid/side joint stereo]] preprocessing by the [[LAME]] [[MP3]] encoder and other lossy audio  encoders).
+
+Lossless compression is used in cases where it is important that the original and the decompressed data be identical, or where deviations from the original data could be deleterious. Typical examples are executable programs, text documents, and source code. Some image file formats, like [[Portable Network Graphics|PNG]] or [[Graphics Interchange Format|GIF]], use only lossless compression, while others like [[TIFF]] and [[Multiple-image Network Graphics|MNG]] may use either lossless or lossy methods. [[Audio compression (data)#Lossless|Lossless audio]] formats are most often used for archiving or production purposes, while smaller [[Audio compression (data)#Lossy audio compression|lossy audio]] files are typically used on portable players and in other cases where storage space is limited or exact replication of the audio is unnecessary.
+
+== Lossless compression techniques ==
+Most lossless compression programs do two things in sequence: the first step generates a ''statistical model'' for the input data, and the second step uses this model to map input data to bit sequences in such a way that "probable" (e.g. frequently encountered) data will produce shorter output than "improbable" data.
+
+The primary encoding algorithms used to produce bit sequences are [[Huffman coding]] (also used by [[DEFLATE (algorithm)|DEFLATE]]) and [[arithmetic coding]]. Arithmetic coding achieves compression rates close to the best possible for a particular statistical model, which is given by the [[information entropy]], whereas Huffman compression is simpler and faster but produces poor results for models that deal with symbol probabilities close to 1.
+
+There are two primary ways of constructing statistical models: in a ''static'' model, the data is analyzed and a model is constructed, then this model is stored with the compressed data. This approach is simple and modular, but has the disadvantage that the model itself can be expensive to store, and also that it forces using a single model for all data being compressed, and so performs poorly on files that contain heterogeneous data. ''Adaptive'' models dynamically update the model as the data is compressed. Both the encoder and decoder begin with a trivial model, yielding poor compression of initial data, but as they learn more about the data, performance improves. Most popular types of compression used in practice now use adaptive coders.
+
+Lossless compression methods may be categorized according to the type of data they are designed to compress. While, in principle, any general-purpose lossless compression algorithm (''general-purpose'' meaning that they can accept any bitstring) can be used on any type of data, many are unable to achieve significant compression on data that are not of the form for which they were designed to compress. Many of the lossless compression techniques used for text also work reasonably well for [[Indexed color|indexed image]]s.
+
+=== Text and image ===
+Statistical modeling algorithms for text (or text-like binary data such as executables) include:
+* [[Context tree weighting]] method (CTW)
+* [[Burrows–Wheeler transform]] (block sorting preprocessing that makes compression more efficient)
+* [[LZ77 and LZ78 (algorithms)|LZ77]] (used by [[DEFLATE (algorithm)|DEFLATE]])
+* [[LZW]]
+* [[PPMd]]
+
+=== Multimedia ===
+Techniques that take advantage of the specific characteristics of images such as the common phenomenon of contiguous 2-D areas of similar tones.
+Every pixel but the first is replaced by the difference to its left neighbor. This leads to small values having a much higher probability than large values.
+This is often also applied to sound files, and can compress files that contain mostly low frequencies and low volumes.
+For images, this step can be repeated by taking the difference to the top pixel, and then in videos, the difference to the pixel in the next frame can be taken.
+
+A hierarchical version of this technique takes neighboring pairs of data points, stores their difference and sum, and on a higher level with lower resolution continues with the sums. This is called [[discrete wavelet transform]]. [[JPEG2000]] additionally uses data points from other pairs and multiplication factors to mix them into the difference. These factors must be integers, so that the result is an integer under all circumstances. So the values are increased, increasing file size, but hopefully the distribution of values is more peaked. {{Citation needed|date=December 2007}} <!-- can someone please explain JPEG2000 for dummies!? Wavelets are fun if taken as continuous real valued function. But all this math for simple integer linear algebra? -->
+
+The adaptive encoding uses the probabilities from the previous sample in sound encoding, from the left and upper pixel in image encoding, and additionally from the previous frame in video encoding. In the wavelet transformation, the probabilities are also passed through the hierarchy.
+
+=== Historical legal issues ===
+Many of these methods are implemented in open-source and proprietary tools, particularly LZW and its variants. Some algorithms are patented in the [[United States|USA]] and other countries and their legal usage requires licensing by the patent holder. Because of patents on certain kinds of LZW compression, and in particular licensing practices by patent holder Unisys that many developers considered abusive, some open source proponents encouraged people to avoid using the [[Graphics Interchange Format]] (GIF) for compressing still image files in favor of [[Portable Network Graphics]] (PNG), which combines the [[LZ77 and LZ78 (algorithms)|LZ77]]-based [[DEFLATE (algorithm)|deflate]] algorithm with a selection of domain-specific prediction filters. However, the patents on LZW expired on June 20, 2003.<ref>[http://www.unisys.com/about__unisys/lzw Unisys | LZW Patent and Software Information<!-- Bot generated title -->]</ref>
+
+Many of the lossless compression techniques used for text also work reasonably well for [[indexed image]]s, but there are other techniques that do not work for typical text that are useful for some images (particularly simple bitmaps), and other techniques that take advantage of the specific characteristics of images (such as the common phenomenon of contiguous 2-D areas of similar tones, and the fact that color images usually have a preponderance of a limited range of colors out of those representable in the color space).
+
+As mentioned previously, lossless sound compression is a somewhat specialised area. Lossless sound compression algorithms can take advantage of the repeating patterns shown by the wave-like nature of the data – essentially using [[autoregressive]] models to predict the "next" value and encoding the (hopefully small) difference between the expected value and the actual data. If the difference between the predicted and the actual data (called the ''error'') tends to be small, then certain difference values (like 0, +1, &minus;1 etc. on sample values) become very frequent, which can be exploited by encoding them in few output bits.
+
+It is sometimes beneficial to compress only the differences between two versions of a file (or, in [[video compression]], of successive images within a sequence). This is called [[delta encoding]] (from the Greek letter [[delta (letter)|?]], which in mathematics, denotes a difference), but the term is typically only used if both versions are meaningful outside compression and decompression. For example, while the process of compressing the error in the above-mentioned lossless audio compression scheme could be described as delta encoding from the approximated sound wave to the original sound wave, the approximated version of the sound wave is not meaningful in any other context.
+
+== Lossless compression methods ==
+{{See also|:Category:Lossless compression algorithms}}
+
+By operation of the [[pigeonhole principle]], no lossless compression algorithm can efficiently compress all possible data. For this reason, many different algorithms exist that are designed either with a specific type of input data in mind or with specific assumptions about what kinds of redundancy the uncompressed data are likely to contain.
+
+Some of the most common lossless compression algorithms are listed below.
+
+===General purpose===
+* [[Run-length encoding]] (RLE) – a simple scheme that provides good compression of data containing lots of runs of the same value.
+* [[LZ78|Lempel-Ziv 1978]] (LZ78), [[LZW|Lempel-Ziv-Welch]] (LZW) – used by [[GIF]] images and [[compress]] among many other applications
+* [[DEFLATE]] – used by [[gzip]], [[ZIP (file format)|ZIP]] (since version 2.0), and as part of the compression process of [[Portable Network Graphics]] (PNG), [[Point-to-Point Protocol]] (PPP), [[HTTP]], [[Secure Shell|SSH]]
+* [[bzip2]] – using the [[Burrows–Wheeler transform]], this provides slower but higher compression than [[DEFLATE]]
+* [[Lempel–Ziv–Markov chain algorithm]] (LZMA) – used by [[7zip]], [[xz]], and other programs; higher compression than [[bzip2]] as well as much faster decompression.
+* [[Lempel–Ziv–Oberhumer]] (LZO) – designed for compression/decompression speed at the expense of compression ratios
+* [[Statistical Lempel Ziv]] – a combination of statistical method and dictionary-based method; better compression ratio than using single method.
+
+=== Audio ===
+* [[Apple Lossless]] (ALAC - Apple Lossless Audio Codec)
+* [[Adaptive Transform Acoustic Coding]] (ATRAC)
+* [[apt-X|apt-X Lossless]]
+* [[Audio Lossless Coding]] (also known as MPEG-4 ALS)
+* [[Super Audio CD#DST|Direct Stream Transfer]] (DST)
+* [[Dolby TrueHD]]
+* [[DTS-HD Master Audio]]
+* [[Free Lossless Audio Codec]] (FLAC)
+* [[Meridian Lossless Packing]] (MLP)
+* [[Monkey's Audio]] (Monkey's Audio APE)
+* [[MPEG-4 SLS]] (also known as HD-AAC)
+* [[OptimFROG]]
+* [[Original Sound Quality]] (OSQ)
+* [[RealPlayer]] (RealAudio Lossless)
+* [[Shorten]] (SHN)
+* [[TTA (codec)|TTA]] (True Audio Lossless)
+* [[WavPack]] (WavPack lossless)
+* [[Windows Media Audio 9 Lossless|WMA Lossless]] (Windows Media Lossless)
+
+=== Graphics ===
+* [[ILBM]] – (lossless RLE compression of [[Amiga]] [[Interchange File Format|IFF]] images)
+* [[JBIG2]] – (lossless or lossy compression of B&W images)
+* [[Lossless JPEG#JPEG-LS|JPEG-LS]] – (lossless/near-lossless compression standard)
+* [[JPEG 2000]] – (includes lossless compression method, as proven by Sunil Kumar, Prof San Diego State University)
+* [[JPEG XR]] – formerly ''WMPhoto'' and ''HD Photo'', includes a lossless compression method
+* [[Progressive Graphics File|PGF]] – Progressive Graphics File (lossless or lossy compression)
+* [[Portable Network Graphics|PNG]] – Portable Network Graphics
+* [[Tagged Image File Format|TIFF]] – Tagged Image File Format
+* [http://www.lcdf.org/gifsicle/ Gifsicle] ([[GNU General Public License|GPL]]) – Optimize gif files
+* [http://www.kokkonen.net/tjko/projects.html Jpegoptim] ([[GNU General Public License|GPL]]) – Optimize jpeg files
+
+=== 3D Graphics ===
+* [[OpenCTM]] – Lossless compression of 3D triangle meshes
+
+=== Video ===
+
+See [[List_of_codecs#Lossless_compression|this list]] of lossless video codecs.
+
+===Cryptography===
+[[Cryptosystem]]s often compress data before encryption for added security; compression prior to encryption helps remove redundancies and patterns that might facilitate cryptanalysis.  However, many ordinary lossless compression algorithms introduce predictable patterns (such as headers, wrappers, and tables) into the compressed data that may actually make cryptanalysis easier.  One possible solution to this problem is to use Bijective Compression that has no headers or additional information. Also using bijective whole file transforms such as bijective BWT greatly increase the Unicity Distance. Therefore, cryptosystems often incorporate specialized compression algorithms specific to the cryptosystem&mdash;or at least demonstrated or widely held to be cryptographically secure&mdash;rather than standard compression algorithms that are efficient but provide potential opportunities for cryptanalysis.{{Citation needed|date=December 2008}}
+
+===Genetics===
+[[Genetics]] compression algorithms are the latest generation of lossless algorithms that compress data (typically sequences of nucleotides) using both conventional compression algorithms and genetic algorithms adapted to the specific datatype. In 2012, a team of scientists from Johns Hopkins University published the first genetic compression algorithm that does not rely on external genetic databases for compression. HAPZIPPER was tailored for [[HapMap]] data and achieves over 20-fold compression (95% reduction in file size), providing 2- to 4-fold better compression and in much faster time than the leading general-purpose compression utilities.<ref>{{cite journal | author=Chanda, Elhaik, and Bader | title=HapZipper: sharing HapMap populations just got easier | journal=Nucleic Acids Res | pages=1–7 | year=2012 | pmid=22844100 | doi=10.1093/nar/gks709 }}</ref>
+
+===Executables===
+{{main|Executable compression}}
+Self-extracting executables contain a compressed application and a decompressor. When executed, the decompressor transparently decompresses and runs the original application. This is especially often used in [[Demo (computer programming)|demo]] coding, where competitions are held for demos with strict size limits, as small as [[Kilobyte|1k]].
+This type of compression is not strictly limited to binary executables, but can also be applied to scripts, such as [[JavaScript]].
+
+== Lossless compression benchmarks ==
+Lossless compression algorithms and their implementations are routinely tested in head-to-head [[benchmark (computing)|benchmark]]s. There are a number of better-known compression benchmarks. Some benchmarks cover only the [[compression ratio]], so winners in these benchmark may be unsuitable for everyday use due to the slow speed of the top performers. Another drawback of some benchmarks is that their data files are known, so some program writers may optimize their programs for best performance on a particular data set. The winners on these benchmarks often come from the class of [[context-mixing]] compression software. 
+
+The benchmarks listed in the 5th edition of the ''Handbook of Data Compression'' (Springer, 2009) are:<ref>David Salomon, Giovanni Motta, (with contributions by [[WavPack|David Bryant]]), ''Handbook of Data Compression'', 5th edition, Springer, 2009, ISBN 1-84882-902-7, pp. 16&ndash;18.</ref>
+* The [http://www.maximumcompression.com/ Maximum Compression] benchmark, started in 2003 and frequently updated, includes over 150 programs. Maintained by Werner Bergmans, it tests on a variety of data sets, including text, images, and executable code. Two types of results are reported: single file compression (SFC) and multiple file compression (MFC). Not surprisingly, context mixing programs often win here; programs from the [[PAQ]] series and [[WinRK]] often are in the top. The site also has a list of pointers to other benchmarks.<ref>[http://www.maximumcompression.com/benchmarks/benchmarks.php Lossless Data Compression Benchmarks (links and spreadsheets)]</ref>
+* [http://studwww.ugent.be/~jdebock/ UCLC] (the ultimate command-line compressors) benchmark by Johan de Bock is another actively maintained benchmark including over 100 programs. The winners in most tests usually are [[PAQ]] programs and WinRK, with the exception of lossless audio encoding and grayscale image compression where some specialized algorithms shine.
+* [http://www.squeezechart.com/ Squeeze Chart] by Stephan Busch is another frequently updated site.
+* The [http://emilcont.webs.com/benchmark.htm EmilCont] benchmarks by Berto Destasio are somewhat outdated having been most recently updated in 2004. A distinctive feature is that the data set is not public, to prevent optimizations targeting it specifically. Nevertheless, the best ratio winners are again the PAQ family, SLIM<!-- no idea where this can be found--> and WinRK.
+* The [http://compression.ca/act/ Archive Comparison Test] (ACT) by Jeff Gilchrist included 162 DOS/Windows and 8 Macintosh lossless compression programs, but it was last updated in 2002.
+* [http://www.compression.ru/artest/index_e.html The Art Of Lossless Data Compression] by Alexander Ratushnyak provides a similar test performed in 2003.
+
+[[Matt Mahoney]], in his February 2010 edition of the free booklet ''Data Compression Explained'', additionally lists the following:<ref>http://nishi.dreamhosters.com/u/dce2010-02-26.pdf, pp. 3&ndash;5</ref>
+* The [[Calgary Corpus]] dating back to 1987 is no longer widely used due to its small size, although Leonid A. Broukhis still maintains [http://mailcom.com/challenge/ The Calgary Corpus Compression Challenge], which started in 1996.
+* The [http://mattmahoney.net/dc/text.html Large Text Compression Benchmark] and the similar [[Hutter Prize]] both use a trimmed [[Wikipedia]] [[XML]] [[UTF-8]] data set.
+* The [http://mattmahoney.net/dc/uiq/ Generic Compression Benchmark], maintained by Mahoney himself, test compression on random data.
+* Sami Runsas (author of [[NanoZip]]) maintains [http://compressionratings.com Compression Ratings], a benchmark similar to Maximum Compression multiple file test, but with minimum speed requirements. It also offers a calculator that allows the user to weight the importance of speed and compression ratio. The top programs here are fairly different due to speed requirement. In January 2010, the top programs were NanoZip followed by [[FreeArc]], [[CCM (software)|CCM]], [[flashzip]], and [[7-Zip]].
+* The [http://heartofcomp.altervista.org/MOC/MOC.htm Monster of Compression] benchmark by N. F. Antonio tests compression on 1Gb of public data with a 40 minute time limit. As of Dec. 20, 2009 the top ranked archiver is NanoZip 0.07a and the top ranked single file compressor is [[ccmx]] 1.30c, both [[context mixing]].
+
+[http://compressionratings.com/ Compression Ratings] publishes a chart summary of the "frontier" in compression ratio and time.<ref>[http://compressionratings.com/rating_sum.html Visualization of compression ratio and time]</ref>
+
+== Limitations ==
+Lossless data compression algorithms cannot guarantee compression for all input data sets.  In other words, for any (lossless) data compression algorithm, there will be an input data set that does not get smaller when processed by the algorithm.  This is easily proven with elementary mathematics using a [[counting argument]], as follows:
+
+* Assume that each file is represented as a string of bits of some arbitrary length.
+* Suppose that there is a compression algorithm that transforms every file into a distinct file that is no longer than the original file, and that at least one file will be compressed into something that is shorter than itself.
+* Let <math>M</math> be the least number such that there is a file <math>F</math> with length <math>M</math> bits that compresses to something shorter. Let <math>N</math> be the length (in bits) of the compressed version of <math>F</math>.
+* Because <math>N<M</math>, '''every''' file of length <math>N</math> keeps its size during compression. There are <math>2^N</math> such files. Together with <math>F</math>, this makes <math>2^N+1</math> files that all compress into one of the <math>2^N</math> files of length <math>N</math>.
+* But <math>2^N</math> is smaller than <math>2^N+1</math>, so by the [[pigeonhole principle]] there must be some file of length <math>N</math> that is simultaneously the output of the compression function on two different inputs. That file cannot be decompressed reliably (which of the two originals should that yield?), which contradicts the assumption that the algorithm was lossless.
+* We must therefore conclude that our original hypothesis (that the compression function makes no file longer) is necessarily untrue.
+
+Any lossless compression algorithm that makes some files shorter must necessarily make some files longer, but it is not necessary that those files become ''very much'' longer. Most practical compression algorithms provide an "escape" facility that can turn off the normal coding for files that would become longer by being encoded. In theory, only a single additional bit is required to tell the decoder that the normal coding has been turned off for the entire input; however, most encoding algorithms use at least one full byte (and typically more than one) for this purpose. For example, [[DEFLATE]] compressed files never need to grow by more than 5 bytes per 65,535 bytes of input.
+
+In fact, if we consider files of length N, if all files were equally probable, then for any lossless compression that reduces the size of some file, the expected length of a compressed file (averaged over all possible files of length N) must necessarily be ''greater'' than N.{{citation needed|date=August 2011}} So if we know nothing about the properties of the data we are compressing, we might as well not compress it at all. A lossless compression algorithm is useful only when we are more likely to compress certain types of files than others; then the algorithm could be designed to compress those types of data better.
+
+Thus, the main lesson from the argument is not that one risks big losses, but merely that one cannot always win. To choose an algorithm always means implicitly to select a ''subset'' of all files that will become usefully shorter. This is the theoretical reason why we need to have different compression algorithms for different kinds of files: there cannot be any algorithm that is good for all kinds of data.
+
+The "trick" that allows lossless compression algorithms, used on the type of data they were designed for, to consistently compress such files to a shorter form is that the files the algorithms are designed to act on all have some form of easily modeled [[redundancy (information theory)|redundancy]] that the algorithm is designed to remove, and thus belong to the subset of files that that algorithm can make shorter, whereas other files would not get compressed or even get bigger. Algorithms are generally quite specifically tuned to a particular type of file: for example, lossless audio compression programs do not work well on text files, and vice versa.
+
+In particular, files of [[random]] data cannot be consistently compressed by any conceivable lossless data compression algorithm: indeed, this result is used to ''define'' the concept of randomness in [[algorithmic complexity theory]].
+
+It's provably impossible to create an [[algorithm]] that can losslessly compress any data.<ref>[[comp.compression]] [[FAQ]] list entry #9: [http://www.faqs.org/faqs/compression-faq/part1/section-8.html Compression of random data (WEB, Gilbert and others)]</ref>  While there have been many claims through the years of companies achieving "perfect compression" where an arbitrary number ''N'' of random bits can always be compressed to ''N''&nbsp;&minus;&nbsp;1 bits, these kinds of claims can be safely discarded without even looking at any further details regarding the purported compression scheme.  Such an algorithm contradicts fundamental laws of mathematics because, if it existed, it could be applied repeatedly to losslessly reduce any file to length 0.  Allegedly "perfect" compression algorithms are usually called derisively "magic" compression algorithms.
+
+On the other hand, it has also been proven{{Reference needed|date=November 2012}} that there is no algorithm to determine whether a file is incompressible in the sense of [[Kolmogorov complexity]]. Hence it's possible that any particular file, even if it appears random, may be significantly compressed, even including the size of the decompressor. An example is the digits of the mathematical constant ''[[pi]]'', which appear random but can be generated by a very small program. However, even though it cannot be determined whether a particular file is incompressible, a [[Kolmogorov_complexity#Compression|simple theorem about incompressible strings]] shows that over 99% of files of any given length cannot be compressed by more than one byte (including the size of the decompressor).
+
+=== Mathematical background ===
+Any [[compression algorithm]] can be viewed as a [[Function (mathematics)|function]] that maps sequences of units (normally octets) into other sequences of the same units. Compression is successful if the resulting sequence is shorter than the original sequence plus the map needed to decompress it. For a compression algorithm to be [[lossless]], there must be a reverse mapping from compressed bit sequences to original bit sequences.  That is to say, the compression method must encapsulate a [[bijection]] between "plain" and "compressed" bit sequences.
+
+The sequences of length ''N'' or less are clearly a strict superset of the sequences of length ''N''&nbsp;&minus;&nbsp;1 or less. It follows that there are more sequences of length ''N'' or less than there are sequences of length ''N''&nbsp;&minus;&nbsp;1 or less. It therefore follows from the [[pigeonhole principle]] that it is not possible to map every sequence of length ''N'' or less to a unique sequence of length ''N''&nbsp;&minus;&nbsp;1 or less. Therefore it is not possible to produce an algorithm that reduces the size of ''every possible'' input sequence.
+
+=== Psychological background ===
+Most everyday files are relatively 'sparse' in an [[information entropy]] sense, and thus, most lossless algorithms a layperson is likely to apply on regular files compress them relatively well.  This may, through misapplication of [[Intuition (knowledge)|intuition]], lead some individuals to conclude that a well-designed compression algorithm can compress ''any'' input, thus, constituting a ''magic compression algorithm''.
+
+=== Points of application in real compression theory ===
+Real compression algorithm designers accept that streams of high information entropy cannot be compressed, and accordingly, include facilities for detecting and handling this condition.  An obvious way of detection is applying a raw compression algorithm and testing if its output is smaller than its input.  Sometimes, detection is made by [[heuristics]]; for example, a compression application may consider files whose names end in ".zip", ".arj" or ".lha" uncompressible without any more sophisticated detection. A common way of handling this situation is quoting input, or uncompressible parts of the input in the output, minimising the compression overhead.  For example, the [[ZIP (file format)|zip]] data format specifies the 'compression method' of 'Stored' for input files that have been copied into the archive verbatim.<ref>[http://www.pkware.com/documents/casestudies/APPNOTE.TXT ZIP file format specification] by [[PKWARE]], chapter V, section J</ref>
+
+=== The Million Random Number Challenge ===
+Mark Nelson, frustrated over many cranks trying to claim having invented a magic compression algorithm appearing in [[comp.compression]], has constructed a 415,241 byte binary file ([http://marknelson.us/attachments/million-digit-challenge/AMillionRandomDigits.bin]) of highly entropic content, and issued a public challenge of $100 to anyone to write a program that, together with its input, would be smaller than his provided binary data yet be able to reconstitute ("decompress") it without error.<ref>{{cite web
+  | last = Nelson
+  | first = Mark
+  | title = The Million Random Digit Challenge Revisited
+  | date = 2006-06-20
+  | url = http://marknelson.us/2006/06/20/million-digit-challenge/ }}</ref>
+
+The [[FAQ]] for the [[comp.compression]] [[newsgroup]] contains a challenge by Mike Goldman offering $5,000 for a program that can compress random data. Patrick Craig took up the challenge, but rather than compressing the data, he split it up into separate files all of which ended in the number ''5'', which was not stored as part of the file. Omitting this character allowed the resulting files (plus, in accordance with the rules, the size of the program that reassembled them) to be smaller than the original file. However, no actual compression took place, and the information stored in the names of the files was necessary to reassemble them in the correct order in the original file, and this information was not taken into account in the file size comparison. The files themselves are thus not sufficient to reconstitute the original file; the file names are also necessary. A full history of the event, including discussion on whether or not the challenge was technically met, is on Patrick Craig's web site.<ref>{{cite web
+  | last = Craig
+  | first = Patrick
+  | title = The $5000 Compression Challenge
+  | url = http://www.patrickcraig.co.uk/other/compression.htm
+  | accessdate = 2009-06-08 }}</ref>
+
+== See also ==
+* [[Audio compression (data)]]
+* [[Comparison of file archivers]]
+* [[David A. Huffman]]
+* [[Entropy (information theory)]]
+* [[Kolmogorov complexity]]
+* [[Data compression]]
+* [[Precompressor]]
+* [[Lossy compression]]
+* [[Lossless Transform Audio Compression]] (LTAC)
+* [[List of codecs]]
+* [[Information theory]]
+* [[Universal code (data compression)]]
+* [[Grammar induction]]
+
+== References ==
+<references/>
+
+== External links ==
+* [http://wiki.hydrogenaudio.org/index.php?title=Lossless_comparison Comparison of Lossless Audio Compressors] at Hydrogenaudio Wiki
+* [http://www.bobulous.org.uk/misc/audioFormats.html Comparing lossless and lossy audio formats for music archiving]
+* [http://www.data-compression.com/theory.html] — [[data-compression.com]]'s overview of data compression and its fundamentals limitations
+* [http://www.faqs.org/faqs/compression-faq/part2/section-4.html] — [[comp.compression]]'s FAQ item 73, ''What is the theoretical compression limit?''
+* [http://www.c10n.info/archives/439] — [[c10n.info]]'s overview of [http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=7,096,360.PN.&OS=PN/7,096,360&RS=PN/7,096,360 US patent #7,096,360], "[a]n "Frequency-Time Based Data Compression Method" supporting the compression, encryption, decompression, and decryption and persistence of many binary digits through frequencies where each frequency represents many bits."
+
+{{Compression Methods}}
+
+{{DEFAULTSORT:Lossless Data Compression}}
+[[Category:Data compression]]
+[[Category:Lossless compression algorithms| ]]
+
+[[ar:??? ???????? ??? ??????]]
+[[ca:Algorisme de compressió sense pèrdua]]
+[[cs:Bezeztrátová komprese]]
+[[es:Algoritmo de compresión sin pérdida]]
+[[fa:?????????? ???????? ???????]]
+[[gl:Algoritmo de compresión sen perda]]
+[[ko:??? ??]]
+[[it:Compressione dati senza perdita]]
+[[ka:?????????? ??????????? ????????]]
+[[ja:????]]
+[[no:Tapsfri komprimering]]
+[[pl:Kompresja bezstratna]]
+[[pt:Compressão sem perda de dados]]
+[[ru:?????? ??? ??????]]
+[[sk:Bezstratová kompresia]]
+[[sr:Kompresija bez gubitka]]
+[[fi:Pakkausohjelma]]
+[[sv:Icke-förstörande komprimering]]
+[[th:????????????????????????????]]
+[[tr:Kayipsiz veri sikistirma]]
+[[uk:????????? ??? ?????]]
+[[vi:Nén d? li?u d?ng Lossless]]
+[[zh:??????]]

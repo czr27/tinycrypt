@@ -1,0 +1,84 @@
+
+        this stuff is some experiments about file packing;
+        based on Jacky Qwerty's compression, as i think
+
+compress file:
+        ...open files...
+        init_engine();
+        ...for each byte:
+        x = get_byte_from_input_stream;
+        if (x == engine_said_next_byte_is())
+          {
+            out_bit(1);
+          }
+        else
+          {
+            out_bit(0);
+            out_byte(x);
+          }
+        update_engine(x);
+        ...
+        ...close files...
+
+decompress file:
+        ...open files...
+        init_engine();
+        ...while not eof:
+        if (get_bit_from_input_stream == 1)
+          {
+            out_byte(engine_said_next_byte_is());
+          }
+        else
+          {
+            get_byte(x);
+            out_byte(x);
+          }
+        update_engine(x);
+        ...
+        ...close files...
+
+
+        as you can see, there exist some thing named "engine" -
+        here this word means 3 following subprograms:
+
+   void engine_init()          - initialize internal variables
+
+   byte engine_next()          - foretells which byte will appear next
+
+   void engine_update(byte x)  - tell engine, which byte appeared really
+
+        this stuff includes 4 engines:
+
+        engine0       - 4 bytes of memory;
+                        remember only last 4 bytes; if last 3 bytes or
+                        2 words was equal, return the same;
+                        otherwise return 0
+
+                       engine:       0 0 0 0 1 .....
+                       input stream: - 1 1 1 .......
+
+                       engine:       0 0 0 0 0 2 ...
+                       input stream: - 2 3 2 3 .....
+
+        engine1       - 256 bytes of memory;
+                        remember only which byte appeared after byte X;
+                        "self-teaching" engine
+
+                       engine:       00 00 00 00 11 00 00 11 00 22 21
+                       input stream: -- B8 11 11 CD 21 B8 22 22 CD 21
+
+        engine2       - 256kb of memory;
+                        remember how many times byte X appeared after byte Y;
+                        returns byte which presently appeared more times
+                        than others after previous byte;
+                        "self-teaching" engine
+
+                       engine:       0 0 0 0 2 0 3 0 4 1 2 1 2 ...
+                       input stream: - 1 2 1 3 1 4 1 2 1 3 1 5 ...
+
+        engine3       - 4mb+ of memory;
+                        the same as engine2, but remember how many times
+                        byte X appeared after last 12 bits
+
+
+

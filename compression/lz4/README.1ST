@@ -1,0 +1,9 @@
+Files in this archive:
+
+lz4_8088.asm    The LZ4 decompression routine in generic assembler
+lz4_8088.txt    A description of this routine
+WIN32\          Win32 executables of the LZ4 compressor and analyzer
+DOS16\          DOS executables of the decompressor test harness and analyzer
+SAMPLES\        LZ4 samples used to test the routine and gather stats
+readme.1st      This file
+

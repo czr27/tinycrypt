@@ -1,0 +1,127 @@
+<strong>Introduction</strong>
+
+<a href="http://cubehash.cr.yp.to/">CubeHash</a> is a simple cryptographic hash function designed and written in 2008 by mathematician/cryptographer <a href="http://cr.yp.to/djb.html">Daniel J. Bernstein.</a> It was submitted to the NIST SHA-3 competition but was not chosen as a finalist for the reasons stated below.
+
+<blockquote>CubeHash is a simple, well-understood design that received extensive third-party analysis. The design is suitable for constrained environments, as it requires a small area in hardware, and little RAM or ROM in software. However, <strong>it has poor performance without the use of a vector unit</strong>, resulting in a large overhead for short messages. Moreover, no single variant for the 512-bit digest size achieves the required theoretical security with acceptable performance. <strong>Another disadvantage of the design is the existence of the symmetric properties that are arguably a potential avenue for future attacks</strong>. NIST felt that an additional year of study would not be enough to determine whether or not the symmetric properties pose a threat. Therefore, NIST felt that CubeHash could not be chosen as SHA-3 with confidence, and thus should not be selected as a finalist.</blockquote>
+
+...continued
+
+<blockquote>In constrained environments, CubeHash has poor performance, but requires less ROM and RAM than most of the second-round candidates.</blockquote>
+
+Having looked at other algorithms and tweaking reference code to reduce space without compromising much of the security, It initially appeared to require less ROM in software than any other algorithm in round 2 which includes Keccak. I was mostly curious to see how far the code could be reduced in assembly.
+
+<strong>Choosing parameters</strong>
+
+The author states in specification.
+
+<blockquote>CubeHash<em>r/b-h</em> produces an <em>h</em>-bit digest of a variable-length message. The digest depends on two tunable parameters <em>r, b</em> that allow the selection of a range of security/performance tradeoffs</blockquote>
+
+Choosing high <em>r</em> and low <em>b</em> values result in the best security but with higher <em>r</em> would impact performance since if you were to select r=10, b=1 then the permutation function would be invoked 10 times for each byte which is not very efficient. 
+
+To minimize size for this implementation, the parameters chosen are: r=1, b=1, h=256
+
+Be advised, the following implementation will only work with those parameters. Changing these would probably provide incorrect hashes but if you want a look at the reference code, see the <a href="http://cubehash.cr.yp.to/">authors site.</a> or alternatively look at implementations from <a href="https://github.com/floodyberry/supercop/tree/master/crypto_hash">the SUPERCOP library.</a>
+
+<strong>Permutation Function</strong>
+
+Unrolled, this is 12 loops and can be vectorized.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>#</span><span style='color:#004a43;'>define</span><span style='color:#004a43;'> ROTL32</span><span style='color:#808030;'>(</span><span style='color:#004a43;'>a</span><span style='color:#808030;'>,</span><span style='color:#004a43;'>b</span><span style='color:#808030;'>)</span><span style='color:#004a43;'> </span><span style='color:#808030;'>(</span><span style='color:#808030;'>(</span><span style='color:#808030;'>(</span><span style='color:#004a43;'>a</span><span style='color:#808030;'>)</span><span style='color:#004a43;'> </span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#004a43;'> </span><span style='color:#808030;'>(</span><span style='color:#004a43;'>b</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#004a43;'> </span><span style='color:#808030;'>|</span><span style='color:#004a43;'> </span><span style='color:#808030;'>(</span><span style='color:#808030;'>(</span><span style='color:#004a43;'>a</span><span style='color:#808030;'>)</span><span style='color:#004a43;'> </span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#004a43;'> </span><span style='color:#808030;'>(</span><span style='color:#004a43;'>32 </span><span style='color:#808030;'>-</span><span style='color:#004a43;'> b</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span>
+
+<span style='color:#800000;font-weight:bold;'>void</span> transform<span style='color:#808030;'>(</span>cube_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>int</span> cnt<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  <span style='color:#800000;font-weight:bold;'>int</span>      i<span style='color:#808030;'>,</span> j<span style='color:#808030;'>,</span> k<span style='color:#808030;'>,</span> n<span style='color:#800080;'>;</span>
+  uint32_t y<span style='color:#808030;'>[</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>n<span style='color:#808030;'>=</span>cnt<span style='color:#800080;'>;</span> n<span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> n<span style='color:#808030;'>-</span><span style='color:#808030;'>-</span><span style='color:#808030;'>)</span> 
+  <span style='color:#800080;'>{</span>
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>k<span style='color:#808030;'>=</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>,</span> j<span style='color:#808030;'>=</span><span style='color:#008c00;'>2</span><span style='color:#800080;'>;</span> j<span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> k<span style='color:#808030;'>+</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>,</span> j<span style='color:#808030;'>-</span><span style='color:#808030;'>-</span><span style='color:#808030;'>)</span>
+    <span style='color:#800080;'>{</span>
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i <span style='color:#808030;'>+</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> y<span style='color:#808030;'>[</span>i <span style='color:#808030;'>^</span> <span style='color:#808030;'>(</span>j<span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL32<span style='color:#808030;'>(</span>y<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> k<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i <span style='color:#808030;'>+</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> y<span style='color:#808030;'>[</span>i <span style='color:#808030;'>^</span> j<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i <span style='color:#808030;'>+</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>15</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>i<span style='color:#808030;'>)</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i <span style='color:#808030;'>+</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> y<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+  <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<strong>Initialization</strong>
+
+The original implementation requires the output digest be provided by the callee. Since I'm only interested in the 256-bit output, the code is fixed to this output length.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> cube_init<span style='color:#808030;'>(</span>cube_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  <span style='color:#800000;font-weight:bold;'>int</span> i<span style='color:#800080;'>;</span>
+
+  <span style='color:#696969;'>// initialize state</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>32</span><span style='color:#800080;'>;</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>+</span>i<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+  <span style='color:#800080;'>}</span>
+  
+  <span style='color:#696969;'>// set our fixed parameters</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#008c00;'>32</span><span style='color:#800080;'>;</span>            <span style='color:#696969;'>// 256-bit</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>             <span style='color:#696969;'>// b=1 (block size in bytes)</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>             <span style='color:#696969;'>// r=1 (number of rounds for each block)</span>
+
+  transform<span style='color:#808030;'>(</span>c<span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>        <span style='color:#696969;'>// initial 10 rounds</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<strong>Updating</strong>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> cube_update<span style='color:#808030;'>(</span>cube_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>in<span style='color:#808030;'>,</span> uint32_t inlen<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint8_t  <span style='color:#808030;'>*</span>data<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>in<span style='color:#800080;'>;</span>
+  uint32_t u<span style='color:#800080;'>;</span>
+
+  <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span>inlen<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+    c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>*</span>data<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#800080;'>;</span>      <span style='color:#696969;'>// absorb byte into state</span>
+    <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>!</span>inlen<span style='color:#808030;'>-</span><span style='color:#808030;'>-</span><span style='color:#808030;'>)</span> <span style='color:#800000;font-weight:bold;'>break</span><span style='color:#800080;'>;</span>     <span style='color:#696969;'>// don't process last byte</span>
+    transform<span style='color:#808030;'>(</span>c<span style='color:#808030;'>,</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>         <span style='color:#696969;'>// transform state with 1 round</span>
+  <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<strong>Finalization</strong>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> cube_final<span style='color:#808030;'>(</span><span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>out<span style='color:#808030;'>,</span> cube_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  <span style='color:#800000;font-weight:bold;'>int</span>      i<span style='color:#800080;'>;</span>
+  uint32_t u<span style='color:#800080;'>;</span>
+
+  <span style='color:#696969;'>// step 1.</span>
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>128</span><span style='color:#800080;'>;</span>           <span style='color:#696969;'>// absorb length</span>
+  transform<span style='color:#808030;'>(</span>c<span style='color:#808030;'>,</span> <span style='color:#008c00;'>1</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>31</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>1</span><span style='color:#800080;'>;</span>            <span style='color:#696969;'>// absorb final bit</span>
+  transform<span style='color:#808030;'>(</span>c<span style='color:#808030;'>,</span> <span style='color:#008c00;'>10</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>         <span style='color:#696969;'>// apply final rounds</span>
+  
+  <span style='color:#696969;'>// return 256-bit hash</span>
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>32</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> 
+    <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>out<span style='color:#808030;'>)</span><span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>v8<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+The step 1 probably requires some explanation. If you look at the reference implementation, the code is
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// from Final</span>
+  crypto_uint32 u<span style='color:#800080;'>;</span>
+
+  u <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#008c00;'>128</span> <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span> <span style='color:#808030;'>(</span>state<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>pos <span style='color:#808030;'>%</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  u <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>8</span> <span style='color:#808030;'>*</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>state<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>pos <span style='color:#808030;'>/</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>%</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  state<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>x<span style='color:#808030;'>[</span>state<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>pos <span style='color:#808030;'>/</span> <span style='color:#008c00;'>32</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> u<span style='color:#800080;'>;</span>
+</pre>
+
+Because the blocksize is 1, the length byte will always be 128.
+
+<strong>Summary</strong>
+
+Simplicity and suitability to constrained environments is where this function wins over any other hash algorithm I've covered so far. The size of variables are 32-bit and because it only uses ARX instructions, makes it suitable for wide range of 32-bit architectures.
+
+The output assembly size for this implementation is 345 bytes.
+
+<a href="https://github.com/odzhan/tinycrypt/tree/master/hash/cubehash">Sources here.</a>

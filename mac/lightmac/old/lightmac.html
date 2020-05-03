@@ -1,0 +1,143 @@
+<h3><strong>Introduction</strong></h3>
+
+<p>A Message Authentication Code (MAC) enables two parties using a shared secret key to authenticate messages exchanged between them. Some MACs are constructed from cryptographic hash algorithms like SHA-3 or BLAKE2 while others are constructed from block ciphers. <a href="https://eprint.iacr.org/2016/190">LightMAC</a> is a MAC mode for block ciphers. It was designed by <a href="https://www.atul.be/">Atul Luykx</a>, <a href="http://homes.esat.kuleuven.be/~preneel/">Bart Preneel</a>, <a href="http://www.dtu.dk/english/service/phonebook/person?id=91243&amp;tab=2&amp;qt=dtupublicationquery">Elmar Tischhauser</a>, Kan Yasuda and published in 2016. LightMAC is incredibly simple to implement, but does not compromise on security or performance. It is ideal for resource constrained environments and also where high performance is required.</p>
+
+<p align="center">
+$latex \begin{array}{l}
+\\\hline 
+\textbf{Algorithm 1: }\text{LightMAC} _{K_1,K_2}(M)
+\\\hline
+\quad\textbf{Input: } K_1, K_2\in \{0, 1\}^k,\: M\in \{0,1\}^{\leq 2^s(n-s)}\\
+\quad\textbf{Output: } T\in\{0, 1\}^t\\
+\textbf{\scriptsize{1}}\;\; V\leftarrow 0^n\in\{0, 1\}^n\\
+\textbf{\scriptsize{2}}\;\; M[1]M[2]\cdots M[\ell]\xleftarrow{n-s}M\\
+\textbf{\scriptsize{3}}\;\; \textbf{for } i = 1\textbf{ to } \ell - 1\textbf{ do}\\
+\textbf{\scriptsize{4}}\;\; \mid V\leftarrow V\oplus E_{K_1}(i_s M[i])\\
+\textbf{\scriptsize{5}}\;\; \textbf{end}\\
+\textbf{\scriptsize{6}}\;\; V\leftarrow V\oplus (M[\ell]10^\ast)\\
+\textbf{\scriptsize{7}}\;\; T\leftarrow \lfloor E_{K_2}(V)\rfloor_t\\
+\textbf{\scriptsize{8}}\;\; \textbf{return } T
+  \\\hline
+\end{array}$
+</p>
+
+<p>The following list describes some of the symbols used above.</p>
+
+<ul>
+  <li><strong>Cipher</strong></li>
+<p>$latex E$ should be a cipher with a block size of at least 64-bits.</p> 
+
+	<li><strong>Block length.</strong></li>
+<p>$latex n$ denotes the block length in bytes. PRESENT supports 64-bits, AES supports 128-bits.</p>
+
+	<li><strong>Key length.</strong></li>
+<p>$latex K_1, K_2$ denote two 128-bit keys if using PRESENT-128 or AES-128.</p>
+
+	<li><strong>Protected counter sum.</strong></li>
+<p>$latex s$ denotes a counter between 8 and 64-bits in size, but should not exceed $latex n/2$.</p>
+
+  <li><strong>Message</strong></li>
+<p>$latex M$ denotes a message with a length not exceeding $latex 2^{s}(n-s)$</p>
+
+	<li><strong>Tag</strong></li>
+<p>$latex T$ denotes a tag of at least 64-bits and not exceeding $latex n$.</p>
+
+  <li><strong>Variable</strong></li>
+<p>$latex V$ is an intermediate/local variable initialized to zero and used to temporarily store the tag of $latex n$ bytes. </p>
+</ul>
+
+
+<p>If we use the block cipher PRESENT-64/128 as an example, $latex K_1, K_2$ would be two 128-bit keys. If $latex s$ is a 1 byte counter and $latex n$ is 8-byte block size, our message should not exceed $latex 2^{8}(8-1)$ or 1,792 bytes. This would be sufficient for authenticating small network packets. It also allows us to use the same encryption algorithm that might be used in Counter (CTR) mode, thus significantly reducing the overall amount of ROM required. The following table shows some example parameters, including PRESENT-64/128.</p>
+
+<table border="1">
+  <tr>
+    <th>Cipher (E)<br></th>
+    <th>Block Length (N)<br></th>
+    <th>Cipher Key Length <br></th>
+    <th>MAC Key Length (K)<br></th>
+    <th>Counter Length (S)<br></th>
+    <th>Tag Length (T)<br></th>
+    <th>Max Message<br></th>
+  </tr>
+  <tr>
+    <td>PRESENT</td>
+    <td>64-bits</td>
+    <td>128-bits</td>
+    <td>256-bits</td>
+    <td>8-bits<br></td>
+    <td>64-bits<br></td>
+    <td>1,792 bytes<br></td>
+  </tr>
+  <tr>
+    <td>SPECK</td>
+    <td>64-bits</td>
+    <td>128-bits</td>
+    <td>256-bits</td>
+    <td>8-bits<br></td>
+    <td>64-bits<br></td>
+    <td>1,792 bytes<br></td>
+  </tr>
+  <tr>
+    <td>AES</td>
+    <td>128-bits<br></td>
+    <td>128-bits</td>
+    <td>256-bits</td>
+    <td>32-bits<br></td>
+    <td>128-bits</td>
+    <td>48 GB</td>
+  </tr>
+</table>
+
+<h3><strong>Compact code</strong></h3>
+
+<p>The value of <var>MSG_LEN</var> is $latex (n - s)$.</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000; font-weight:bold; '>void</span> lightmac<span style='color:#808030; '>(</span><span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>data<span style='color:#808030; '>,</span> u32 len<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>tag<span style='color:#808030; '>,</span> <span style='color:#800000; font-weight:bold; '>void</span> <span style='color:#808030; '>*</span>key<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+    <span style='color:#800000; font-weight:bold; '>int</span>  i<span style='color:#800080; '>;</span>
+    u8   m<span style='color:#808030; '>[</span>BLK_LEN<span style='color:#808030; '>]</span><span style='color:#808030; '>,</span> v<span style='color:#808030; '>[</span>TAG_LEN<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span> 
+    u8   <span style='color:#808030; '>*</span>t<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>u8<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>tag<span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>k<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>u8<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>key<span style='color:#808030; '>,</span> <span style='color:#808030; '>*</span>p<span style='color:#808030; '>=</span><span style='color:#808030; '>(</span>u8<span style='color:#808030; '>*</span><span style='color:#808030; '>)</span>data<span style='color:#800080; '>;</span>
+    
+    <span style='color:#800000; font-weight:bold; '>union</span> <span style='color:#800080; '>{</span>
+      u8  b<span style='color:#808030; '>[</span><span style='color:#008c00; '>8</span><span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      u64 q<span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span> s<span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// 1. zero initialize V</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>TAG_LEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> <span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>
+
+    <span style='color:#696969; '>// 2. set protected counter sum to 1</span>
+    s<span style='color:#808030; '>.</span>q <span style='color:#808030; '>=</span> <span style='color:#008c00; '>1</span><span style='color:#800080; '>;</span>
+    
+    <span style='color:#696969; '>// 3. while we have blocks of data equal to (n - s)</span>
+    <span style='color:#800000; font-weight:bold; '>while</span> <span style='color:#808030; '>(</span>len <span style='color:#808030; '>></span><span style='color:#808030; '>=</span> MSG_LEN<span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+      <span style='color:#696969; '>// 4. add counter s to M in big endian byte order</span>
+      <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>CTR_LEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        m<span style='color:#808030; '>[</span>CTR_LEN<span style='color:#808030; '>-</span>i<span style='color:#808030; '>-</span><span style='color:#008c00; '>1</span><span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> s<span style='color:#808030; '>.</span>b<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+      <span style='color:#696969; '>// 5. add data to M</span>
+      <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>MSG_LEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> <span style='color:#800080; '>{</span>
+        m<span style='color:#808030; '>[</span>CTR_LEN<span style='color:#808030; '>+</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> p<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#800080; '>}</span>
+      <span style='color:#696969; '>// 6. encrypt M with K1</span>
+      ENC<span style='color:#808030; '>(</span>k<span style='color:#808030; '>,</span> m<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// 7. update V</span>
+      <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>TAG_LEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>^</span><span style='color:#808030; '>=</span> m<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// 8. decrease length and advance data pointer</span>
+      len <span style='color:#808030; '>-</span><span style='color:#808030; '>=</span> MSG_LEN<span style='color:#800080; '>;</span>
+      p <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> MSG_LEN<span style='color:#800080; '>;</span>
+      <span style='color:#696969; '>// 9. update counter</span>
+      s<span style='color:#808030; '>.</span>q<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#800080; '>;</span>
+    <span style='color:#800080; '>}</span>
+    <span style='color:#696969; '>// 10. absorb any data less than (n - s)</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>len<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>^</span><span style='color:#808030; '>=</span> p<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// 11. add end bit</span>
+    v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>^</span><span style='color:#808030; '>=</span> <span style='color:#008000; '>0x80</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// 12. encrypt V with K2</span>
+    k <span style='color:#808030; '>+</span><span style='color:#808030; '>=</span> BC_KEY_LEN<span style='color:#800080; '>;</span>
+    ENC<span style='color:#808030; '>(</span>k<span style='color:#808030; '>,</span> v<span style='color:#808030; '>)</span><span style='color:#800080; '>;</span>
+    <span style='color:#696969; '>// 13. return V in T</span>
+    <span style='color:#800000; font-weight:bold; '>for</span><span style='color:#808030; '>(</span>i<span style='color:#808030; '>=</span><span style='color:#008c00; '>0</span><span style='color:#800080; '>;</span>i<span style='color:#808030; '>&lt;</span>TAG_LEN<span style='color:#800080; '>;</span>i<span style='color:#808030; '>+</span><span style='color:#808030; '>+</span><span style='color:#808030; '>)</span> t<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span> <span style='color:#808030; '>=</span> v<span style='color:#808030; '>[</span>i<span style='color:#808030; '>]</span><span style='color:#800080; '>;</span>
+<span style='color:#800080; '>}</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/mac/lightmac">Sources here.</a></p>

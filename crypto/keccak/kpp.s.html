@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>/home/user/hub/shellcode/os/linux/arm64/crypto/keccak/kpp.s.html</title>
+<meta name="Generator" content="Vim/8.0">
+<meta name="plugin-version" content="vim7.4_v2">
+<meta name="syntax" content="arm">
+<meta name="settings" content="use_css,pre_wrap,no_foldcolumn,prevent_copy=">
+<meta name="colorscheme" content="none">
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #ffffff; background-color: #000000; }
+body { font-family: monospace; color: #ffffff; background-color: #000000; }
+* { font-size: 1em; }
+.Constant { color: #ff40ff; }
+.Comment { color: #00ffff; }
+.Type { color: #87ffaf; }
+.Identifier { color: #00ffff; font-weight: bold; }
+.Statement { color: #ffff00; }
+.PreProc { color: #5fd7ff; }
+-->
+</style>
+
+<script type='text/javascript'>
+<!--
+
+-->
+</script>
+</head>
+<body>
+<pre id='vimCodeElement'>
+
+<span class="Comment">// keccak-p[1600, 24]</span>
+<span class="Comment">// 428 bytes</span>
+
+    <span class="PreProc">.arch</span> <span class="Identifier">armv8</span><span class="Statement">-</span><span class="Identifier">a</span>
+    <span class="PreProc">.text</span>
+    <span class="PreProc">.global</span> <span class="Identifier">k1600</span>
+
+<span class="Identifier">    #define</span> <span class="Identifier">s</span> <span class="Type">x0</span>
+<span class="Identifier">    #define</span> <span class="Identifier">n</span> <span class="Type">x1</span>
+<span class="Identifier">    #define</span> <span class="Identifier">i</span> <span class="Type">x2</span>
+<span class="Identifier">    #define</span> <span class="Identifier">j</span> <span class="Type">x3</span>
+<span class="Identifier">    #define</span> <span class="Identifier">r</span> <span class="Type">x4</span>
+<span class="Identifier">    #define</span> <span class="Identifier">x</span> <span class="Type">x5</span>
+<span class="Identifier">    #define</span> <span class="Identifier">y</span> <span class="Type">x6</span>
+<span class="Identifier">    #define</span> <span class="Identifier">t</span> <span class="Type">x7</span>
+<span class="Identifier">    #define</span> <span class="Identifier">Y</span> <span class="Type">x8</span>
+<span class="Identifier">    #define</span> <span class="Identifier">c</span> <span class="Type">x9</span>   <span class="Comment">// round constant (unsigned char)</span>
+<span class="Identifier">    #define</span> <span class="Identifier">d</span> <span class="Type">x10</span>
+<span class="Identifier">    #define</span> <span class="Identifier">v</span> <span class="Type">x11</span>
+<span class="Identifier">    #define</span> <span class="Identifier">u</span> <span class="Type">x12</span>
+<span class="Identifier">    #define</span> <span class="Statement">b</span> <span class="Type">sp</span>   <span class="Comment">// local buffer</span>
+
+<span class="Identifier">k1600:</span>
+    <span class="Statement">sub</span>     <span class="Type">sp</span><span class="Statement">,</span> <span class="Type">sp</span><span class="Statement">,</span> <span class="Constant">64</span>
+    <span class="Comment">// F(n,24){</span>
+    <span class="Statement">mov</span>     <span class="Identifier">n</span><span class="Statement">,</span> <span class="Constant">24</span>
+    <span class="Statement">mov</span>     <span class="Identifier">c</span><span class="Statement">,</span> <span class="Constant">1</span>                <span class="Comment">// c = 1</span>
+<span class="Identifier">L0:</span>
+    <span class="Statement">mov</span>     <span class="Identifier">d</span><span class="Statement">,</span> <span class="Constant">5</span>
+    <span class="Comment">// F(i,5){b[i]=0;F(j,5)b[i]^=s[i+j*5];}</span>
+    <span class="Statement">mov</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// i = 0</span>
+<span class="Identifier">L1:</span>
+    <span class="Statement">mov</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// j = 0</span>
+    <span class="Statement">mov</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// u = 0</span>
+<span class="Identifier">L2:</span>
+    <span class="Statement">madd</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">i</span>          <span class="Comment">// v = (j * 5) + i</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">v</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// v = s[v]</span>
+
+    <span class="Statement">eor</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span>             <span class="Comment">// u ^= v</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// j = j + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// j &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L2</span>
+
+    <span class="Statement">str</span>     <span class="Identifier">u</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// b[i] = u</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// i = i + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// i &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L1</span>
+
+    <span class="Comment">// F(i,5){</span>
+    <span class="Statement">mov</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Identifier">L3:</span>
+    <span class="Comment">// t=b[(i+4)%5] ^ R(b[(i+1)%5], 63);</span>
+    <span class="Statement">add</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">4</span>             <span class="Comment">// v = i + 4</span>
+    <span class="Statement">udiv</span>    <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// u = (v / 5)</span>
+    <span class="Statement">msub</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">v</span>          <span class="Comment">// v = (v - (u * 5))</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// t = b[v]</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// v = i + 1</span>
+    <span class="Statement">udiv</span>    <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// u = (v / 5)</span>
+    <span class="Statement">msub</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">v</span>          <span class="Comment">// v = (v - (u * 5))</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">u</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// u = b[v]</span>
+
+    <span class="Statement">eor</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Statement">ror</span> <span class="Constant">63</span>     <span class="Comment">// t ^= R(u, 63)</span>
+
+    <span class="Comment">// F(j,5)s[i+j*5]^=t;}</span>
+    <span class="Statement">mov</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Identifier">L4:</span>
+    <span class="Statement">madd</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">i</span>          <span class="Comment">// v = (j * 5) + i</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">u</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// u = s[v]</span>
+    <span class="Statement">eor</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">t</span>             <span class="Comment">// u ^= t</span>
+    <span class="Statement">str</span>     <span class="Identifier">u</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// s[v] = u </span>
+
+    <span class="Statement">add</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// j = j + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// j &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L4</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// i = i + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// i &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L3</span>
+
+    <span class="Comment">// t=s[1],y=r=0,x=1;</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Constant">8</span>]           <span class="Comment">// t = s[1]</span>
+    <span class="Statement">mov</span>     <span class="Identifier">y</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// y = 0</span>
+    <span class="Statement">mov</span>     <span class="Identifier">r</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// r = 0</span>
+    <span class="Statement">mov</span>     <span class="Identifier">x</span><span class="Statement">,</span> <span class="Constant">1</span>                <span class="Comment">// x = 1</span>
+
+    <span class="Comment">// F(j,24)</span>
+    <span class="Statement">mov</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">0</span>
+<span class="Identifier">L5:</span>
+    <span class="Statement">add</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// j = j + 1</span>
+    <span class="Comment">// r+=j+1,Y=(x*2)+(y*3),x=y,y=Y%5,</span>
+    <span class="Statement">add</span>     <span class="Identifier">r</span><span class="Statement">,</span> <span class="Identifier">r</span><span class="Statement">,</span> <span class="Identifier">j</span>             <span class="Comment">// r = r + j</span>
+    <span class="Statement">add</span>     <span class="Identifier">Y</span><span class="Statement">,</span> <span class="Identifier">y</span><span class="Statement">,</span> <span class="Identifier">y</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">1</span>      <span class="Comment">// Y = y * 3</span>
+    <span class="Statement">add</span>     <span class="Identifier">Y</span><span class="Statement">,</span> <span class="Identifier">Y</span><span class="Statement">,</span> <span class="Identifier">x</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">1</span>      <span class="Comment">// Y = Y + (x * 2)</span>
+    <span class="Statement">mov</span>     <span class="Identifier">x</span><span class="Statement">,</span> <span class="Identifier">y</span>                <span class="Comment">// x = y </span>
+    <span class="Statement">udiv</span>    <span class="Identifier">y</span><span class="Statement">,</span> <span class="Identifier">Y</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// y = (Y / 5)</span>
+    <span class="Statement">msub</span>    <span class="Identifier">y</span><span class="Statement">,</span> <span class="Identifier">y</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">Y</span>          <span class="Comment">// y = (Y - (y * 5)) </span>
+
+    <span class="Comment">// Y=s[x+y*5],s[x+y*5]=R(t, -(r - 64) % 64),t=Y;</span>
+    <span class="Statement">madd</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">y</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">x</span>          <span class="Comment">// v = (y * 5) + x</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">Y</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// Y = s[v]</span>
+    <span class="Statement">neg</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">r</span>
+    <span class="Statement">ror</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">u</span>             <span class="Comment">// t = R(t, u)</span>
+    <span class="Statement">str</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// s[v] = t </span>
+    <span class="Statement">mov</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">Y</span>
+
+    <span class="Statement">cmp</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">24</span>               <span class="Comment">// j &lt; 24</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L5</span>
+
+    <span class="Comment">// F(j,5){</span>
+    <span class="Statement">mov</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// j = 0</span>
+<span class="Identifier">L6:</span>
+    <span class="Comment">// F(i,5)b[i] = s[i+j*5];</span>
+    <span class="Statement">mov</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// i = 0</span>
+<span class="Identifier">L7:</span>
+    <span class="Statement">madd</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">i</span>          <span class="Comment">// v = (j * 5) + i</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// t = s[v]</span>
+    <span class="Statement">str</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// b[i] = t</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// i = i + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// i &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L7</span>
+
+    <span class="Comment">// F(i,5)</span>
+    <span class="Statement">mov</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// i = 0</span>
+<span class="Identifier">L8:</span>
+    <span class="Comment">// s[i+j*5] = b[i] ^ (b[(i+2)%5] &amp; ~b[(i+1)%5]);}</span>
+    <span class="Statement">add</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">2</span>             <span class="Comment">// v = i + 2 </span>
+    <span class="Statement">udiv</span>    <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// u = v / 5</span>
+    <span class="Statement">msub</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">v</span>          <span class="Comment">// v = (v - (u * 5)) </span>
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// t = b[v]</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// v = i + 1</span>
+    <span class="Statement">udiv</span>    <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// u = v / 5 </span>
+    <span class="Statement">msub</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">v</span>          <span class="Comment">// v = (v - (u * 5)) </span>
+    <span class="Statement">ldr</span>     <span class="Identifier">u</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// u = b[v]</span>
+
+    <span class="Statement">bic</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">u</span>             <span class="Comment">// u = (t &amp; ~u)</span>
+
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Statement">b</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// t = b[i]</span>
+    <span class="Statement">eor</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">u</span>             <span class="Comment">// t ^= u</span>
+
+    <span class="Statement">madd</span>    <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">d</span><span class="Statement">,</span> <span class="Identifier">i</span>          <span class="Comment">// v = (j * 5) + i</span>
+    <span class="Statement">str</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">3</span>]    <span class="Comment">// s[v] = t</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// i++</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">i</span><span class="Statement">,</span> <span class="Constant">5</span>                <span class="Comment">// i &lt; 5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L8</span>
+
+    <span class="Statement">add</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">5</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L6</span>
+
+    <span class="Comment">// F(j,7)</span>
+    <span class="Statement">mov</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">0</span>                <span class="Comment">// j = 0</span>
+    <span class="Statement">mov</span>     <span class="Identifier">d</span><span class="Statement">,</span> <span class="Constant">113</span>
+<span class="Identifier">L9:</span>
+    <span class="Comment">// if((c=(c&lt;&lt;1)^((c&gt;&gt;7)*113))&amp;2)</span>
+    <span class="Statement">lsr</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">c</span><span class="Statement">,</span> <span class="Constant">7</span>             <span class="Comment">// t = c &gt;&gt; 7</span>
+    <span class="Statement">mul</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">d</span>             <span class="Comment">// t = t * 113 </span>
+    <span class="Statement">eor</span>     <span class="Identifier">c</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">c</span><span class="Statement">,</span> <span class="Statement">lsl</span> <span class="Constant">1</span>      <span class="Comment">// c = t ^ (c &lt;&lt; 1)</span>
+    <span class="Statement">and</span>     <span class="Identifier">c</span><span class="Statement">,</span> <span class="Identifier">c</span><span class="Statement">,</span> <span class="Constant">255</span>           <span class="Comment">// c = c % 256 </span>
+    <span class="Statement">tbz</span>     <span class="Identifier">c</span><span class="Statement">,</span> <span class="Constant">1</span><span class="Statement">,</span> <span class="Identifier">L10</span>           <span class="Comment">// if (c &amp; 2)</span>
+
+    <span class="Comment">//   *s^=1ULL&lt;&lt;((1&lt;&lt;j)-1);</span>
+    <span class="Statement">mov</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Constant">1</span>                <span class="Comment">// v = 1</span>
+    <span class="Statement">lsl</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">j</span>             <span class="Comment">// u = v &lt;&lt; j </span>
+    <span class="Statement">sub</span>     <span class="Identifier">u</span><span class="Statement">,</span> <span class="Identifier">u</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// u = u - 1</span>
+    <span class="Statement">lsl</span>     <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">v</span><span class="Statement">,</span> <span class="Identifier">u</span>             <span class="Comment">// v = v &lt;&lt; u</span>
+    <span class="Statement">ldr</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span>]              <span class="Comment">// t = s[0]</span>
+    <span class="Statement">eor</span>     <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">t</span><span class="Statement">,</span> <span class="Identifier">v</span>             <span class="Comment">// t ^= v</span>
+    <span class="Statement">str</span>     <span class="Identifier">t</span><span class="Statement">,</span> [<span class="Identifier">s</span>]              <span class="Comment">// s[0] = t</span>
+<span class="Identifier">L10:</span>
+    <span class="Statement">add</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// j = j + 1</span>
+    <span class="Statement">cmp</span>     <span class="Identifier">j</span><span class="Statement">,</span> <span class="Constant">7</span>                <span class="Comment">// j &lt; 7</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L9</span>
+
+    <span class="Statement">subs</span>    <span class="Identifier">n</span><span class="Statement">,</span> <span class="Identifier">n</span><span class="Statement">,</span> <span class="Constant">1</span>             <span class="Comment">// n = n - 1</span>
+    <span class="Statement">bne</span>     <span class="Identifier">L0</span>
+
+    <span class="Statement">add</span>     <span class="Type">sp</span><span class="Statement">,</span> <span class="Type">sp</span><span class="Statement">,</span> <span class="Constant">64</span>
+    <span class="Statement">ret</span>
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->

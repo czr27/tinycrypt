@@ -1,0 +1,13 @@
+Name of the submission: Spook.
+
+Corresponding submitter' name: François-Xavier Standaert.
+Corresponding submitter' e-mail: fstandae@uclouvain.be.
+Corresponding submitter' phone number: +3210472565.
+Corresponding submitter' address: Place du Levant, 3, B1348 Louvain-la-Neuve, Belgium.
+
+CONTENT: 
+- Spook.pdf (submission specification, rationale, ...).
+- Spook_diff_R1R2.pdf (diff. file with the first-round submission).
+- summary_of_changes_R1R2.txt (list of changes between first-round and second-round submissions).
+- Reference implementations (for our primary candidate and variants).
+

@@ -1,0 +1,422 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="http://www.ecrypt.eu.org/stream/p3ciphers/rabbit/rabbit_p3.pdf">Rabbit</a> is a stream cipher designed in 2003 by Martin Boesgaard, Mette Vesterager, Thomas Pedersen, Jesper Christiansen and Ove Scavenius. It was published in 2005 and selected as a software cipher for the <a href="http://www.ecrypt.eu.org/stream/rabbitpf.html">eSTREAM portfolio in 2008</a>. It's designed for high performance in software implementations but is also known to work well in hardware environments. A more extensive description by the authors can be found in <a href="https://tools.ietf.org/rfc/rfc4503.txt">RFC 4503</a></p>
+
+<blockquote>Technically, Rabbit consists of a pseudorandom bitstream generator that takes a 128-bit key and a 64-bit initialization vector (IV) as input and generates a stream of 128-bit blocks.  Encryption is performed by combining this output with the message, using the exclusive-OR operation.  Decryption is performed in exactly the same way as encryption.</blockquote>
+
+<h3><strong>About the assembly code</strong></h3>
+
+<p>This was a joint effort between <a href="http://pferrie.host22.com/">Peter Ferrie</a> and myself. It's not as compact as <a href="https://tinycrypt.wordpress.com/2016/06/05/asmcodes-salsa20/">Salsa20</a> or <a href="https://tinycrypt.wordpress.com/2016/08/05/asmcodes-hc-256/">HC-256</a> that are also part the eSTREAM portfolio.</p>
+
+<h3><strong>Optimization trick with PUSHAD/POPAD</strong></h3>
+
+<p>Although this has nothing to do with the cipher itself, I think it's worth noting. While writing the assembly code for RABBIT, I accidently "discovered" something that I didn't realize was possible with the PUSHAD instruction. When PUSHAD is executed, it saves all the general purpose registers including ESP on the stack. The total stack space occupied for this operation is 32-bytes. What I didn't know is that it's possible to overwrite ESP and when POPAD is executed, the original value of ESP is still restored to its original value.</p>
+
+"<em>So what?</em>" you may say.. but think about it. This is a neat way to allocate and release 32-bytes of memory without worrying about overwriting ESP. If the original value of ESP were not restored, only 12 bytes would be available, but that's still useful for some code. Instead of using SUB, ADD or ENTER to allocate 32-bytes or more in future, consider using PUSHAD since it doesn't appear to matter if ESP is overwritten. Try it for yourself with the following code:</p>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>;</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; save all registers</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; eax=0</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>8</span>                 <span style='color:#696969;'>; overwrite 8 GP registers</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>stosd</span>             <span style='color:#696969;'>; memset(edi, 0, 32);</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>                    <span style='color:#696969;'>; like "magic", ESP is restored</span>
+</pre>
+
+<p>I've updated other sources to use this "trick" and they all work fine. It is used here in RABBIT_setiv and RABBIT_crypt.</p>
+
+<h3><strong>Key setup</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> RABBIT_setkey<span style='color:#808030;'>(</span>RABBIT_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#800000;font-weight:bold;'>void</span> <span style='color:#808030;'>*</span>key<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+   uint32_t k0<span style='color:#808030;'>,</span> k1<span style='color:#808030;'>,</span> k2<span style='color:#808030;'>,</span> k3<span style='color:#808030;'>,</span> i<span style='color:#800080;'>;</span>
+   rabbit_blk <span style='color:#808030;'>*</span>k<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>rabbit_blk<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>key<span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Generate four subkeys</span>
+   k0 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   k1 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   k2 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   k3 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Generate initial state variables</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k0<span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k1<span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k2<span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>6</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k3<span style='color:#800080;'>;</span>
+
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> U32V<span style='color:#808030;'>(</span>k3<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k2<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> U32V<span style='color:#808030;'>(</span>k0<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k3<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>5</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> U32V<span style='color:#808030;'>(</span>k1<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k0<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> U32V<span style='color:#808030;'>(</span>k2<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k1<span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Generate initial counter values</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL32<span style='color:#808030;'>(</span>k2<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL32<span style='color:#808030;'>(</span>k3<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL32<span style='color:#808030;'>(</span>k0<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>6</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL32<span style='color:#808030;'>(</span>k1<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>k0<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF0000</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k1<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>k1<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF0000</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k2<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>5</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>k2<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF0000</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k3<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>k3<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF0000</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>k0<span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Clear carry bit</span>
+   c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>carry <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Iterate the system four times</span>
+   <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>4</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      RABBIT_next_state<span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   <span style='color:#800080;'>}</span>
+
+   <span style='color:#696969;'>// Modify the counters</span>
+   <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>8</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#808030;'>(</span>i<span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   <span style='color:#800080;'>}</span>
+
+   <span style='color:#696969;'>// Copy master instance to work instance</span>
+   <span style='color:#603000;'>memcpy</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>sizeof</span><span style='color:#808030;'>(</span>RABBIT_state<span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<h3><strong>x86 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; Key setup</span>
+<span style='color:#e34adc;'>RABBIT_setkeyx:</span>
+<span style='color:#e34adc;'>_RABBIT_setkeyx:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+8</span><span style='color:#808030;'>]</span>
+    <span style='color:#696969;'>; ---------------------</span>
+    <span style='color:#696969;'>; Generate four subkeys</span>
+    <span style='color:#696969;'>; ---------------------</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#696969;'>; --------------------------------</span>
+    <span style='color:#696969;'>; Generate initial state variables</span>
+    <span style='color:#696969;'>; --------------------------------</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.x[1] = U32V(k3&lt;&lt;16) | (k2&gt;&gt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.x[3] = U32V(k0&lt;&lt;16) | (k3&gt;&gt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.x[5] = U32V(k1&lt;&lt;16) | (k0&gt;&gt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.x[7] = U32V(k2&lt;&lt;16) | (k1&gt;&gt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+    
+    <span style='color:#696969;'>; -------------------------------</span>
+    <span style='color:#696969;'>; Generate initial counter values</span>
+    <span style='color:#696969;'>; -------------------------------</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.c[1] = (k0&amp;0xFFFF0000) | (k1&amp;0xFFFF);</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>         <span style='color:#696969;'>; k1.lo</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.c[3] = (k1&amp;0xFFFF0000) | (k2&amp;0xFFFF);</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>          <span style='color:#696969;'>; k2.lo</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.c[5] = (k2&amp;0xFFFF0000) | (k3&amp;0xFFFF);</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>         <span style='color:#696969;'>; k3.lo</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+
+    <span style='color:#696969;'>; c-&gt;m.c[7] = (k3&amp;0xFFFF0000) | (k0&amp;0xFFFF);</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>         <span style='color:#696969;'>; k0.lo</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>bp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+    
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>stosd</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+
+    <span style='color:#696969;'>; -----------------------------</span>
+    <span style='color:#696969;'>; Iterate the system four times</span>
+    <span style='color:#696969;'>; -----------------------------</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>
+<span style='color:#e34adc;'>rsk_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>RABBIT_next_state</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>rsk_l0</span>
+    
+    <span style='color:#696969;'>; -------------------</span>
+    <span style='color:#696969;'>; Modify the counters</span>
+    <span style='color:#696969;'>; -------------------</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>
+<span style='color:#e34adc;'>rsk_l1:</span>
+    <span style='color:#696969;'>; c-&gt;m.c[i] ^= c-&gt;m.x[(i+4) &amp; 7];</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>+</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>7</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#008c00;'>+32</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>
+    <span style='color:#800000;font-weight:bold;'>jne</span>    <span style='color:#e34adc;'>rsk_l1</span>
+    
+    <span style='color:#696969;'>; -------------------------------------</span>
+    <span style='color:#696969;'>; Copy master instance to work instance</span>
+    <span style='color:#696969;'>; -------------------------------------</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>68</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsb</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>IV setup</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// IV setup</span>
+<span style='color:#800000;font-weight:bold;'>void</span> RABBIT_setiv<span style='color:#808030;'>(</span>RABBIT_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#800000;font-weight:bold;'>void</span><span style='color:#808030;'>*</span> iv<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+   rabbit_blk <span style='color:#808030;'>*</span>v<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>rabbit_blk<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>iv<span style='color:#800080;'>;</span>
+   uint32_t   sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   <span style='color:#800000;font-weight:bold;'>int</span>        i<span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Generate four subvectors</span>
+   sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> v<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+
+   sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0xFFFF0000</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>|</span> <span style='color:#808030;'>(</span>sv<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&amp;</span><span style='color:#008000;'>0x0000FFFF</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Modify counter values</span>
+   <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>8</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>c<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span> sv<span style='color:#808030;'>[</span>i <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+   <span style='color:#800080;'>}</span>
+
+   <span style='color:#696969;'>// Copy state variables but not carry flag</span>
+   <span style='color:#603000;'>memcpy</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>m<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>32</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+   <span style='color:#696969;'>// Iterate the system four times</span>
+   <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>4</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      RABBIT_next_state<span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+   <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<h3><strong>x86 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; IV setup</span>
+<span style='color:#e34adc;'>RABBIT_setivx:</span>
+<span style='color:#e34adc;'>_RABBIT_setivx:</span>
+    <span style='color:#696969;'>; save registers</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; ctx</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+8</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; iv</span>
+    <span style='color:#696969;'>; Generate four subvectors</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; sv[0] = v-&gt;d[0];</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; sv[2] = v-&gt;d[1];</span>
+
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; create sv variable (32 bytes), init first and third</span>
+
+    <span style='color:#800000;font-weight:bold;'>ror</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>           <span style='color:#696969;'>; sv[0] &gt;&gt; 16</span>
+    
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; sv[1] = (sv[0]&gt;&gt;16) | (sv[2]&amp;0xFFFF0000);</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>di</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ax</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    
+    <span style='color:#800000;font-weight:bold;'>ror</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>           <span style='color:#696969;'>; sv[3] = (sv[2]&lt;&lt;16) | (sv[0]&amp;0x0000FFFF);</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>12</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edi</span>
+    <span style='color:#696969;'>; Modify counter values</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+<span style='color:#e34adc;'>rsv_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#008c00;'>+32</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; eax = c-&gt;m.c[i]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>      <span style='color:#696969;'>; eax ^= sv[i &amp; 3]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#008c00;'>+100</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>  <span style='color:#696969;'>; c-&gt;w.c[i] = eax</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>rsv_l0</span>
+    <span style='color:#696969;'>; Copy master state variables to work</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>68</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>rep</span>    <span style='color:#800000;font-weight:bold;'>movsd</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#696969;'>; Iterate the system four times</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>cl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>4</span>
+<span style='color:#e34adc;'>rsv_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>68</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>RABBIT_next_state</span> <span style='color:#696969;'>; RABBIT_next_state(&amp;c-&gt;w);</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>rsv_l1</span>
+    
+    <span style='color:#696969;'>; release sv of 32 bytes</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#696969;'>; restore registers</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>Encryption/Decryption</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> RABBIT_crypt<span style='color:#808030;'>(</span>RABBIT_ctx <span style='color:#808030;'>*</span>c<span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>void</span><span style='color:#808030;'>*</span> input<span style='color:#808030;'>,</span> uint32_t inlen<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+   uint32_t   i<span style='color:#808030;'>,</span> len<span style='color:#800080;'>;</span>
+   rabbit_blk x<span style='color:#800080;'>;</span>
+   uint8_t    <span style='color:#808030;'>*</span>in<span style='color:#808030;'>=</span><span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>input<span style='color:#800080;'>;</span>
+
+   <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span><span style='color:#800080;'>;</span><span style='color:#800080;'>;</span><span style='color:#808030;'>)</span>
+   <span style='color:#800080;'>{</span>
+     <span style='color:#696969;'>// break on zero length</span>
+     <span style='color:#800000;font-weight:bold;'>if</span> <span style='color:#808030;'>(</span>inlen<span style='color:#808030;'>=</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800000;font-weight:bold;'>break</span><span style='color:#800080;'>;</span>
+
+     <span style='color:#696969;'>// update state</span>
+     RABBIT_next_state<span style='color:#808030;'>(</span><span style='color:#808030;'>&amp;</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+     <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>4</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+       x<span style='color:#808030;'>.</span>d<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span>i<span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+     <span style='color:#800080;'>}</span>
+
+     x<span style='color:#808030;'>.</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>5</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+     x<span style='color:#808030;'>.</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>5</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+     x<span style='color:#808030;'>.</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+     x<span style='color:#808030;'>.</span>d<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&gt;</span><span style='color:#808030;'>&gt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>^</span> <span style='color:#808030;'>(</span>c<span style='color:#808030;'>-</span><span style='color:#808030;'>&gt;</span>w<span style='color:#808030;'>.</span>x<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+
+     <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>16</span> <span style='color:#808030;'>&amp;</span><span style='color:#808030;'>&amp;</span> inlen<span style='color:#808030;'>!</span><span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+       <span style='color:#808030;'>*</span>in<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> x<span style='color:#808030;'>.</span>b<span style='color:#808030;'>[</span>i<span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+       inlen<span style='color:#808030;'>-</span><span style='color:#808030;'>-</span><span style='color:#800080;'>;</span>
+     <span style='color:#800080;'>}</span>
+   <span style='color:#800080;'>}</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+<h3><strong>x86 assembly</strong></h3>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; encrypt/decrypt a message of any size</span>
+<span style='color:#e34adc;'>RABBIT_cryptx:</span>
+<span style='color:#e34adc;'>_RABBIT_cryptx:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; save registers</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#008c00;'>+4</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; esi = parameters</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>                   <span style='color:#696969;'>; alloc 32-bytes on stack</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; ebx=c</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; ecx=input</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; ecx=inlen</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>          <span style='color:#696969;'>; esi=input</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ebx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>68</span>           <span style='color:#696969;'>; ebx=&amp;c-&gt;w.x[0]</span>
+<span style='color:#e34adc;'>rc_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>jecxz</span>  <span style='color:#e34adc;'>rc_l3</span>             <span style='color:#696969;'>; break if ecx==0</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>ebx</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>RABBIT_next_state</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esp</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#696969;'>; for (i=0; i&lt;4; i++) {</span>
+    <span style='color:#696969;'>;   x.d[i] = c-&gt;w.x[i&lt;&lt;1];</span>
+    <span style='color:#696969;'>; }</span>
+<span style='color:#e34adc;'>rc_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>8</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>eax</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>cmp</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>jnz</span>    <span style='color:#e34adc;'>rc_l1</span>
+    
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; ebx = c-&gt;w.x[1]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; ecx = c-&gt;w.x[3]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>5</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; edx = c-&gt;w.x[5]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>ebx</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>7</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>    <span style='color:#696969;'>; ebp = c-&gt;w.x[7]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#696969;'>; x.d[0] ^= (c-&gt;w.x[5]&gt;&gt;16) ^ (c-&gt;w.x[3]&lt;&lt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>  <span style='color:#696969;'>; x5 &gt;&gt; 16, x3 &lt;&lt; 16</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#696969;'>; x.d[1] ^= (c-&gt;w.x[7]&gt;&gt;16) ^ (c-&gt;w.x[5]&lt;&lt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>
+    <span style='color:#696969;'>; x.d[2] ^= (c-&gt;w.x[1]&gt;&gt;16) ^ (c-&gt;w.x[7]&lt;&lt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>ebp</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ebp</span>
+    <span style='color:#696969;'>; x.d[3] ^= (c-&gt;w.x[3]&gt;&gt;16) ^ (c-&gt;w.x[1]&lt;&lt;16);</span>
+    <span style='color:#800000;font-weight:bold;'>shld</span>   <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    
+    <span style='color:#696969;'>; for (i=0; i&lt;16 &amp;&amp; inlen!=0; i++) {</span>
+    <span style='color:#696969;'>;   *in++ ^= x.b[i];</span>
+    <span style='color:#696969;'>;   inlen--;</span>
+    <span style='color:#696969;'>; }</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>            <span style='color:#696969;'>; do 16 bytes or remaining</span>
+<span style='color:#e34adc;'>rc_l2:</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>al</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>edi</span><span style='color:#808030;'>]</span>         <span style='color:#696969;'>; al = x.b[i]</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>edi</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>al</span>         <span style='color:#696969;'>; *in ^= al</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>esi</span>               <span style='color:#696969;'>; in++</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>    <span style='color:#000080;'>edx</span>               <span style='color:#696969;'>; i--</span>
+    <span style='color:#800000;font-weight:bold;'>loopnz</span> <span style='color:#e34adc;'>rc_l2</span>             <span style='color:#696969;'>; break if --len==0 or i==0</span>
+    <span style='color:#800000;font-weight:bold;'>inc</span>    <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>rc_l0</span>
+<span style='color:#e34adc;'>rc_l3:</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>                    <span style='color:#696969;'>; free stack</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>                    <span style='color:#696969;'>; restore registers</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/stream/rabbit">Sources here.</a></p>

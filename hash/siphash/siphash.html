@@ -1,0 +1,194 @@
+<h3><strong>Introduction</strong></h3>
+
+<p><a href="https://131002.net/siphash/">SipHash</a> is a Pseudo-Random-Function (PRF) designed and published in 2012 by <a href="https://131002.net/">Jean-Philippe Aumasson</a> and <a href="http://cr.yp.to/djb.html">Daniel J. Bernstein</a>. SipHash uses an add-rotate-xor (ARX) construction that makes it ideal for almost any CPU. It computes a 64-bit or 128-bit Message Authentication Code (MAC) from a variable-length message and 128-bit key and can be used to authenticate network packets.</p>
+
+<pre style='color:#000000;background:#ffffff;'>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#008000;'>0xff</span><span style='color:#800080;'>;</span>
+</pre>
+
+This is simply flipping the lower 8 bits so the additional parameter to SIPROUND is either zero or one which when negated can either flip bits or have no effect at all. Xor'ing by zero does nothing but if we negate 1 and Xor the result, that is the same as performing a logical not.
+
+Since our <strong>cROUNDS </strong>are 2 and <strong>dROUNDS </strong>for the end are 4, we can multiply <strong>last</strong> flag by 2 and add to <strong>rnds</strong> counter thus avoiding the need for any conditional testing.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#800000;font-weight:bold;'>void</span> SIPROUND<span style='color:#808030;'>(</span>
+    uint32_t v<span style='color:#808030;'>[</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> 
+    uint32_t w<span style='color:#808030;'>,</span> 
+    uint8_t last<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  <span style='color:#800000;font-weight:bold;'>int</span> i<span style='color:#808030;'>,</span> rnds<span style='color:#808030;'>=</span>cROUNDS<span style='color:#800080;'>;</span>
+  
+  v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>)</span><span style='color:#808030;'>-</span>last<span style='color:#800080;'>;</span>
+  rnds <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>last <span style='color:#808030;'>*</span> <span style='color:#008c00;'>2</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  
+  v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> w<span style='color:#800080;'>;</span>
+  
+  <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span>rnds<span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span>
+  <span style='color:#800080;'>{</span>
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>                                                      
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>                                                     
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>                                                      
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>7</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>                                                      
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>13</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>                                                     
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>                                                              
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> ROTL<span style='color:#808030;'>(</span>v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>   
+  <span style='color:#800080;'>}</span>    
+  v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span><span style='color:#808030;'>=</span> w<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+
+uint32_t hsh32<span style='color:#808030;'>(</span>
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t <span style='color:#808030;'>*</span>data<span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>const</span> <span style='color:#603000;'>size_t</span> inlen<span style='color:#808030;'>,</span> 
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t <span style='color:#808030;'>*</span>key<span style='color:#808030;'>)</span> 
+<span style='color:#800080;'>{</span>
+    uint32_t v<span style='color:#808030;'>[</span><span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    uint8_t i<span style='color:#800080;'>;</span>
+    uint32_t m<span style='color:#800080;'>;</span>
+    
+    uint8_t <span style='color:#808030;'>*</span>in <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint8_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>data<span style='color:#800080;'>;</span>
+    uint32_t <span style='color:#808030;'>*</span>k <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>key<span style='color:#800080;'>;</span>
+    
+    uint32_t k0 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    uint32_t k1 <span style='color:#808030;'>=</span> k<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+    
+    <span style='color:#800000;font-weight:bold;'>int</span> left <span style='color:#808030;'>=</span> inlen <span style='color:#808030;'>&amp;</span> <span style='color:#008c00;'>3</span><span style='color:#800080;'>;</span>        
+    <span style='color:#800000;font-weight:bold;'>const</span> uint8_t <span style='color:#808030;'>*</span>end <span style='color:#808030;'>=</span> in <span style='color:#808030;'>+</span> inlen <span style='color:#808030;'>-</span> left<span style='color:#800080;'>;</span>
+    uint32_t b <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>)</span>inlen<span style='color:#808030;'>)</span> <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#008c00;'>24</span><span style='color:#800080;'>;</span>
+    
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k0<span style='color:#800080;'>;</span>
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k1<span style='color:#800080;'>;</span>
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k0 <span style='color:#808030;'>^</span> <span style='color:#008000;'>0x6c796765</span><span style='color:#800080;'>;</span>
+    v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>=</span> k1 <span style='color:#808030;'>^</span> <span style='color:#008000;'>0x74656462</span><span style='color:#800080;'>;</span>
+
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span><span style='color:#800080;'>;</span> in <span style='color:#808030;'>!</span><span style='color:#808030;'>=</span> end<span style='color:#800080;'>;</span> in <span style='color:#808030;'>+</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      m <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>*</span><span style='color:#808030;'>)</span>in<span style='color:#808030;'>)</span><span style='color:#808030;'>[</span><span style='color:#008c00;'>0</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+      SIPROUND<span style='color:#808030;'>(</span>v<span style='color:#808030;'>,</span> m<span style='color:#808030;'>,</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+
+    <span style='color:#800000;font-weight:bold;'>while</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>-</span><span style='color:#808030;'>-</span>left <span style='color:#808030;'>&gt;</span><span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      b <span style='color:#808030;'>|</span><span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span><span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>)</span>in<span style='color:#808030;'>[</span>left<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span> <span style='color:#808030;'>&lt;</span><span style='color:#808030;'>&lt;</span> <span style='color:#808030;'>(</span><span style='color:#008c00;'>8</span> <span style='color:#808030;'>*</span> left<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>   
+    <span style='color:#800080;'>}</span>
+
+    <span style='color:#800000;font-weight:bold;'>for</span> <span style='color:#808030;'>(</span>i<span style='color:#808030;'>=</span><span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>&lt;</span><span style='color:#008c00;'>2</span><span style='color:#800080;'>;</span> i<span style='color:#808030;'>+</span><span style='color:#808030;'>+</span><span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+      SIPROUND<span style='color:#808030;'>(</span>v<span style='color:#808030;'>,</span> b<span style='color:#808030;'>,</span> i<span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+      b <span style='color:#808030;'>=</span> <span style='color:#008c00;'>0</span><span style='color:#800080;'>;</span>
+    <span style='color:#800080;'>}</span>
+    
+    <span style='color:#800000;font-weight:bold;'>return</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>1</span><span style='color:#808030;'>]</span> <span style='color:#808030;'>^</span> v<span style='color:#808030;'>[</span><span style='color:#008c00;'>3</span><span style='color:#808030;'>]</span><span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+With the above code in C, it's much easier to implement assembly. Instead of using a flag parameter, we clear or set the <em>Carry Flag</em> (CF) using <em>Clear Carry</em> <strong>CLC</strong> or <em>Set Carry</em> <strong>STC</strong>. You can see in the last loop, EFLAGS register is saved with <strong>PUSHFD/POPFD</strong> and then flipped using <em>Complement Carry</em> <strong>CMC</strong>.
+
+Inside the round function, we avoid flipping bits using <em>Jump If No Carry</em> <strong>JNC</strong>
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; don't change these    </span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> cROUNDS 2</span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> dROUNDS 4</span>
+
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> v0 ebx    </span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> v1 ebp    </span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> v2 edx    </span>
+<span style='color:#004a43;'>%define</span><span style='color:#004a43;'> v3 edi</span>
+
+<span style='color:#e34adc;'>_hsh32x:</span>
+<span style='color:#e34adc;'>hsh32x:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>+</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>               <span style='color:#696969;'>; save data</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>               <span style='color:#696969;'>; save inlen</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+    <span style='color:#800000;font-weight:bold;'>xchg</span>   <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>esi</span>          <span style='color:#696969;'>; esi = key </span>
+    
+    <span style='color:#696969;'>; initialize state</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; eax = k0</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    v0<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v0  = k0 </span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    v2<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v2  = k0</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>                    <span style='color:#696969;'>; eax = k1</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    v1<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v1  = k1</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    v3<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v3  = k1</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v2<span style='color:#808030;'>,</span> <span style='color:#008000;'>0x6c796765</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v3<span style='color:#808030;'>,</span> <span style='color:#008000;'>0x74656462</span>
+    
+    <span style='color:#696969;'>; update state in 4-byte blocks</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; ecx = inlen</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>esi</span>               <span style='color:#696969;'>; esi = data </span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; save inlen</span>
+    <span style='color:#800000;font-weight:bold;'>shr</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>2</span>            <span style='color:#696969;'>; inlen /= 4 </span>
+    <span style='color:#800000;font-weight:bold;'>jz</span>     <span style='color:#e34adc;'>shx_l2</span>
+<span style='color:#e34adc;'>shx_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>lodsd</span>
+<span style='color:#e34adc;'>shx_l1:</span>
+    <span style='color:#800000;font-weight:bold;'>clc</span>    
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>SIPROUND</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>shx_l0</span>
+<span style='color:#e34adc;'>shx_l2:</span>    
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; restore inlen</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>edx</span>               <span style='color:#696969;'>; save edx</span>
+    <span style='color:#800000;font-weight:bold;'>cdq</span>                      <span style='color:#696969;'>; edx = 0    </span>
+    <span style='color:#800000;font-weight:bold;'>shl</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>24</span>           <span style='color:#696969;'>; eax = inlen &lt;&lt; 24</span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span>            <span style='color:#696969;'>; inlen &amp;= 3</span>
+<span style='color:#e34adc;'>shx_l3:</span>
+    <span style='color:#800000;font-weight:bold;'>dec</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; if (--left &gt;= 0) </span>
+    <span style='color:#800000;font-weight:bold;'>js</span>     <span style='color:#e34adc;'>shx_l4</span>            <span style='color:#696969;'>;   goto shx_l4</span>
+    <span style='color:#800000;font-weight:bold;'>shl</span>    <span style='color:#000080;'>edx</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>            <span style='color:#696969;'>; t &lt;&lt;= 8</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#000080;'>dl</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>byte</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#000080;'>ecx</span><span style='color:#808030;'>]</span> <span style='color:#696969;'>; t |= in[left]</span>
+    <span style='color:#800000;font-weight:bold;'>jmp</span>    <span style='color:#e34adc;'>shx_l3</span>
+<span style='color:#e34adc;'>shx_l4:</span>
+    <span style='color:#800000;font-weight:bold;'>or</span>     <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>edx</span>          <span style='color:#696969;'>; b |= t</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>edx</span>               <span style='color:#696969;'>; restore edx</span>
+    <span style='color:#800000;font-weight:bold;'>clc</span>                      <span style='color:#696969;'>; CF=0  </span>
+<span style='color:#e34adc;'>shx_l5:</span>    
+    <span style='color:#800000;font-weight:bold;'>pushfd</span>                   <span style='color:#696969;'>; save flags</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>SIPROUND</span>
+    <span style='color:#800000;font-weight:bold;'>popfd</span>                    <span style='color:#696969;'>; restore flags</span>
+    <span style='color:#800000;font-weight:bold;'>cmc</span>                      <span style='color:#696969;'>; CF=1 for last round</span>
+    <span style='color:#800000;font-weight:bold;'>jc</span>     <span style='color:#e34adc;'>shx_l5</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v1<span style='color:#808030;'>,</span> v3            <span style='color:#696969;'>; v[1] ^= v[3]</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>28</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> v1      <span style='color:#696969;'>; pushad_t._eax = v1</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+
+<span style='color:#696969;'>; CF=0 for normal update    </span>
+<span style='color:#696969;'>; CF=1 for final update    </span>
+<span style='color:#e34adc;'>SIPROUND:</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; save ecx</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   cROUNDS 
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>
+    <span style='color:#800000;font-weight:bold;'>jnc</span>    <span style='color:#e34adc;'>sr_l0</span>             <span style='color:#696969;'>; skip if no carry</span>
+    
+    <span style='color:#800000;font-weight:bold;'>xor</span>    <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>          <span style='color:#696969;'>; w=0 if last round</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>ecx</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>ecx</span>          <span style='color:#696969;'>; assumes: cROUNDS=2, dROUNDS=4</span>
+    <span style='color:#800000;font-weight:bold;'>not</span>    <span style='color:#000080;'>dl</span>                <span style='color:#696969;'>; requires edx to be v2</span>
+<span style='color:#e34adc;'>sr_l0:</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v3<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v3 ^= w    </span>
+<span style='color:#e34adc;'>sr_l1:</span>    
+    <span style='color:#800000;font-weight:bold;'>add</span>    v0<span style='color:#808030;'>,</span> v1            <span style='color:#696969;'>; v[0] += v[1];</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v1<span style='color:#808030;'>,</span> <span style='color:#008c00;'>5</span>             <span style='color:#696969;'>; v[1] = ROTL(v[1], 5);</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v1<span style='color:#808030;'>,</span> v0            <span style='color:#696969;'>; v[1] ^= v[0];</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v0<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>            <span style='color:#696969;'>; v[0] = ROTL(v[0], 16);</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    v2<span style='color:#808030;'>,</span> v3            <span style='color:#696969;'>; v[2] += v[3]; </span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v3<span style='color:#808030;'>,</span> <span style='color:#008c00;'>8</span>             <span style='color:#696969;'>; v[3] = ROTL(v[3], 8); </span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v3<span style='color:#808030;'>,</span> v2            <span style='color:#696969;'>; v[3] ^= v[2]; </span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    v0<span style='color:#808030;'>,</span> v3            <span style='color:#696969;'>; v[0] += v[3];</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v3<span style='color:#808030;'>,</span> <span style='color:#008c00;'>7</span>             <span style='color:#696969;'>; v[3] = ROTL(v[3], 7);</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v3<span style='color:#808030;'>,</span> v0            <span style='color:#696969;'>; v[3] ^= v[0];</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    v2<span style='color:#808030;'>,</span> v1            <span style='color:#696969;'>; v[2] += v[1];</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v1<span style='color:#808030;'>,</span> <span style='color:#008c00;'>13</span>            <span style='color:#696969;'>; v[1] = ROTL(v[1], 13);</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v1<span style='color:#808030;'>,</span> v2            <span style='color:#696969;'>; v[1] ^= v[2];</span>
+    <span style='color:#800000;font-weight:bold;'>rol</span>    v2<span style='color:#808030;'>,</span> <span style='color:#008c00;'>16</span>            <span style='color:#696969;'>; v[2] = ROTL(v[2], 16);</span>
+    <span style='color:#800000;font-weight:bold;'>loop</span>   <span style='color:#e34adc;'>sr_l1</span>
+    <span style='color:#800000;font-weight:bold;'>xor</span>    v0<span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; v0 ^= w</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>ecx</span>               <span style='color:#696969;'>; restore ecx</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<p><a href="https://github.com/odzhan/tinycrypt/tree/master/hash/siphash">Sources here</a>.</p>

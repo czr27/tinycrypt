@@ -1,0 +1,7 @@
+#!/bin/sh
+
+FILES="tb_wrapper.v wrapper.v drygascon128_use_funcs.v"
+
+FLAGS="+interp +dump2fst +fst+parallel2=on"
+
+cvc64 $FLAGS $FILES

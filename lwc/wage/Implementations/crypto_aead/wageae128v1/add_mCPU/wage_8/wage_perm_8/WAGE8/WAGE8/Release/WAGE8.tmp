@@ -1,0 +1,35 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega128"</DEVICE>
+ <WORKING_DIR>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\Release</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc</DIR>
+  <DIR>D:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>D:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.209\avrasm\inc\m128def.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\Release\WAGE8.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>WAGE8.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>WAGE8.map</FILE>
+  <FILE>WAGE8.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <main><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>10</LINE></main>
+  <INIT><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>12</LINE></INIT>
+  <FFUN3><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1574</LINE></FFUN3>
+  <start><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1567</LINE></start>
+  <WHIL1><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1577</LINE></WHIL1>
+  <NEXTD1><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1581</LINE></NEXTD1>
+  <FFUN><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1607</LINE></FFUN>
+  <WHILMOVE><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1591</LINE></WHILMOVE>
+  <NEXTDMOVE><FILE>E:\Dropbox2018A\Dropbox\sLi\Bit8C\WAGE_perm_8\WAGE8\WAGE8\main.asm</FILE><LINE>1601</LINE></NEXTDMOVE>
+ </LABELS>
+</ASSEMBLER_INFO>

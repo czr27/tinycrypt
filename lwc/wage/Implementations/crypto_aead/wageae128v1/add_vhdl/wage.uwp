@@ -1,0 +1,27 @@
+LIB_VHDL      =+ wage_pkg.vhd 
+
+TB_ENTITY     =  wage_tb
+TB_ARCH       =  main
+
+TB_VHDL       =+ util_unsynth.vhd
+TB_VHDL       =+ wage_unsynth.vhd
+TB_VHDL       =+ wage_tb.vhd
+
+SIM_SCRIPT    =  wage_tb.sim
+
+DESIGN_ENTITY =  wage
+DESIGN_ARCH   =  rtl
+
+DESIGN_VHDL   =+ omega.vhd 
+DESIGN_VHDL   =+ wagelfsr.vhd 
+DESIGN_VHDL   =+ r_sb.vhd 
+DESIGN_VHDL   =+ q_sb.vhd 
+DESIGN_VHDL   =+ not_sb.vhd 
+DESIGN_VHDL   =+ sb.vhd 
+DESIGN_VHDL   =+ lfsr_c.vhd 
+DESIGN_VHDL   =+ dwgp.vhd 
+DESIGN_VHDL   =+ dwgp-const_array.vhd 
+DESIGN_VHDL   =+ dp.vhd 
+DESIGN_VHDL   =+ ctl.vhd
+ENTITY_VHDL   =+ wage.vhd
+DESIGN_VHDL   =+ wage-rtl.vhd

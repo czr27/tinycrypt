@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>4</fileVersion>
+    <fileChecksum>2113677428</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE_perm_32\asm.s</file>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE32AE64, (2, 2)\asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\WAGE_16\WAGE16(l_ad=0, l_m=16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\WAGE32(l_ad=0, l_m=16)\asm.s</file>
+            <file>$PROJ_DIR$\..\WAGE_perm_32\asm.s</file>
+            <file>$PROJ_DIR$\..\..\SPIX_32\sLight_32(l_ad=2, l_m=16)\Proj32CortexM3\asm.s</file>
+            <file>$PROJ_DIR$\..\..\SPIX_32\sLight_32(l_ad=0, l_m=16)\Proj32CortexM3\asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\ACE_16\ACE16AE1024, (2, 16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE32AE1024, (2, 16)\asm.s</file>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE32HASH1024,(16,4)\asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\SPIX_16\sLight_16(l_ad=0, l_m=16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\ACE_16\ACE16HASH1024 (16,4)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\SPIX_32\sLight_perm_32\Proj32CortexM3\asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\WAGE_16\WAGE16(l_ad=2, l_m=16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\SPIX_16\sLight_16(l_ad=2, l_m=16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\WAGE_16\WAGE_Perm_16\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\SPIX_16\sLight_perm_16\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE32AE1024, (0, 16)\asm.s</file>
+            <file>$PROJ_DIR$\asm.s</file>
+            <file>$TOOLKIT_DIR$\config\linker\TexasInstruments\LM3S9D96.icf</file>
+            <file>$PROJ_DIR$\Debug\Obj\asm.o</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\ACE_16\ACE_perm_16\asm.s43</file>
+            <file>$PROJ_DIR$\Debug\Exe\WAGE32.out</file>
+            <file>$PROJ_DIR$\Debug\List\WAGE32.map</file>
+            <file>$PROJ_DIR$\..\..\SPIX_32\sLight_32(l_ad=2, l_m=2)\Proj32CortexM3\asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\ACE_16\ACE16HASH128 (2,4)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\..\Bit16C\ACE_16\ACE16AE1024, (0, 16)\asm.s43</file>
+            <file>$PROJ_DIR$\..\..\ACE_32\ACE32HASH128,(2,4)\asm.s</file>
+        </outputs>
+        <file>
+            <name>$PROJ_DIR$\asm.s</name>
+            <outputs>
+                <tool>
+                    <name>AARM</name>
+                    <file> 20</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\WAGE32.out</name>
+            <outputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 23</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 19 20</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 23 22</file>
+                </tool>
+            </outputs>
+        </file>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs />
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>ILINK</tool>
+        </forcedrebuild>
+    </configuration>
+</project>

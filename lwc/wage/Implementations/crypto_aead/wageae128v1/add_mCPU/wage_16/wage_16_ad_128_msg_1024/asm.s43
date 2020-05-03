@@ -1,0 +1,1106 @@
+/* Reference implementation of WAGE16 (l_ad=2, l_m=16)
+ Written by:
+ Yunjie Yi <yunjie.yi@uwaterloo.ca>
+ */
+#include "msp430.h"                     ; #define controlled include file
+
+        NAME    main                    ; module name
+
+        PUBLIC  main                    ; make the main label vissible
+                                        ; outside this module
+        ORG     0FFFEh
+        DC16    init                    ; set reset vector to 'init' label
+
+        RSEG    CSTACK                  ; pre-declaration of segment
+        RSEG    CODE                    ; place program in 'CODE' segment
+
+init:   MOV     #SFE(CSTACK), SP        ; set up stack
+
+main:   NOP                             ; main program
+        MOV.W   #WDTPW+WDTHOLD,&WDTCTL  ; Stop watchdog timer
+
+
+;;begin main func
+
+;;Pre-save VECTOR 1:________  WG
+        MOV.B #0x00, &0xE521
+        MOV.B #0x12, &0xE522
+        MOV.B #0x0A, &0xE523
+        MOV.B #0x4B, &0xE524
+        MOV.B #0x66, &0xE525
+        MOV.B #0x0C, &0xE526
+        MOV.B #0x48, &0xE527
+        MOV.B #0x73, &0xE528
+        MOV.B #0x79, &0xE529
+        MOV.B #0x3E, &0xE52A
+        MOV.B #0x61, &0xE52B
+        MOV.B #0x51, &0xE52C
+        MOV.B #0x01, &0xE52D
+        MOV.B #0x15, &0xE52E
+        MOV.B #0x17, &0xE52F
+
+        MOV.B #0x0E, &0xE530
+        MOV.B #0x7E, &0xE531
+        MOV.B #0x33, &0xE532
+        MOV.B #0x68, &0xE533
+        MOV.B #0x36, &0xE534
+        MOV.B #0x42, &0xE535
+        MOV.B #0x35, &0xE536
+        MOV.B #0x37, &0xE537
+        MOV.B #0x5E, &0xE538
+        MOV.B #0x53, &0xE539
+        MOV.B #0x4C, &0xE53A
+        MOV.B #0x3F, &0xE53B
+        MOV.B #0x54, &0xE53C
+        MOV.B #0x58, &0xE53D
+        MOV.B #0x6E, &0xE53E
+        MOV.B #0x56, &0xE53F
+
+        MOV.B #0x2A, &0xE540
+        MOV.B #0x1D, &0xE541
+        MOV.B #0x25, &0xE542
+        MOV.B #0x6D, &0xE543
+        MOV.B #0x65, &0xE544
+        MOV.B #0x5B, &0xE545
+        MOV.B #0x71, &0xE546
+        MOV.B #0x2F, &0xE547
+        MOV.B #0x20, &0xE548
+        MOV.B #0x06, &0xE549
+        MOV.B #0x18, &0xE54A
+        MOV.B #0x29, &0xE54B
+        MOV.B #0x3A, &0xE54C
+        MOV.B #0x0D, &0xE54D
+        MOV.B #0x7A, &0xE54E
+        MOV.B #0x6C, &0xE54F
+
+        MOV.B #0x1B, &0xE550
+        MOV.B #0x19, &0xE551
+        MOV.B #0x43, &0xE552
+        MOV.B #0x70, &0xE553
+        MOV.B #0x41, &0xE554
+        MOV.B #0x49, &0xE555
+        MOV.B #0x22, &0xE556
+        MOV.B #0x77, &0xE557
+        MOV.B #0x60, &0xE558
+        MOV.B #0x4F, &0xE559
+        MOV.B #0x45, &0xE55A
+        MOV.B #0x55, &0xE55B
+        MOV.B #0x02, &0xE55C
+        MOV.B #0x63, &0xE55D
+        MOV.B #0x47, &0xE55E
+        MOV.B #0x75, &0xE55F
+
+        MOV.B #0x2D, &0xE560
+        MOV.B #0x40, &0xE561
+        MOV.B #0x46, &0xE562
+        MOV.B #0x7D, &0xE563
+        MOV.B #0x5C, &0xE564
+        MOV.B #0x7C, &0xE565
+        MOV.B #0x59, &0xE566
+        MOV.B #0x26, &0xE567
+        MOV.B #0x0B, &0xE568
+        MOV.B #0x09, &0xE569
+        MOV.B #0x03, &0xE56A
+        MOV.B #0x57, &0xE56B
+        MOV.B #0x5D, &0xE56C
+        MOV.B #0x27, &0xE56D
+        MOV.B #0x78, &0xE56E
+        MOV.B #0x30, &0xE56F
+
+        MOV.B #0x2E, &0xE570
+        MOV.B #0x44, &0xE571
+        MOV.B #0x52, &0xE572
+        MOV.B #0x3B, &0xE573
+        MOV.B #0x08, &0xE574
+        MOV.B #0x67, &0xE575
+        MOV.B #0x2C, &0xE576
+        MOV.B #0x05, &0xE577
+        MOV.B #0x6B, &0xE578
+        MOV.B #0x2B, &0xE579
+        MOV.B #0x1A, &0xE57A
+        MOV.B #0x21, &0xE57B
+        MOV.B #0x38, &0xE57C
+        MOV.B #0x07, &0xE57D
+        MOV.B #0x0F, &0xE57E
+        MOV.B #0x4A, &0xE57F
+
+        MOV.B #0x11, &0xE580
+        MOV.B #0x50, &0xE581
+        MOV.B #0x6A, &0xE582
+        MOV.B #0x28, &0xE583
+        MOV.B #0x31, &0xE584
+        MOV.B #0x10, &0xE585
+        MOV.B #0x4D, &0xE586
+        MOV.B #0x5F, &0xE587
+        MOV.B #0x72, &0xE588
+        MOV.B #0x39, &0xE589
+        MOV.B #0x16, &0xE58A
+        MOV.B #0x5A, &0xE58B
+        MOV.B #0x13, &0xE58C
+        MOV.B #0x04, &0xE58D
+        MOV.B #0x3C, &0xE58E
+        MOV.B #0x34, &0xE58F
+
+        MOV.B #0x1F, &0xE590
+        MOV.B #0x76, &0xE591
+        MOV.B #0x1E, &0xE592
+        MOV.B #0x14, &0xE593
+        MOV.B #0x23, &0xE594
+        MOV.B #0x1C, &0xE595
+        MOV.B #0x32, &0xE596
+        MOV.B #0x4E, &0xE597
+        MOV.B #0x7B, &0xE598
+        MOV.B #0x24, &0xE599
+        MOV.B #0x74, &0xE59A
+        MOV.B #0x7F, &0xE59B
+        MOV.B #0x3D, &0xE59C
+        MOV.B #0x69, &0xE59D
+        MOV.B #0x64, &0xE59E
+        MOV.B #0x62, &0xE59F
+
+        MOV.B #0x6F, &0xE5A0
+
+;;Pre-save VECTOR 2:________ r
+ 
+        MOV.B #0x00, &0xE621
+        MOV.B #0x78, &0xE622
+        MOV.B #0x01, &0xE623
+        MOV.B #0x79, &0xE624
+        MOV.B #0x02, &0xE625
+        MOV.B #0x7A, &0xE626
+        MOV.B #0x03, &0xE627
+        MOV.B #0x7B, &0xE628
+        MOV.B #0x04, &0xE629
+        MOV.B #0x7C, &0xE62A
+        MOV.B #0x05, &0xE62B
+        MOV.B #0x7D, &0xE62C
+        MOV.B #0x06, &0xE62D
+        MOV.B #0x7E, &0xE62E
+        MOV.B #0x07, &0xE62F
+
+        MOV.B #0x7F, &0xE630
+        MOV.B #0x08, &0xE631
+        MOV.B #0x70, &0xE632
+        MOV.B #0x09, &0xE633
+        MOV.B #0x71, &0xE634
+        MOV.B #0x0A, &0xE635
+        MOV.B #0x72, &0xE636
+        MOV.B #0x0B, &0xE637
+        MOV.B #0x73, &0xE638
+        MOV.B #0x0C, &0xE639
+        MOV.B #0x74, &0xE63A
+        MOV.B #0x0D, &0xE63B
+        MOV.B #0x75, &0xE63C
+        MOV.B #0x0E, &0xE63D
+        MOV.B #0x76, &0xE63E
+        MOV.B #0x0F, &0xE63F
+
+        MOV.B #0x77, &0xE640
+        MOV.B #0x10, &0xE641
+        MOV.B #0x68, &0xE642
+        MOV.B #0x11, &0xE643
+        MOV.B #0x69, &0xE644
+        MOV.B #0x12, &0xE645
+        MOV.B #0x6A, &0xE646
+        MOV.B #0x13, &0xE647
+        MOV.B #0x6B, &0xE648
+        MOV.B #0x14, &0xE649
+        MOV.B #0x6C, &0xE64A
+        MOV.B #0x15, &0xE64B
+        MOV.B #0x6D, &0xE64C
+        MOV.B #0x16, &0xE64D
+        MOV.B #0x6E, &0xE64E
+        MOV.B #0x17, &0xE64F
+
+        MOV.B #0x6F, &0xE650
+        MOV.B #0x18, &0xE651
+        MOV.B #0x60, &0xE652
+        MOV.B #0x19, &0xE653
+        MOV.B #0x61, &0xE654
+        MOV.B #0x1A, &0xE655
+        MOV.B #0x62, &0xE656
+        MOV.B #0x1B, &0xE657
+        MOV.B #0x63, &0xE658
+        MOV.B #0x1C, &0xE659
+        MOV.B #0x64, &0xE65A
+        MOV.B #0x1D, &0xE65B
+        MOV.B #0x65, &0xE65C
+        MOV.B #0x1E, &0xE65D
+        MOV.B #0x66, &0xE65E
+        MOV.B #0x1F, &0xE65F
+
+        MOV.B #0x67, &0xE660
+        MOV.B #0x20, &0xE661
+        MOV.B #0x58, &0xE662
+        MOV.B #0x21, &0xE663
+        MOV.B #0x59, &0xE664
+        MOV.B #0x22, &0xE665
+        MOV.B #0x5A, &0xE666
+        MOV.B #0x23, &0xE667
+        MOV.B #0x5B, &0xE668
+        MOV.B #0x24, &0xE669
+        MOV.B #0x5C, &0xE66A
+        MOV.B #0x25, &0xE66B
+        MOV.B #0x5D, &0xE66C
+        MOV.B #0x26, &0xE66D
+        MOV.B #0x5E, &0xE66E
+        MOV.B #0x27, &0xE66F
+
+        MOV.B #0x5F, &0xE670
+        MOV.B #0x28, &0xE671
+        MOV.B #0x50, &0xE672
+        MOV.B #0x29, &0xE673
+        MOV.B #0x51, &0xE674
+        MOV.B #0x2A, &0xE675
+        MOV.B #0x52, &0xE676
+        MOV.B #0x2B, &0xE677
+        MOV.B #0x53, &0xE678
+        MOV.B #0x2C, &0xE679
+        MOV.B #0x54, &0xE67A
+        MOV.B #0x2D, &0xE67B
+        MOV.B #0x55, &0xE67C
+        MOV.B #0x2E, &0xE67D
+        MOV.B #0x56, &0xE67E
+        MOV.B #0x2F, &0xE67F
+
+        MOV.B #0x57, &0xE680
+        MOV.B #0x30, &0xE681
+        MOV.B #0x48, &0xE682
+        MOV.B #0x31, &0xE683
+        MOV.B #0x49, &0xE684
+        MOV.B #0x32, &0xE685
+        MOV.B #0x4A, &0xE686
+        MOV.B #0x33, &0xE687
+        MOV.B #0x4B, &0xE688
+        MOV.B #0x34, &0xE689
+        MOV.B #0x4C, &0xE68A
+        MOV.B #0x35, &0xE68B
+        MOV.B #0x4D, &0xE68C
+        MOV.B #0x36, &0xE68D
+        MOV.B #0x4E, &0xE68E
+        MOV.B #0x37, &0xE68F
+
+        MOV.B #0x4F, &0xE690
+        MOV.B #0x38, &0xE691
+        MOV.B #0x40, &0xE692
+        MOV.B #0x39, &0xE693
+        MOV.B #0x41, &0xE694
+        MOV.B #0x3A, &0xE695
+        MOV.B #0x42, &0xE696
+        MOV.B #0x3B, &0xE697
+        MOV.B #0x43, &0xE698
+        MOV.B #0x3C, &0xE699
+        MOV.B #0x44, &0xE69A
+        MOV.B #0x3D, &0xE69B
+        MOV.B #0x45, &0xE69C
+        MOV.B #0x3E, &0xE69D
+        MOV.B #0x46, &0xE69E
+        MOV.B #0x3F, &0xE69F
+
+        MOV.B #0x47, &0xE6A0
+       
+
+;;Pre-save VECTOR 3:________     s-box
+ 
+        MOV.B #0x2E, &0xE721
+        MOV.B #0x1C, &0xE722
+        MOV.B #0x6D, &0xE723
+        MOV.B #0x2B, &0xE724
+        MOV.B #0x35, &0xE725
+        MOV.B #0x07, &0xE726
+        MOV.B #0x7F, &0xE727
+        MOV.B #0x3B, &0xE728
+        MOV.B #0x28, &0xE729
+        MOV.B #0x08, &0xE72A
+        MOV.B #0x0B, &0xE72B
+        MOV.B #0x5F, &0xE72C
+        MOV.B #0x31, &0xE72D
+        MOV.B #0x11, &0xE72E
+        MOV.B #0x1B, &0xE72F
+        MOV.B #0x4D, &0xE730
+        MOV.B #0x6E, &0xE731
+        MOV.B #0x54, &0xE732
+        MOV.B #0x0D, &0xE733
+        MOV.B #0x09, &0xE734
+        MOV.B #0x1F, &0xE735
+        MOV.B #0x45, &0xE736
+        MOV.B #0x75, &0xE737
+        MOV.B #0x53, &0xE738
+        MOV.B #0x6A, &0xE739
+        MOV.B #0x5D, &0xE73A
+        MOV.B #0x61, &0xE73B
+        MOV.B #0x00, &0xE73C
+        MOV.B #0x04, &0xE73D
+        MOV.B #0x78, &0xE73E
+        MOV.B #0x06, &0xE73F
+        MOV.B #0x1E, &0xE740
+        MOV.B #0x37, &0xE741
+        MOV.B #0x6F, &0xE742
+        MOV.B #0x2F, &0xE743
+        MOV.B #0x49, &0xE744
+        MOV.B #0x64, &0xE745
+        MOV.B #0x34, &0xE746
+        MOV.B #0x7D, &0xE747
+        MOV.B #0x19, &0xE748
+        MOV.B #0x39, &0xE749
+        MOV.B #0x33, &0xE74A
+        MOV.B #0x43, &0xE74B
+        MOV.B #0x57, &0xE74C
+        MOV.B #0x60, &0xE74D
+        MOV.B #0x62, &0xE74E
+        MOV.B #0x13, &0xE74F
+        MOV.B #0x05, &0xE750
+        MOV.B #0x77, &0xE751
+        MOV.B #0x47, &0xE752
+        MOV.B #0x4F, &0xE753
+        MOV.B #0x4B, &0xE754
+        MOV.B #0x1D, &0xE755
+        MOV.B #0x2D, &0xE756
+        MOV.B #0x24, &0xE757
+        MOV.B #0x48, &0xE758
+        MOV.B #0x74, &0xE759
+        MOV.B #0x58, &0xE75A
+        MOV.B #0x25, &0xE75B
+        MOV.B #0x5E, &0xE75C
+        MOV.B #0x5A, &0xE75D
+        MOV.B #0x76, &0xE75E
+        MOV.B #0x41, &0xE75F
+        MOV.B #0x42, &0xE760
+        MOV.B #0x27, &0xE761
+        MOV.B #0x3E, &0xE762
+        MOV.B #0x6C, &0xE763
+        MOV.B #0x01, &0xE764
+        MOV.B #0x2C, &0xE765
+        MOV.B #0x3C, &0xE766
+        MOV.B #0x4E, &0xE767
+        MOV.B #0x1A, &0xE768
+        MOV.B #0x21, &0xE769
+        MOV.B #0x2A, &0xE76A
+        MOV.B #0x0A, &0xE76B
+        MOV.B #0x55, &0xE76C
+        MOV.B #0x3A, &0xE76D
+        MOV.B #0x38, &0xE76E
+        MOV.B #0x18, &0xE76F
+        MOV.B #0x7E, &0xE770
+        MOV.B #0x0C, &0xE771
+        MOV.B #0x63, &0xE772
+        MOV.B #0x67, &0xE773
+        MOV.B #0x56, &0xE774
+        MOV.B #0x50, &0xE775
+        MOV.B #0x7C, &0xE776
+        MOV.B #0x32, &0xE777
+        MOV.B #0x7A, &0xE778
+        MOV.B #0x68, &0xE779
+        MOV.B #0x02, &0xE77A
+        MOV.B #0x6B, &0xE77B
+        MOV.B #0x17, &0xE77C
+        MOV.B #0x7B, &0xE77D
+        MOV.B #0x59, &0xE77E
+        MOV.B #0x71, &0xE77F
+        MOV.B #0x0F, &0xE780
+        MOV.B #0x30, &0xE781
+        MOV.B #0x10, &0xE782
+        MOV.B #0x22, &0xE783
+        MOV.B #0x3D, &0xE784
+        MOV.B #0x40, &0xE785
+        MOV.B #0x69, &0xE786
+        MOV.B #0x52, &0xE787
+        MOV.B #0x14, &0xE788
+        MOV.B #0x36, &0xE789
+        MOV.B #0x44, &0xE78A
+        MOV.B #0x46, &0xE78B
+        MOV.B #0x03, &0xE78C
+        MOV.B #0x16, &0xE78D
+        MOV.B #0x65, &0xE78E
+        MOV.B #0x66, &0xE78F
+        MOV.B #0x72, &0xE790
+        MOV.B #0x12, &0xE791
+        MOV.B #0x0E, &0xE792
+        MOV.B #0x29, &0xE793
+        MOV.B #0x4A, &0xE794
+        MOV.B #0x4C, &0xE795
+        MOV.B #0x70, &0xE796
+        MOV.B #0x15, &0xE797
+        MOV.B #0x26, &0xE798
+        MOV.B #0x79, &0xE799
+        MOV.B #0x51, &0xE79A
+        MOV.B #0x23, &0xE79B
+        MOV.B #0x3F, &0xE79C
+        MOV.B #0x73, &0xE79D
+        MOV.B #0x5B, &0xE79E
+        MOV.B #0x20, &0xE79F
+        MOV.B #0x5C, &0xE7A0
+
+;; RC1 __
+        MOV.B #0x3F, &0xE821
+        MOV.B #0x0F, &0xE822
+        MOV.B #0x03, &0xE823
+        MOV.B #0x40, &0xE824
+        MOV.B #0x10, &0xE825
+        MOV.B #0x04, &0xE826
+        MOV.B #0x41, &0xE827
+        MOV.B #0x30, &0xE828
+        MOV.B #0x0C, &0xE829
+        MOV.B #0x43, &0xE82A
+        MOV.B #0x50, &0xE82B
+        MOV.B #0x14, &0xE82C
+        MOV.B #0x45, &0xE82D
+        MOV.B #0x71, &0xE82E
+        MOV.B #0x3C, &0xE82F
+
+        MOV.B #0x4F, &0xE830
+        MOV.B #0x13, &0xE831
+        MOV.B #0x44, &0xE832
+        MOV.B #0x51, &0xE833
+        MOV.B #0x34, &0xE834
+        MOV.B #0x4D, &0xE835
+        MOV.B #0x73, &0xE836
+        MOV.B #0x5C, &0xE837
+        MOV.B #0x57, &0xE838
+        MOV.B #0x15, &0xE839
+        MOV.B #0x65, &0xE83A
+        MOV.B #0x79, &0xE83B
+        MOV.B #0x3E, &0xE83C
+        MOV.B #0x2F, &0xE83D
+        MOV.B #0x0B, &0xE83E
+        MOV.B #0x42, &0xE83F
+
+        MOV.B #0x70, &0xE840
+        MOV.B #0x1C, &0xE841
+        MOV.B #0x47, &0xE842
+        MOV.B #0x11, &0xE843
+        MOV.B #0x24, &0xE844
+        MOV.B #0x49, &0xE845
+        MOV.B #0x32, &0xE846
+        MOV.B #0x6C, &0xE847
+        MOV.B #0x5B, &0xE848
+        MOV.B #0x56, &0xE849
+        MOV.B #0x35, &0xE84A
+        MOV.B #0x6D, &0xE84B
+        MOV.B #0x7B, &0xE84C
+        MOV.B #0x5E, &0xE84D
+        MOV.B #0x37, &0xE84E
+        MOV.B #0x0D, &0xE84F
+
+        MOV.B #0x63, &0xE850
+        MOV.B #0x58, &0xE851
+        MOV.B #0x16, &0xE852
+        MOV.B #0x25, &0xE853
+        MOV.B #0x69, &0xE854
+        MOV.B #0x3A, &0xE855
+        MOV.B #0x6E, &0xE856
+        MOV.B #0x3B, &0xE857
+        MOV.B #0x4E, &0xE858
+        MOV.B #0x33, &0xE859
+        MOV.B #0x4C, &0xE85A
+        MOV.B #0x53, &0xE85B
+        MOV.B #0x54, &0xE85C
+        MOV.B #0x55, &0xE85D
+        MOV.B #0x75, &0xE85E
+        MOV.B #0x7D, &0xE85F
+
+        MOV.B #0x7F, &0xE860
+        MOV.B #0x1F, &0xE861
+        MOV.B #0x07, &0xE862
+        MOV.B #0x01, &0xE863
+        MOV.B #0x20, &0xE864
+        MOV.B #0x08, &0xE865
+        MOV.B #0x02, &0xE866
+        MOV.B #0x60, &0xE867
+        MOV.B #0x18, &0xE868
+        MOV.B #0x06, &0xE869
+        MOV.B #0x21, &0xE86A
+        MOV.B #0x28, &0xE86B
+        MOV.B #0x0A, &0xE86C
+        MOV.B #0x62, &0xE86D
+        MOV.B #0x78, &0xE86E
+        MOV.B #0x1E, &0xE86F
+
+        MOV.B #0x27, &0xE870
+        MOV.B #0x09, &0xE871
+        MOV.B #0x22, &0xE872
+        MOV.B #0x68, &0xE873
+        MOV.B #0x1A, &0xE874
+        MOV.B #0x66, &0xE875
+        MOV.B #0x39, &0xE876
+        MOV.B #0x2E, &0xE877
+        MOV.B #0x2B, &0xE878
+        MOV.B #0x4A, &0xE879
+        MOV.B #0x72, &0xE87A
+        MOV.B #0x7C, &0xE87B
+        MOV.B #0x5F, &0xE87C
+        MOV.B #0x17, &0xE87D
+        MOV.B #0x05, &0xE87E
+        MOV.B #0x61, &0xE87F
+
+        MOV.B #0x38, &0xE880
+        MOV.B #0x0E, &0xE881
+        MOV.B #0x23, &0xE882
+        MOV.B #0x48, &0xE883
+        MOV.B #0x12, &0xE884
+        MOV.B #0x64, &0xE885
+        MOV.B #0x59, &0xE886
+        MOV.B #0x36, &0xE887
+        MOV.B #0x2D, &0xE888
+        MOV.B #0x6B, &0xE889
+        MOV.B #0x5A, &0xE88A
+        MOV.B #0x76, &0xE88B
+        MOV.B #0x3D, &0xE88C
+        MOV.B #0x6F, &0xE88D
+        MOV.B #0x1B, &0xE88E
+        MOV.B #0x46, &0xE88F
+
+;; RC0 __
+        MOV.B #0x7F, &0xE921
+        MOV.B #0x1F, &0xE922
+        MOV.B #0x07, &0xE923
+        MOV.B #0x01, &0xE924
+        MOV.B #0x20, &0xE925
+        MOV.B #0x08, &0xE926
+        MOV.B #0x02, &0xE927
+        MOV.B #0x60, &0xE928
+        MOV.B #0x18, &0xE929
+        MOV.B #0x06, &0xE92A
+        MOV.B #0x21, &0xE92B
+        MOV.B #0x28, &0xE92C
+        MOV.B #0x0A, &0xE92D
+        MOV.B #0x62, &0xE92E
+        MOV.B #0x78, &0xE92F
+
+        MOV.B #0x1E, &0xE930
+        MOV.B #0x27, &0xE931
+        MOV.B #0x09, &0xE932
+        MOV.B #0x22, &0xE933
+        MOV.B #0x68, &0xE934
+        MOV.B #0x1A, &0xE935
+        MOV.B #0x66, &0xE936
+        MOV.B #0x39, &0xE937
+        MOV.B #0x2E, &0xE938
+        MOV.B #0x2B, &0xE939
+        MOV.B #0x4A, &0xE93A
+        MOV.B #0x72, &0xE93B
+        MOV.B #0x7C, &0xE93C
+        MOV.B #0x5F, &0xE93D
+        MOV.B #0x17, &0xE93E
+        MOV.B #0x05, &0xE93F
+
+        MOV.B #0x61, &0xE940
+        MOV.B #0x38, &0xE941
+        MOV.B #0x0E, &0xE942
+        MOV.B #0x23, &0xE943
+        MOV.B #0x48, &0xE944
+        MOV.B #0x12, &0xE945
+        MOV.B #0x64, &0xE946
+        MOV.B #0x59, &0xE947
+        MOV.B #0x36, &0xE948
+        MOV.B #0x2D, &0xE949
+        MOV.B #0x6B, &0xE94A
+        MOV.B #0x5A, &0xE94B
+        MOV.B #0x76, &0xE94C
+        MOV.B #0x3D, &0xE94D
+        MOV.B #0x6F, &0xE94E
+        MOV.B #0x1B, &0xE94F
+
+        MOV.B #0x46, &0xE950
+        MOV.B #0x31, &0xE951
+        MOV.B #0x2C, &0xE952
+        MOV.B #0x4B, &0xE953
+        MOV.B #0x52, &0xE954
+        MOV.B #0x74, &0xE955
+        MOV.B #0x5D, &0xE956
+        MOV.B #0x77, &0xE957
+        MOV.B #0x1D, &0xE958
+        MOV.B #0x67, &0xE959
+        MOV.B #0x19, &0xE95A
+        MOV.B #0x26, &0xE95B
+        MOV.B #0x29, &0xE95C
+        MOV.B #0x2A, &0xE95D
+        MOV.B #0x6A, &0xE95E
+        MOV.B #0x7A, &0xE95F
+
+        MOV.B #0x7E, &0xE960
+        MOV.B #0x3F, &0xE961
+        MOV.B #0x0F, &0xE962
+        MOV.B #0x03, &0xE963
+        MOV.B #0x40, &0xE964
+        MOV.B #0x10, &0xE965
+        MOV.B #0x04, &0xE966
+        MOV.B #0x41, &0xE967
+        MOV.B #0x30, &0xE968
+        MOV.B #0x0C, &0xE969
+        MOV.B #0x43, &0xE96A
+        MOV.B #0x50, &0xE96B
+        MOV.B #0x14, &0xE96C
+        MOV.B #0x45, &0xE96D
+        MOV.B #0x71, &0xE96E
+        MOV.B #0x3C, &0xE96F
+
+        MOV.B #0x4F, &0xE970
+        MOV.B #0x13, &0xE971
+        MOV.B #0x44, &0xE972
+        MOV.B #0x51, &0xE973
+        MOV.B #0x34, &0xE974
+        MOV.B #0x4D, &0xE975
+        MOV.B #0x73, &0xE976
+        MOV.B #0x5C, &0xE977
+        MOV.B #0x57, &0xE978
+        MOV.B #0x15, &0xE979
+        MOV.B #0x65, &0xE97A
+        MOV.B #0x79, &0xE97B
+        MOV.B #0x3E, &0xE97C
+        MOV.B #0x2F, &0xE97D
+        MOV.B #0x0B, &0xE97E
+        MOV.B #0x42, &0xE97F
+
+        MOV.B #0x70, &0xE980
+        MOV.B #0x1C, &0xE981
+        MOV.B #0x47, &0xE982
+        MOV.B #0x11, &0xE983
+        MOV.B #0x24, &0xE984
+        MOV.B #0x49, &0xE985
+        MOV.B #0x32, &0xE986
+        MOV.B #0x6C, &0xE987
+        MOV.B #0x5B, &0xE988
+        MOV.B #0x56, &0xE989
+        MOV.B #0x35, &0xE98A
+        MOV.B #0x6D, &0xE98B
+        MOV.B #0x7B, &0xE98C
+        MOV.B #0x5E, &0xE98D
+        MOV.B #0x37, &0xE98E
+        MOV.B #0x0D, &0xE98F
+
+
+;;data:__
+
+        MOV.B #0x00, &0xEA24  ;; S36 --------D9
+        MOV.B #0x00, &0xEA23  ;; S35 --------D8
+        MOV.B #0x00, &0xEA22  ;; S34 --------D7
+        MOV.B #0x00, &0xEA21  ;; S33
+        MOV.B #0x00, &0xEA20  ;; S32
+        MOV.B #0x00, &0xEA1F  ;; S31
+        MOV.B #0x00, &0xEA1E  ;; S30
+        MOV.B #0x00, &0xEA1D  ;; S29
+        MOV.B #0x00, &0xEA1C  ;; S28 --------D6
+        MOV.B #0x00, &0xEA1B  ;; S27 --------D5
+        MOV.B #0x00, &0xEA1A  ;; S26
+        MOV.B #0x00, &0xEA19  ;; S25
+        MOV.B #0x00, &0xEA18  ;; S24
+        MOV.B #0x00, &0xEA17  ;; S23
+        MOV.B #0x00, &0xEA16  ;; S22
+        MOV.B #0x00, &0xEA15  ;; S21
+        
+        MOV.B #0x00, &0xEA14  ;; S20
+        MOV.B #0x00, &0xEA13  ;; S19
+        MOV.B #0x00, &0xEA12  ;; S18 --------D4
+        MOV.B #0x00, &0xEA11  ;; S17
+        MOV.B #0x00, &0xEA10  ;; S16 --------D3
+        MOV.B #0x00, &0xEA0F  ;; S15 --------D2
+        MOV.B #0x00, &0xEA0E  ;; S14
+        MOV.B #0x00, &0xEA0D  ;; S13
+        MOV.B #0x00, &0xEA0C  ;; S12
+        MOV.B #0x00, &0xEA0B  ;; S11
+        MOV.B #0x00, &0xEA0A  ;; S10
+        MOV.B #0x00, &0xEA09  ;; S9 --------D1
+        MOV.B #0x00, &0xEA08  ;; S8 --------D0
+        MOV.B #0x00, &0xEA07  ;; S7
+        MOV.B #0x00, &0xEA06  ;; S6
+        MOV.B #0x00, &0xEA05  ;; S6
+        
+        MOV.B #0x00, &0xEA04  ;; S4
+        MOV.B #0x00, &0xEA03  ;; S3
+        MOV.B #0x00, &0xEA02  ;; S2
+        MOV.B #0x00, &0xEA01  ;; S1
+        MOV.B #0x00, &0xEA00  ;; S0
+
+
+        ;;;;
+        CALL #FFUNAE
+
+
+;;End main func
+JMP $                           ; jump to current location '$'
+                                        ; (endless loop)
+
+
+FFUNAE:
+        CALL #FFUN3    ;;1 initia
+
+        CALL #FFUNLOAD
+        CALL #FFUNKEY1
+        CALL #FFUNSAVE
+        
+        CALL #FFUN3   ;2  initia
+
+        CALL #FFUNLOAD
+        CALL #FFUNKEY2
+        CALL #FFUNSAVE
+        
+        CALL #FFUN3   ;3  initia
+
+        MOV.W #0x0000, R15
+        
+WHIL9:  CMP.W #0x0002, R15
+        JGE NEXT9
+
+
+        CALL #FFUNLOAD
+        CALL #FFUNAD
+        CALL #FFUNSAVE
+
+        CALL #FFUN3  ;RUN Enc 16 times
+
+        INC R15
+        JMP WHIL9
+NEXT9:
+
+
+        MOV.W #0x0000, R15
+        
+WHIL8:  CMP.W #0x0010, R15
+        JGE NEXT8
+
+        CALL #FFUNLOAD
+        CALL #FFUNM
+        CALL #FFUNSAVE
+        
+        CALL #FFUN3  ;RUN Enc 16 times
+
+        INC R15
+        JMP WHIL8
+NEXT8:
+
+
+        CALL #FFUNLOAD
+        CALL #FFUNKEY1
+        CALL #FFUNSAVE
+        CALL #FFUN3  ;8  Final
+        
+        CALL #FFUNLOAD
+        CALL #FFUNKEY2
+        CALL #FFUNSAVE
+        
+        CALL #FFUN3 ;10 Final
+        
+        
+RET
+
+
+;;load data
+FFUNLOAD:
+
+        MOV.B &0xEA24, R14  ;; S36 --------D9
+        MOV.B &0xEA23, R13  ;; S35 --------D8
+        MOV.B &0xEA22, R12  ;; S34 --------D7        
+        MOV.B &0xEA1C, R11  ;; S28 --------D6
+        MOV.B &0xEA1B, R10  ;; S27 --------D5
+        MOV.B &0xEA12, R9  ;; S18 --------D4
+        MOV.B &0xEA10, R8  ;; S16 --------D3
+        MOV.B &0xEA0F, R7  ;; S15 --------D2
+        MOV.B &0xEA09, R6  ;; S9 --------D1
+        MOV.B &0xEA08, R5  ;; S8 --------D0
+        MOV.B &0xEA00, R4  ;; S0 for domain seperator
+
+RET
+
+;;this is the key absorption part in the mode
+FFUNKEY1: ;;(R12 - R4)
+
+        XOR #0x00, R14 ;;XOR with key0
+        XOR #0x00, R13
+        XOR #0x00, R12
+        XOR #0x00, R11
+        XOR #0x00, R10
+        XOR #0x00, R9
+        XOR #0x00, R8
+        XOR #0x00, R7
+        XOR #0x00, R6
+        XOR #0x00, R5
+
+      
+RET
+;;this is the key absorption part in the mode
+FFUNKEY2: ;;(R12 - R4)
+        XOR #0x00, R14 ;;XOR with key1
+        XOR #0x00, R13
+        XOR #0x00, R12
+        XOR #0x00, R11
+        XOR #0x00, R10
+        XOR #0x00, R9
+        XOR #0x00, R8
+        XOR #0x00, R7
+        XOR #0x00, R6
+        XOR #0x00, R5
+RET
+
+;;this is the AD absorption part in the mode
+FFUNAD: ;;(R12 - R4)
+        XOR #0x00, R14 ;;XOR with AD0
+        XOR #0x00, R13
+        XOR #0x00, R12
+        XOR #0x00, R11
+        XOR #0x00, R10
+        XOR #0x00, R9
+        XOR #0x00, R8
+        XOR #0x00, R7
+        XOR #0x00, R6
+        XOR #0x00, R5
+        XOR #0x01, R4
+RET
+
+;;this is the message absorption part in the mode 
+FFUNM: ;;(R12 - R4)
+        XOR #0x00, R14 ;;XOR with AD0
+        XOR #0x00, R13
+        XOR #0x00, R12
+        XOR #0x00, R11
+        XOR #0x00, R10
+        XOR #0x00, R9
+        XOR #0x00, R8
+        XOR #0x00, R7
+        XOR #0x00, R6
+        XOR #0x00, R5
+        XOR #0x02, R4
+RET
+
+;;save data
+FFUNSAVE:
+        MOV.B R14, &0xEA24  ;; S36 --------D9
+        MOV.B R13, &0xEA23  ;; S35 --------D8
+        MOV.B R12, &0xEA22  ;; S34 --------D7        
+        MOV.B R11, &0xEA1C  ;; S28 --------D6
+        MOV.B R10, &0xEA1B  ;; S27 --------D5
+        MOV.B R9, &0xEA12  ;; S18 --------D4
+        MOV.B R8, &0xEA10  ;; S16 --------D3
+        MOV.B R7, &0xEA0F  ;; S15 --------D2
+        MOV.B R6, &0xEA09  ;; S9 --------D1
+        MOV.B R5, &0xEA08  ;; S8 --------D0
+        MOV.B R4, &0xEA00  ;; S0 for domain seperator
+RET
+
+
+
+
+;;this is Simeck box
+FFUN3:   ;;LOOP the sliscp-light
+        PUSH R9
+        PUSH R10
+        PUSH R11
+        PUSH R12
+        PUSH R13
+        PUSH R14
+        PUSH R15
+        
+        
+        MOV.W #0x0000, R15
+WHIL1:  CMP.W #0x006F, R15
+        JGE NEXTA
+        CALL #FFUN
+        JMP WHIL1
+NEXTA:
+
+        MOV.B &0xEA93, &0xEA24
+        MOV.B &0xEA92, &0xEA23
+        MOV.B &0xEA91, &0xEA22
+        MOV.B &0xEA90, &0xEA21
+        MOV.B &0xEA8F, &0xEA20
+        MOV.B &0xEA8E, &0xEA1F
+        MOV.B &0xEA8D, &0xEA1E
+        MOV.B &0xEA8C, &0xEA1D
+        MOV.B &0xEA8B, &0xEA1C
+        MOV.B &0xEA8A, &0xEA1B
+        MOV.B &0xEA89, &0xEA1A
+        MOV.B &0xEA88, &0xEA19
+        MOV.B &0xEA87, &0xEA18
+        MOV.B &0xEA86, &0xEA17
+        MOV.B &0xEA85, &0xEA16
+        MOV.B &0xEA84, &0xEA15
+        
+        MOV.B &0xEA83, &0xEA14
+        MOV.B &0xEA82, &0xEA13
+        MOV.B &0xEA81, &0xEA12
+        MOV.B &0xEA80, &0xEA11
+        MOV.B &0xEA7F, &0xEA10
+        MOV.B &0xEA7E, &0xEA0F
+        MOV.B &0xEA7D, &0xEA0E
+        MOV.B &0xEA7C, &0xEA0D
+        MOV.B &0xEA7B, &0xEA0C
+        MOV.B &0xEA7A, &0xEA0B
+        MOV.B &0xEA79, &0xEA0A
+        MOV.B &0xEA78, &0xEA09
+        MOV.B &0xEA77, &0xEA08
+        MOV.B &0xEA76, &0xEA07
+        MOV.B &0xEA75, &0xEA06
+        MOV.B &0xEA74, &0xEA05
+        
+        MOV.B &0xEA73, &0xEA04
+        MOV.B &0xEA72, &0xEA03
+        MOV.B &0xEA71, &0xEA02
+        MOV.B &0xEA70, &0xEA01
+        MOV.B &0xEA6F, &0xEA00
+
+        POP R15
+        POP R14
+        POP R13
+        POP R12
+        POP R11
+        POP R10
+        POP R9
+RET
+
+
+;;this is WG permutation round
+FFUN: ;;DATA: A24,  TABLE: 521 (WG), 621(r), 721(s-box)  821(RC1), 921(RC0) and R15
+;; Load required* data to registers from memory
+        MOV.W #0xEA24, R14 ;Save the very initial location of data
+        ADD.W R15, R14  ;add reference R15, save the new loc to R14
+        MOV.B @R14, R13   ;;S36
+                            ;;fb-out will be saved in R12, then save to the loc
+        SUB.W #5, R14   ;;S31  
+        MOV.B @R14, R12
+        
+        SUB.W #1, R14 ;;S30
+        MOV.B @R14, R11 
+        XOR.W R11, R12
+        
+        SUB.W #4, R14  ;;S26
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #2, R14  ;;S24
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #5, R14  ;;S19
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #6, R14 ;;S13
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #1, R14 ;;S12
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #4, R14 ;;S8
+        MOV.B @R14, R11
+        XOR.W R11, R12
+        
+        SUB.W #2, R14 ;;S6
+        MOV.B @R14, R11
+        XOR.W R11, R12
+
+        SUB.W #6, R14 ;;S0
+        MOV.B @R14, R11
+        
+        ;;Begin get data from 
+        MOV.W #0xE521,R10  ;;WG operation
+        ADD.W R13, R10
+        MOV.B @R10, R13  ;;overwrite R13, because no need update s36
+        
+        MOV.W #0xE621,R10
+        ADD.W R11, R10
+        MOV.B @R10, R11  ;;overwrite R11, because no need update s0
+
+        XOR.W R13, R12
+        XOR.W R11, R12
+        
+        MOV.W #0xE821,R10  ;get RC1
+        ADD.W R15, R10
+        MOV.B @R10, R11  ;;overwrite R11, because no need update s0
+        XOR.W R11, R12
+
+;;So far, fb-out has been saved in R12 ,DO NOT TOUCH R12 as temp reg
+
+
+
+        MOV.W #0xEA24, R14 ;Save the very initial location of data, prepare for updating with s-box
+        ADD.W R15, R14  ;add reference R15, save the new loc to R14
+
+;;Begin updateing terms, (30, 24, 19, 11, 5), with s-box of (34, 27, 18, 15, 8)
+        SUB.W #2, R14  ;; 1st update begin s30
+        MOV.B @R14, R9
+        SUB.W #4, R14
+        MOV.B @R14, R10
+        
+        MOV.W #0xE721,R13 ;;;s-box operation 
+        ADD.W R9, R13  ;R9 is the input
+        MOV.B @R13, R9   ;R9 is also the output
+
+        XOR R9, R10
+        MOV.B R10, 0(R14) ;; 1st update finished
+
+
+
+        SUB.W #3, R14  ;2nd update begin s24
+        MOV.B @R14, R9
+        SUB.W #3, R14
+        MOV.B @R14, R10       
+        
+        MOV.W #0xE721,R13  ;;;s-box operation 
+        ADD.W R9, R13  ;R9 is the input
+        MOV.B @R13, R9   ;R9 is also the output
+
+        XOR R9, R10
+        MOV.B R10, 0(R14) ;; 2nd update finished
+
+
+
+        SUB.W #6, R14  ;3rd update begin
+        MOV.B @R14, R9
+        ADD.W #1, R14
+        MOV.B @R14, R10
+        
+        MOV.W #0xE521,R13  ;;WG operation 
+        ADD.W R9, R13  ;R9 is the input
+        MOV.B @R13, R9   ;R9 is also the output
+
+        MOV.W #0xE921,R13  ;get RC0
+        ADD.W R15, R13
+        MOV.B @R13, R11
+        XOR.W R11, R9   ;;xor RC1 with wap(s18), then save to R9
+
+        XOR R9, R10
+        MOV.B R10, 0(R14) ;; 3rd update finished
+
+
+
+        SUB.W #4, R14  ;4th update begin
+        MOV.B @R14, R9  ;s15
+        SUB.W #4, R14
+        MOV.B @R14, R10   ;s11
+        
+        MOV.W #0xE721,R13 ;;;s-box operation 
+        ADD.W R9, R13  ;R9 is the input
+        MOV.B @R13, R9   ;R9 is also the output
+
+        XOR R9, R10
+        MOV.B R10, 0(R14) ;; 4th update finished
+
+
+        SUB.W #3, R14  ;5th update begin
+        MOV.B @R14, R9
+        SUB.W #3, R14
+        MOV.B @R14, R10
+        
+        MOV.W #0xE721,R13
+        ADD.W R9, R13  ;R9 is the input
+        MOV.B @R13, R9   ;R9 is also the output
+
+        XOR R9, R10
+        MOV.B R10, 0(R14) ;; 5th update finished
+     
+        ADD.W #1, R15
+        
+        MOV.W #0xEA24, R14 ;Save the very initial location of data
+        ADD.W R15, R14  ;add reference R15, save the new loc to R14
+        MOV.B R12, 0(R14)
+        RET
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 
+;;End sub function
+        END
+
+
